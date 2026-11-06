@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         위시라이트3_통합홈
 // @namespace    local.rp.context.manager
-// @version      0.17.68-mobile
+// @version      0.17.70-char-usage
 // @description  모바일 통합 화면 · 현재상태/날짜로그/타임라인 한곳에 · 자동 기억주입 유지.
 // @author       User
 // @license      All Rights Reserved
@@ -68,7 +68,7 @@
         const style=document.createElement('style');
         style.textContent=':host{all:initial}section{box-sizing:border-box;width:280px;border:1px solid #d898ba;border-radius:12px;background:#fff4f9;color:#442d3b;padding:12px;font:13px/1.5 system-ui;box-shadow:0 4px 20px #0003}strong,span{display:block}span{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:5px}button{font:inherit;margin-top:8px;padding:5px 9px;border:1px solid #b982a2;border-radius:6px;background:white;color:#442d3b;cursor:pointer}';
         const card=document.createElement('section');
-        card.innerHTML='<strong>WISH 0.17.68-mobile · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
+        card.innerHTML='<strong>WISH 0.17.70-char-usage · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
         card.querySelector('button').onclick=()=>{dismissed=true;host?.remove();host=null;};
         root.append(style,card);document.documentElement.appendChild(host);
         for(const [key,value] of Object.entries({position:'fixed',right:'16px',top:'112px','z-index':'2147483647',display:'block',visibility:'visible',opacity:'1',width:'280px',height:'auto'}))host.style.setProperty(key,value,'important');
@@ -92,13 +92,13 @@
     wishBoot.status('duplicate', '다른 RP Manager 실행이 감지됐습니다. 버전: '+String(window.__WISH_RP_MANAGER_LOADED__.version||'알 수 없음'));
     return;
   }
-  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.68-mobile', loadedAt: Date.now() };
+  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.70-char-usage', loadedAt: Date.now() };
   // 같은 페이지에 남아 있는 v0.8.10 복사본이 뒤늦게 시작되는 경우도 차단합니다.
   window.__RP_MANAGER_0810_LOADED__ = true;
 
   const APP = {
     name: '🪽위시 RP Manager',
-    version: '0.17.68-mobile',
+    version: '0.17.70-char-usage',
     dbName: 'RPContextManagerDB',
     dbVersion: 2,
     storeName: 'rooms',
@@ -11551,7 +11551,7 @@ ${dialogueText}`;
     const style=document.createElement('style');style.id='wish-quick-compact-style';style.textContent=`
       html #rpcm-quick-backdrop .rpcm-quick-overview{padding:13px 15px!important;margin-bottom:9px!important}
       html #rpcm-quick-backdrop .wish-quick-summary{display:flex;align-items:center;gap:12px;margin-bottom:9px;font-size:12px;color:#7e7e8c}
-      html #rpcm-quick-backdrop .wish-quick-summary>strong{font-size:14px;color:#31313d;margin-right:auto}
+      html #rpcm-quick-backdrop .wish-quick-summary>strong{font-size:17px;color:#31313d;margin-right:auto;font-variant-numeric:tabular-nums}html #rpcm-quick-backdrop .wish-quick-summary>strong small{font-size:12px;color:#8e8e93;font-weight:400}
       html #rpcm-quick-backdrop .wish-quick-summary>details{position:relative}
       html #rpcm-quick-backdrop .wish-quick-summary>details>summary{list-style:none;cursor:pointer;font-size:17px}
       html #rpcm-quick-backdrop .wish-quick-summary>details>div{position:absolute;right:0;top:26px;z-index:5;width:240px;padding:14px;background:#fff;border:1px solid #e4e4ee;border-radius:13px;box-shadow:0 8px 28px #2222;font-size:11px;line-height:1.7}
@@ -11571,6 +11571,24 @@ ${dialogueText}`;
       html #rpcm-quick-backdrop .wish-quick-detail summary{font-size:11px;color:#8c8c9b;cursor:pointer}
       html #rpcm-quick-backdrop .wish-quick-detail p{font-size:11px;overflow-wrap:anywhere}
       html #rpcm-quick-backdrop .rpcm-quick-note{font-size:10px!important;padding-bottom:4px!important}
+
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"],html body #wish-memory-dialog>section{
+        --wish-accent:#007aff!important;--wish-accent-strong:#007aff!important;--wish-accent-soft:#eaf3ff!important;--wish-accent-soft-2:#e1edff!important;--wish-accent-line:#bfd9ff!important;--wish-accent-ink:#fff!important;
+        --wish-card:#fff!important;--wish-card-2:#f7f7fa!important;--wish-sheet:#f2f2f7!important;--wish-line:#e5e5ea!important;--wish-fg:#1c1c1e!important;--wish-fg-2:#636366!important;--wish-muted:#8e8e93!important;
+        background:#f2f2f7!important;color:#1c1c1e!important;font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo',system-ui,sans-serif!important;
+      }
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] button{font-family:inherit!important;box-shadow:none!important;text-shadow:none!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .rpcm-quick-foot button.rpcm-btn.primary{background:#007aff!important;color:#fff!important;border:0!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .rpcm-quick-foot button.rpcm-btn.secondary{background:#fff!important;color:#007aff!important;border:0!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .rpcm-quick-foot button.rpcm-btn.warn{background:#fff!important;color:#ff3b30!important;border:0!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .wish-quick-list-heading button{background:#fff!important;color:#007aff!important;border:0!important;border-radius:10px!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .rpcm-quick-empty strong{color:#1c1c1e!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .rpcm-quick-empty p{color:#8e8e93!important}
+      html body #rpcm-quick-backdrop .rpcm-quick-panel[data-quick-design="clean"] .rpcm-quick-empty-icon{background:#e7effb!important;color:#4488df!important}
+      html body #wish-memory-dialog>section button{border:0!important;border-radius:11px!important;background:#eaf3ff!important;color:#007aff!important}
+      html body #wish-memory-dialog>section button.primary{background:#007aff!important;color:#fff!important}
+      html body #wish-memory-dialog>section>header{background:#fff!important;border-color:#e5e5ea!important}
+      html body #wish-memory-dialog>section input[type=search]{background:#fff!important;border-color:#e5e5ea!important;color:#1c1c1e!important}
     `;document.head.append(style);
   }
   function renderQuickInjectionPanel() {
@@ -11603,7 +11621,7 @@ ${dialogueText}`;
     rpcmPatchHtml(backdrop, `<div class="rpcm-quick-shade" data-key="shade"></div><aside class="rpcm-quick-panel" data-quick-design="clean" data-key="panel" role="dialog" aria-modal="true" aria-label="주입 현황">
       <div class="rpcm-quick-head"><div class="rpcm-quick-heading"><small>${esc(room?.label||'현재 대화')}</small><strong>주입 현황</strong></div><span class="rpcm-quick-status ${monitor.warning?'is-warning':pending?'is-on':'is-off'}">${monitor.busy?'반영 중':pending?'주입 중':'꺼짐'}</span><button type="button" class="rpcm-quick-close" aria-label="닫기" data-rpcm-close="icon">×</button></div>
       <div class="rpcm-quick-content" data-key="content">
-      ${pending?`<section class="rpcm-quick-overview" aria-label="주입 용량"><div class="wish-quick-summary"><strong>기억 ${active.length}개</strong><span>용량 ${monitor.percent}%</span><details><summary aria-label="용량 상세 정보">ⓘ</summary><div>${formatCount(monitor.used)} / ${formatCount(APP.defaultMaxChars)}자${capacity.byteKnown?`<br>전송 ${formatCount(capacity.payloadBytes)} / ${formatCount(capacity.byteLimit)}바이트`:''}<div class="rpcm-monitor-categories">${quickMonitorCategories(monitor.items)}</div></div></details></div><div class="rpcm-quick-meter${monitor.capacityNear?' is-warning':''}" role="progressbar" aria-label="주입 용량" aria-valuenow="${monitor.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${monitor.percent}%"></i></div></section>`:''}
+      ${pending?`<section class="rpcm-quick-overview" aria-label="주입 용량"><div class="wish-quick-summary"><strong>${formatCount(monitor.used)} <small>/ ${formatCount(APP.defaultMaxChars)}자</small></strong><span>${monitor.percent}%</span><details><summary aria-label="용량 상세 정보">ⓘ</summary><div>${formatCount(monitor.used)} / ${formatCount(APP.defaultMaxChars)}자${capacity.byteKnown?`<br>전송 ${formatCount(capacity.payloadBytes)} / ${formatCount(capacity.byteLimit)}바이트`:''}<div class="rpcm-monitor-categories">${quickMonitorCategories(monitor.items)}</div></div></details></div><div class="rpcm-quick-meter${monitor.capacityNear?' is-warning':''}" role="progressbar" aria-label="주입 용량" aria-valuenow="${monitor.percent}" aria-valuemin="0" aria-valuemax="100"><i style="width:${monitor.percent}%"></i></div></section>`:''}
       ${monitor.warningCount?`<div class="rpcm-quick-attention" role="status"><strong>확인할 항목 ${monitor.warningCount}개</strong><span>기억 관리에서 자세히 확인해 주세요.</span></div>`:''}
       <div class="rpcm-quick-note" ${!pending&&!room?._logBudgetInfo?.omitted&&!(loreBudgetInfoFor(room)?.candidates>loreBudgetInfoFor(room)?.included)?'hidden':''}>${pending ? '끄면 이번 주입에서만 제외돼요.' : ''}${room?._logBudgetInfo?.omitted ? ` · 로그 ${room._logBudgetInfo.omitted}개 용량 제외${room._logBudgetInfo.omittedTitles?.length ? `: ${esc(room._logBudgetInfo.omittedTitles.join(', '))}` : ''}` : ''}${loreBudgetInfoFor(room)?.candidates > loreBudgetInfoFor(room)?.included ? ` · 자료집 ${loreBudgetInfoFor(room).candidates - loreBudgetInfoFor(room).included}개 용량 제외${loreBudgetInfoFor(room)?.omittedTitles?.length ? `: ${esc(loreBudgetInfoFor(room).omittedTitles.join(', '))}` : ''}` : ''}</div>
       <div class="wish-quick-list-heading"><strong>이번 대화의 기억</strong><div><button type="button" class="wish-quick-expand-all">${ordered.length&&ordered.every(row=>wishQuickExpanded.has(String(room.chatId)+'|'+row.key))?'전체 접기':'전체 펼치기'}</button><button type="button" class="rpcm-btn secondary wish-quick-memory">🔍 찾기</button></div></div><div class="rpcm-quick-list" data-key="list">
@@ -21523,6 +21541,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     if(remove&&wishMemoryHasLog(room,key))throw new Error('제외가 아직 서버에 반영되지 않았어요. 다시 확인해 주세요.');
   }
   function wishOpenMessageMemory(room){
+    wishQuickCompactStyle();
     if(!room||state.currentRoom!==room)return;
     document.querySelector('#wish-memory-dialog')?.remove();
     const root=document.createElement('div');root.id='wish-memory-dialog';root.dataset.memorySimple='1';
@@ -22149,6 +22168,17 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-character-help{font-size:11px;color:#9292a3;line-height:1.6}
       #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-date-actions{display:flex;gap:6px;flex-wrap:wrap;padding-top:9px}
       #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-date-actions button{font-size:11px!important;padding:6px 9px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall{margin:12px 0 0!important;padding:13px!important;border-radius:14px!important;background:#f2f2f7!important;border:0!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall label{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:12px!important;margin:0!important;padding:0!important;cursor:pointer}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall label>span{display:flex;flex-direction:column;gap:5px;min-width:0}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall strong{font-size:13px;color:#1c1c1e;font-weight:600}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall small{font-size:10px;line-height:1.6;color:#8e8e93}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall input{appearance:none!important;-webkit-appearance:none!important;position:relative!important;display:block!important;width:43px!important;height:26px!important;min-width:43px!important;border:0!important;border-radius:20px!important;background:#d1d1d6!important;margin:0!important;flex:0 0 43px!important;cursor:pointer;transition:background .15s ease}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall input:before{content:'';position:absolute;width:22px;height:22px;left:2px;top:2px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0002;transition:transform .15s ease}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall input:checked{background:#34c759!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall input:checked:before{transform:translateX(17px)}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall input:disabled{opacity:.5;cursor:wait}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-recall input:focus-visible{outline:2px solid #007aff;outline-offset:3px}
       #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-help{font-size:11px;line-height:1.6;color:#9595a6;margin:5px 0}
       html body #rpcm-fab.rpcm-header-monitor .wish-mobile-count-badge{position:absolute;z-index:3;right:-2px;bottom:-2px;min-width:13px;padding:1px 3px;border-radius:7px;background:#247cf0;color:white;font:9px/1.2 Arial,sans-serif;border:1px solid white;text-align:center}
       html body #rpcm-fab.rpcm-header-monitor{overflow:visible!important}
@@ -22281,8 +22311,10 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     const logSection=root.querySelector('[data-wish-section="logs"]'),recall=logSection?.querySelector('.wish-three-recall');
     if(recall){
       const enabled=room.autoLogRecallEnabled&&room.wishAutoPreSend,partial=!!room.autoLogRecallEnabled!==!!room.wishAutoPreSend;
-      recall.replaceChildren();recall.innerHTML='<summary>과거 기억 자동 사용</summary><label><input type="checkbox" data-mobile-recall '+(enabled?'checked':'')+'> 필요한 과거 기록 자동 사용</label><p class="wish-mobile-auto-help">현재 대화와 내가 작성한 메시지를 보고, 관련 날짜로그를 골라 전달해요.'+(partial?' 이전 검색 설정은 일부만 사용 중이에요.':'')+'</p>';
-      recall.querySelector('input').onchange=async event=>{const input=event.target;input.disabled=true;try{await wishMobileSetAutoRecall(room,input.checked);recall.querySelector('p').textContent='현재 대화와 내가 작성한 메시지를 보고, 관련 날짜로그를 골라 전달해요.';}catch(error){input.checked=!!(room.autoLogRecallEnabled&&room.wishAutoPreSend);notify(error.message,'error');}finally{input.disabled=false;}};
+      const visible=document.createElement('div');visible.className='wish-three-recall wish-mobile-auto-recall';
+      visible.innerHTML='<label><span><strong>과거 기억 자동 사용</strong><small>대화와 작성한 메시지에 맞는 날짜로그를 골라요.'+(partial?' 이전 설정은 일부만 사용 중이에요.':'')+'</small></span><input type="checkbox" role="switch" aria-label="과거 기억 자동 사용" data-mobile-recall '+(enabled?'checked':'')+'></label>';
+      recall.replaceWith(visible);
+      visible.querySelector('input').onchange=async event=>{const input=event.target;input.disabled=true;try{await wishMobileSetAutoRecall(room,input.checked);visible.querySelector('small').textContent='대화와 작성한 메시지에 맞는 날짜로그를 골라요.';}catch(error){input.checked=!!(room.autoLogRecallEnabled&&room.wishAutoPreSend);notify(error.message,'error');}finally{input.disabled=false;}};
     }
     const extra=root.querySelector('[data-wish-section="extra"]');
     if(extra){
@@ -22296,7 +22328,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       const key=String(room.chatId)+'|'+name,details=document.createElement('details');details.className='wish-mobile-section';details.dataset.mobileSection=name;
       let opened=wishMobileFoldState.get(key);if(opened==null){try{const stored=GM_getValue('WISH_MOBILE_FOLD_'+key,null);if(typeof stored==='boolean')opened=stored;}catch(_){}}
       details.open=opened==null?(!mobile||name==='state'):opened;
-      const summary=document.createElement('summary');summary.append(header);const body=document.createElement('div');body.className='wish-mobile-section-body';while(section.firstChild)body.append(section.firstChild);details.append(summary,body);section.append(details);
+      const summary=document.createElement('summary');summary.append(header);const body=document.createElement('div');body.className='wish-mobile-section-body';while(section.firstChild)body.append(section.firstChild);details.append(summary,body);section.append(details);if(name==='logs'){const automatic=body.querySelector('.wish-mobile-auto-recall');if(automatic)section.append(automatic);}
       details.addEventListener('toggle',()=>{const all=root.querySelector('.wish-mobile-fold-all');if(all)all.textContent=[...root.querySelectorAll('.wish-mobile-section')].some(node=>node.open)?'모두 접기':'모두 펼치기';wishMobileFoldState.set(key,details.open);try{GM_setValue('WISH_MOBILE_FOLD_'+key,details.open);}catch(_){}});
     }
     const folds=document.createElement('button');folds.type='button';folds.className='wish-mobile-fold-all';folds.textContent=[...root.querySelectorAll('.wish-mobile-section')].some(node=>node.open)?'모두 접기':'모두 펼치기';folds.onclick=()=>{const list=[...root.querySelectorAll('.wish-mobile-section')],open=list.every(node=>!node.open);for(const node of list){node.open=open;wishMobileFoldState.set(String(room.chatId)+'|'+node.dataset.mobileSection,open);}folds.textContent=open?'모두 접기':'모두 펼치기';};root.querySelector('.wish-status-line')?.append(folds);
@@ -22756,7 +22788,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
 
   function wishTabbedStyles(){
     GM_addStyle(`
-      /* WISH 0.17.68-mobile - unified one-page layout; no second navigation or separate memory windows. */
+      /* WISH 0.17.70-char-usage - unified one-page layout; no second navigation or separate memory windows. */
       #rpcm-overlay #rpcm-modal-wrap{width:min(780px,100%)!important;max-width:min(780px,100%)!important}
       #rpcm-overlay .wish-clean-main.wish-unified-home{display:flex!important;flex-direction:column!important;gap:14px!important;padding:14px!important;overscroll-behavior:contain}
       #rpcm-overlay .wish-status-line[hidden]{display:none!important}
@@ -23137,7 +23169,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
         #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-clean-footer button{padding:9px 12px!important;font-size:11px!important;min-height:40px!important}
       }
 
-      /* v0.17.68-mobile: simple mobile reading, only monthly folders collapse */
+      /* v0.17.70-char-usage: simple mobile reading, only monthly folders collapse */
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-month .wish-log-day-visible{display:block!important;overflow:visible}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible h3{font-size:13px!important;font-weight:700!important;color:#424553!important;margin:0 0 6px!important;line-height:1.5}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible .wish-log-day-content{padding:0!important}
