@@ -2,7 +2,7 @@
 // ==UserScript==
 // @name         위시라이트3_통합홈
 // @namespace    local.rp.context.manager
-// @version      0.17.67-blue-spark
+// @version      0.17.68-mobile
 // @description  모바일 통합 화면 · 현재상태/날짜로그/타임라인 한곳에 · 자동 기억주입 유지.
 // @author       User
 // @license      All Rights Reserved
@@ -68,7 +68,7 @@
         const style=document.createElement('style');
         style.textContent=':host{all:initial}section{box-sizing:border-box;width:280px;border:1px solid #d898ba;border-radius:12px;background:#fff4f9;color:#442d3b;padding:12px;font:13px/1.5 system-ui;box-shadow:0 4px 20px #0003}strong,span{display:block}span{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:5px}button{font:inherit;margin-top:8px;padding:5px 9px;border:1px solid #b982a2;border-radius:6px;background:white;color:#442d3b;cursor:pointer}';
         const card=document.createElement('section');
-        card.innerHTML='<strong>WISH 0.17.67-blue-spark · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
+        card.innerHTML='<strong>WISH 0.17.68-mobile · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
         card.querySelector('button').onclick=()=>{dismissed=true;host?.remove();host=null;};
         root.append(style,card);document.documentElement.appendChild(host);
         for(const [key,value] of Object.entries({position:'fixed',right:'16px',top:'112px','z-index':'2147483647',display:'block',visibility:'visible',opacity:'1',width:'280px',height:'auto'}))host.style.setProperty(key,value,'important');
@@ -92,13 +92,13 @@
     wishBoot.status('duplicate', '다른 RP Manager 실행이 감지됐습니다. 버전: '+String(window.__WISH_RP_MANAGER_LOADED__.version||'알 수 없음'));
     return;
   }
-  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.67-blue-spark', loadedAt: Date.now() };
+  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.68-mobile', loadedAt: Date.now() };
   // 같은 페이지에 남아 있는 v0.8.10 복사본이 뒤늦게 시작되는 경우도 차단합니다.
   window.__RP_MANAGER_0810_LOADED__ = true;
 
   const APP = {
     name: '🪽위시 RP Manager',
-    version: '0.17.67-blue-spark',
+    version: '0.17.68-mobile',
     dbName: 'RPContextManagerDB',
     dbVersion: 2,
     storeName: 'rooms',
@@ -11797,6 +11797,7 @@ ${dialogueText}`;
     trigger.setAttribute('aria-label',`W.lite · ${monitor.armed?'주입 켜짐':'주입 꺼짐'}${monitor.busy?' · 반영 중':''} · 짧게 누르면 빠른 관리, 길게 누르면 전체 RP Manager`);
     trigger.title=`W.lite · ${monitor.armed?'주입 켜짐':'주입 꺼짐'}${monitor.warning?' · 확인할 일 있음':''} · 짧게 누르면 빠른 관리, 길게 누르면 전체 RP Manager`;
     trigger.querySelector('.rpcm-header-monitor-label').textContent='✦';
+    let countBadge=trigger.querySelector('.wish-mobile-count-badge');if(!countBadge){countBadge=document.createElement('span');countBadge.className='wish-mobile-count-badge';countBadge.setAttribute('aria-hidden','true');trigger.append(countBadge);}countBadge.textContent=String(monitor.items.length);countBadge.hidden=!monitor.armed;
     if (state.modal) trigger.rpcmCancelHold?.();
     trigger.disabled = !!state.modal;
   }
@@ -18150,13 +18151,14 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     const turns=await loadRpcmCompletedRange(room,needsBeginning?[]:anchors);aiMemoryCheckAnchorEvidence(room,areas,turns);return turns;
   }
   async function aiMemoryStartFromNow(room,area){
-    const turns=await loadLatestCompletedTurns(room),turn=turns.at(-1),row=aiMemoryConfig(room).areas[area];
+    const turns=await loadRpcmCompletedRange(room,[]),turn=turns.at(-1),row=aiMemoryConfig(room).areas[area];
+    if(!turn)throw new Error('아직 완료된 대화가 없어요.');
     if(state.currentRoom!==room)throw new Error('방이 바뀌었습니다.');
     const previous=structuredClone(row),anchors=structuredClone(room.aiMemorySourceAnchors||{});
-    Object.assign(row,{historyPlan:null,baseline:String(turn.key),cursor:'',draft:null,status:'지금부터 대기',error:'',failedEnd:'',lastAttemptKey:'',plannedStart:'',plannedEnd:''});
+    Object.assign(row,{historyPlan:null,baseline:String(turn.key),cursor:'',draft:null,status:'다음 대화부터 대기',wishCountBaseTurn:turns.length,error:'',failedEnd:'',lastAttemptKey:'',plannedStart:'',plannedEnd:''});
     aiMemorySetAnchorEvidence(room,area,turn,true);
-    try{await saveRoom(room);}catch(error){Object.assign(row,previous);room.aiMemorySourceAnchors=anchors;throw error;}
-    invalidateAiMemoryHistory();const key=String(room.chatId),counts=aiMemoryRuntime.lastCounts.get(key)||{};aiMemoryRuntime.lastCounts.set(key,{...counts,[area]:0,lastKey:String(turn.key)});
+    try{await saveRoom(room);}catch(error){Object.assign(row,previous);if(!Object.prototype.hasOwnProperty.call(previous,'wishCountBaseTurn'))delete row.wishCountBaseTurn;room.aiMemorySourceAnchors=anchors;throw error;}
+    invalidateAiMemoryHistory();const key=String(room.chatId),counts=aiMemoryRuntime.lastCounts.get(key)||{};aiMemoryRuntime.lastCounts.set(key,{...counts,[area]:0,ready:{...(counts.ready||{}),[area]:0},lastKey:String(turn.key)});
     return turn;
   }
 
@@ -20513,7 +20515,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
   function wishHistoryControls(room,area){
     const row=aiMemoryConfig(room).areas[area],plan=row.historyPlan,active=plan?.status==='active',total=wishCleanAuditRecord(room)?.total;
     const status=plan?`${plan.from}~${plan.to}턴 · ${plan.done}/${plan.keys.length}턴 ${active?'정리 완료':plan.status==='done'?'전체 완료':'진행 종료'}`:'이미 쌓인 대화도 원하는 범위부터 정리할 수 있어요.';
-    return `<details class="wish-history-tools" data-history-area="${area}"><summary>📚 기존 대화 정리 <small>${active?'진행 중':'범위 지정'}</small></summary><p data-history-status>${esc(status)}</p><div class="wish-history-fields"><label>시작 턴<input type="number" min="1" step="1" data-history-from value="${active?plan.from:wishQueueSuggestedStart(room)}" ></label><label>마지막 턴<input type="number" min="1" step="1" data-history-to ${active||Number.isInteger(total)?`value="${active?plan.to:total}"`:''} placeholder="최신 턴까지" ></label><label>정리 단위<input type="number" min="1" max="100" step="1" data-history-size aria-label="정리 단위, 한 번에 처리할 턴 수" title="한 번에 정리할 대화 수" value="${active?plan.batchSize:30}" ><span class="wish-batch-unit">턴씩</span></label></div><label class="wish-history-follow"><input type="checkbox" data-history-follow ${active?(plan.resumeAutomatic?'checked':''):'checked'} > 완료 후 새 대화 자동 정리 · 검토 후 저장</label><p class="wish-history-help">선택한 턴을 순서대로 정리해요. 결과를 확인해 저장하면 다음 대화를 이어서 정리할 수 있어요.</p><div class="wish-history-actions"><button type="button" class="primary" data-history-run="${area}" ${row.draft?'disabled':''}>${active?'정리하기':'선택한 대화 정리하기'}</button>${active?`<button type="button" data-history-cancel="${area}" ${row.draft?'disabled':''}>정리 그만하기</button>`:''}</div></details>`;
+    return `<details class="wish-history-tools" data-history-area="${area}"><summary>📚 기존 대화 정리 <small>${active?'진행 중':'범위 지정'}</small></summary><p data-history-status>${esc(status)}</p><div class="wish-history-fields"><label>시작 턴<input type="number" min="1" step="1" data-history-from value="${active?plan.from:wishMobileSuggestedFrom(room,area)}" ></label><label>마지막 턴<input type="number" min="1" step="1" data-history-to ${active?`value="${plan.to}"`:''} placeholder="최신 턴까지" ></label><label>정리 단위<input type="number" min="1" max="100" step="1" data-history-size aria-label="정리 단위, 한 번에 처리할 턴 수" title="한 번에 정리할 대화 수" value="${active?plan.batchSize:30}" ><span class="wish-batch-unit">턴씩</span></label></div><label class="wish-history-follow"><input type="checkbox" data-history-follow ${active?(plan.resumeAutomatic?'checked':''):'checked'} > 완료 후 새 대화 자동 정리 · 검토 후 저장</label><p class="wish-history-help">선택한 턴을 순서대로 정리해요. 결과를 확인해 저장하면 다음 대화를 이어서 정리할 수 있어요.</p><div class="wish-history-actions"><button type="button" class="primary" data-history-run="${area}" ${row.draft?'disabled':''}>${active?'정리하기':'선택한 대화 정리하기'}</button>${active?`<button type="button" data-history-cancel="${area}" ${row.draft?'disabled':''}>정리 그만하기</button>`:''}</div></details>`;
   }
   async function wishHistoryRun(room,area,controls=null){
     if(aiMemoryRuntime.busy||wishHistoryPreparing)throw new Error('다른 AI 작업이 끝난 뒤 시작해 주세요.');
@@ -20534,6 +20536,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       if(state.currentRoom!==room)throw new Error('방이 바뀌었습니다.');
       if(!turns.length)throw new Error('완료된 대화가 없습니다.');
       const from=Number(controls.querySelector('[data-history-from]').value),to=Number(controls.querySelector('[data-history-to]').value||turns.length),batchSize=Number(controls.querySelector('[data-history-size]').value);
+      if(from>turns.length&&!controls.querySelector('[data-history-to]').value)throw new Error('새로 정리할 완료 대화가 없어요.');
       if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<from||to>turns.length)throw new Error(`시작·마지막 턴을 1~${turns.length} 안에서 지정해 주세요.`);
       if(!Number.isInteger(batchSize)||batchSize<1||batchSize>100)throw new Error('한 번에 처리할 턴은 1~100 사이 정수로 지정해 주세요.');
       const selected=turns.slice(from-1,to),previous=row.historyPlan;
@@ -20586,7 +20589,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     const settings=aiFeatureSettings(loadAiSummarySettings(),area==='timeline'?'timeline':'summary');
     const provider=settings.provider,secret=readAiSecret(provider),model=settings.models?.[provider]||'';
     if(!secret){row.status='인증 필요';row.error='API 인증 정보가 없습니다. AI · API 설정에서 연결해 주세요.';row.failedEnd=String((aiMemoryRuntime.lastCounts.get(String(room.chatId))||{}).lastKey||'');await saveRoom(room).catch(()=>{});aiMemoryRefreshStatusUi(room);throw new Error(row.error);}
-    aiMemoryRuntime.busy=true;aiMemoryRuntime.roomId=String(room.chatId);
+    aiMemoryRuntime.busy=true;aiMemoryRuntime.roomId=String(room.chatId);aiMemoryRuntime.area=area;wishCleanUpdateStatus(room);
     row.status='원문 확인 중';row.error='';
     const policy=Object.fromEntries(Object.keys(AI_MEMORY_AREAS).map(key=>{const config=aiMemoryConfig(room),target=config.areas[key];return [key,{autoApplyEligible:!options.historyPlanId&&config.enabled&&target.enabled&&target.autoApply,applyRevision:target.applyRevision,globalApplyRevision:config.applyRevision,connectionStamp:JSON.stringify(aiFeatureSettings(loadAiSummarySettings(),key==='timeline'?'timeline':'summary'))}];}));
     let pairedArea='',pairedRow=null;
@@ -20667,7 +20670,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       if(!accepted.length)throw rejected[0]?.error||new Error('AI 초안 검증 실패');
       return accepted.find(draft=>draft.area===area)||accepted[0];
     }catch(error){const current=aiMemoryConfig(room).areas[area];if(!current.draft){current.status='실패';current.error=String(error.message||error);current.failedEnd=String((aiMemoryRuntime.lastCounts.get(String(room.chatId))||{}).lastKey||current.failedEnd||'');}if(pairedRow&&!pairedRow.draft&&pairedRow.status!=='실패'){pairedRow.status='대기';pairedRow.plannedStart='';pairedRow.plannedEnd='';}try{if(state.currentRoom===room)await saveRoom(room);}catch(_){}aiMemoryRefreshStatusUi(room);throw error;}
-    finally{aiMemoryRuntime.busy=false;aiMemoryRuntime.roomId='';}
+    finally{aiMemoryRuntime.busy=false;aiMemoryRuntime.roomId='';aiMemoryRuntime.area='';wishCleanUpdateStatus(room);}
   }
   async function aiMemoryPoll(room,force=false) {
     if(areaResetPaused(room))return;
@@ -20979,13 +20982,13 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     }
   }
 
-  function aiMemoryReviewDialog(room,area) {
+  function aiMemoryReviewDialog(room,area,forcePopup=false) {
     const row=aiMemoryConfig(room).areas[area],draft=row.draft;
     if(!draft){notify('검토할 AI 초안이 없습니다.','warn');return;}
     document.querySelector('#rpcm-ai-memory-backdrop')?.remove();
     document.querySelector('#wish-inline-ai-memory-backdrop')?.remove();
     const inlineHost=state.modal?.querySelector(`[data-wish-review-host="${area}"]`);
-    const inline=!!(inlineHost&&inlineHost.isConnected&&state.currentRoom===room);
+    const inline=!forcePopup&&!!(inlineHost&&inlineHost.isConnected&&state.currentRoom===room);
     const backdrop=document.createElement('div');backdrop.id=inline?'wish-inline-ai-memory-backdrop':'rpcm-ai-memory-backdrop';
     backdrop.innerHTML=`<section class="rpcm-update-dialog rpcm-update-result-dialog" role="dialog" aria-modal="true" aria-labelledby="rpcm-ai-review-title"><header><div><span class="rpcm-ai-review-eyebrow">AI로 정리한 내용</span><h2 id="rpcm-ai-review-title">${esc(AI_MEMORY_AREAS[area].label)} 변경 내용</h2><p>완료 RP ${draft.startIndex+1}–${draft.endIndex+1}턴 · ${draft.turnCount}턴 분석 · 확인 후 저장할 수 있어요</p></div><button type="button" class="rpcm-update-dialog-close" data-ai-memory-close aria-label="닫기" data-rpcm-close="icon">${rpcmUiIcon('close')}</button></header><div class="rpcm-update-result-body"><div class="rpcm-update-result-status" role="status">변경 내용을 불러오고 있어요…</div><div class="rpcm-ai-memory-selection"></div><details class="rpcm-ai-review-raw"><summary>AI가 정리한 글 직접 수정</summary><p>내용을 수정했다면 아래에서 변경 내용을 확인해 주세요.</p><textarea class="rpcm-ai-memory-output" spellcheck="false" aria-label="${esc(AI_MEMORY_AREAS[area].label)} 초안 원문"></textarea><button type="button" class="rpcm-btn secondary" data-ai-memory-save-draft>수정 내용 임시 저장</button></details><details class="rpcm-ai-review-diff" hidden><summary>자세한 변경 비교</summary><div class="rpcm-update-diff"></div></details></div><footer><button type="button" class="rpcm-btn secondary" data-ai-memory-discard>이번 정리 취소</button><div><button type="button" class="rpcm-btn secondary" data-ai-memory-check>변경 내용 확인</button><button type="button" class="rpcm-btn primary" data-ai-memory-apply disabled>선택한 내용 저장</button></div></footer></section>`;
     const queued=room.wishHistoryQueue?.status==='active'&&room.wishHistoryQueue.planIds?.[area]===draft.historyPlanId;
@@ -21308,7 +21311,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       grid=Array.from({length:start},()=>'<span></span>').join('')+Array.from({length:days},(_,i)=>{const day=i+1,count=dated.filter(row=>row.year===year&&row.month===month&&row.day===day).length;return `<button type="button" data-compact-day="${day}" ${count?'':'disabled'} class="${count?'has-log':''} ${selected.day===day?'selected':''}" aria-pressed="${selected.day===day}" aria-label="${year}년 ${month}월 ${day}일 기록 ${count}개">${day}${count?'<i></i>':''}</button>`;}).join('');
     }
     const shown=selected.day==='other'?other:dated.filter(row=>monthKey(row)===selected.month&&row.day===selected.day);
-    return wishLogUndoBanner(room)+`<details class="wish-compact-calendar-fold" data-compact-calendar-fold ${wishCompactCalendarOpen.get(String(room.chatId))?'open':''}><summary>📅 달력</summary><div class="wish-compact-calendar"><header><button type="button" data-compact-month="-1" aria-label="이전 기록 월" ${index>0?'':'disabled'}>‹</button><strong>${months.length?year+'년 '+month+'월':'날짜로그 없음'}</strong><button type="button" data-compact-month="1" aria-label="다음 기록 월" ${index>=0&&index<months.length-1?'':'disabled'}>›</button></header><div class="wish-compact-week">${'일월화수목금토'.split('').map(day=>'<span>'+day+'</span>').join('')}</div><div class="wish-compact-days">${grid}</div>${other.length?`<button type="button" data-compact-day="other">날짜 미정 · 특수 날짜 ${other.length}개</button>`:''}</div><div class="wish-compact-selected">${shown.length?shown.map(row=>`<article class="wish-log-recent-row"><h3>${esc(row.titleText||row.fullDate||'날짜 미상')}</h3><p>${esc(row.body||'내용 없음')}</p>${wishLogChoiceHtml(room,row.key)}<div class="wish-log-card-actions"><button type="button" data-wish-log-action="edit" data-wish-log-key="${esc(row.key)}" data-wish-log-index="${row.index}">수정</button><button type="button" data-wish-log-action="delete" data-wish-log-key="${esc(row.key)}" data-wish-log-index="${row.index}">삭제</button></div></article>`).join(''):'<small>● 표시된 날짜를 누르면 기록이 보여요.</small>'}</div></details>`;
+    return wishLogUndoBanner(room)+`<details class="wish-compact-calendar-fold" data-compact-calendar-fold ${wishCompactCalendarOpen.get(String(room.chatId))?'open':''}><summary>📅 달력</summary><div class="wish-compact-calendar"><header><button type="button" data-compact-month="-1" aria-label="이전 기록 월" ${index>0?'':'disabled'}>‹</button><strong>${months.length?year+'년 '+month+'월':'날짜로그 없음'}</strong><button type="button" data-compact-month="1" aria-label="다음 기록 월" ${index>=0&&index<months.length-1?'':'disabled'}>›</button></header><div class="wish-compact-week">${'일월화수목금토'.split('').map(day=>'<span>'+day+'</span>').join('')}</div><div class="wish-compact-days">${grid}</div>${other.length?`<button type="button" data-compact-day="other">날짜 미정 · 특수 날짜 ${other.length}개</button>`:''}</div><div class="wish-compact-selected">${shown.length?shown.map(row=>`<article class="wish-log-recent-row"><h3>${esc(row.titleText||row.fullDate||'날짜 미상')}</h3><p>${esc(row.body||'내용 없음')}</p>${wishLogChoiceHtml(room,row.key)}<div class="wish-log-card-actions"><button type="button" data-wish-log-action="edit" data-wish-log-key="${esc(row.key)}" data-wish-log-index="${row.index}">수정</button><button type="button" data-wish-log-action="delete" data-wish-log-key="${esc(row.key)}" data-wish-log-index="${row.index}">삭제</button></div></article>`).join(''):'<small>● 표시된 날짜를 누르면 기록이 보여요.</small>'}</div><div class="wish-mobile-date-actions"><button type="button" data-mobile-log-continue="missing">미정리부터 이어서 정리</button>${typeof selected.day==='number'?'<button type="button" data-mobile-log-continue="date">이 날짜 다음부터 정리</button>':''}</div></details>`;
   }
 
   function wishCleanLogGroupedHtml(room,query=''){
@@ -21340,6 +21343,8 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       if(month && event.target===month){wishLogMonthOpen.set(wishLogGroupStateKey(room,month.dataset.wishLogMonth),month.open);return;}
     },true);
     root.addEventListener('click',event=>{
+      const continuation=event.target.closest('[data-mobile-log-continue]');
+      if(continuation){if(continuation.disabled)return;continuation.disabled=true;void wishMobileContinueLogs(room,continuation.dataset.mobileLogContinue).catch(error=>notify(error.message,'error',8000)).finally(()=>{if(continuation.isConnected)continuation.disabled=false;});return;}
       const monthButton=event.target.closest('[data-compact-month]'),dayButton=event.target.closest('[data-compact-day]');
       if(monthButton||dayButton){
         wishCompactCalendarOpen.set(String(room.chatId),true);
@@ -21932,6 +21937,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     const refresh=root.querySelector('#wish-clean-turn-refresh');if(refresh)refresh.disabled=!!audit?.busy;
     for(const [key] of WISH_CLEAN_AREAS){
       const text=wishCleanStatusLabel(room,key),row=aiMemoryConfig(room).areas[key];
+      wishMobileCounterLabel(root,room,key,row);
       const progress=root.querySelector('[data-three-progress="'+key+'"]');if(progress){const plan=row.historyPlan;progress.textContent=plan?`${plan.done} / ${plan.keys.length}턴 정리됨`:'새 대화를 기억으로 정리해요.';}
       const tabKey={currentState:'state',logSummary:'logs',timeline:'timeline'}[key],label=WISH_CLEAN_AREAS.find(([id])=>id===key)?.[1]||'';
       root.querySelectorAll(`[data-clean-auto-enable="${key}"]`).forEach(input=>{input.checked=row.enabled;});
@@ -21942,7 +21948,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       root.querySelectorAll(`[data-clean-review="${key}"]`).forEach(button=>{button.disabled=!row.draft;button.textContent=row.draft?'정리 결과 확인 ●':'정리 결과 확인';});
       root.querySelectorAll(`[data-history-run="${key}"],[data-history-cancel="${key}"]`).forEach(button=>{button.disabled=!!row.draft||!!aiMemoryRuntime.busy;});
       root.querySelectorAll(`[data-clean-run="${key}"]`).forEach(button=>{button.disabled=!!row.draft||!!aiMemoryRuntime.busy;});
-      root.querySelectorAll(`[data-clean-main="${key}"]`).forEach(button=>{button.disabled=!!aiMemoryRuntime.busy||!!wishHistoryPreparing;button.textContent=row.draft?'결과 확인':'정리';});
+      root.querySelectorAll(`[data-clean-main="${key}"]`).forEach(button=>{button.disabled=!!aiMemoryRuntime.busy||!!wishHistoryPreparing||!!wishMobileRunArea;button.textContent=(wishMobileRunArea===key||(aiMemoryRuntime.busy&&aiMemoryRuntime.area===key))?'정리 중…':row.draft?'결과 확인':'정리';});
 
       set(`[data-wish-auto-pill-status="${key}"]`,text);
       const first=root.querySelector(`[data-wish-auto-pill="${key}"] > small`);if(first){const cfg=aiMemoryConfig(room),a=cfg.areas[key];first.textContent=cfg.enabled&&a.enabled?`자동 ${a.interval}턴`:'수동';}
@@ -22022,7 +22028,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       if(room.pending){
         if(current)await syncEditedSlotIntoPending(room,current,'wish-clean-state-edit');
         if(logs)await syncEditedSlotIntoPending(room,logs,'wish-clean-log-edit');
-        for(const slot of room.slots.filter(s=>s.group==='extra')) await syncEditedSlotIntoPending(room,slot,'wish-clean-extra-edit');
+        for(const slot of room.slots.filter(s=>s.group==='extra'))if(slot.extraCategory==='캐릭터')await wishMobileSyncCharacter(room,slot);else await syncEditedSlotIntoPending(room,slot,'wish-clean-extra-edit');
       }
       if(root.isConnected){const list=root.querySelector('#wish-clean-log-results');if(list)list.innerHTML=wishCleanLogGroupedHtml(room,root.querySelector('#wish-clean-log-search')?.value||'');}
       wishCleanRefreshHome(room);
@@ -22117,6 +22123,184 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       }catch(error){if(before)room.storyTimelineCards=before;notify('타임라인 저장 실패: '+error.message,'error');}
       finally{delete form.dataset.saving;if(submit?.isConnected)submit.disabled=false;}
     });
+  }
+
+  let wishMobileRunArea='';
+  const wishMobileFoldState=new Map(),wishMobileCounterCache=new Map();
+  function wishMobileStyles(){
+    if(document.getElementById('wish-mobile-improvements'))return;
+    const style=document.createElement('style');style.id='wish-mobile-improvements';style.textContent=`
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-section>summary{list-style:none;cursor:pointer;padding:0;position:relative}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-section>summary::-webkit-details-marker{display:none}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-section>summary:after{content:'⌄';position:absolute;right:0;bottom:0;color:#9393a5;font-size:12px}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-section[open]>summary:after{content:'⌃'}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-section .wish-memory-head{margin:0!important;padding-right:15px}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-section-body{padding-top:12px}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-counter{font-size:11px;color:#8b8b9c;line-height:1.6;margin:0 0 10px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-counter button{padding:1px 5px!important;min-height:24px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-three-auto{gap:6px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-three-range .wish-history-fields{grid-template-columns:repeat(3,minmax(0,1fr)) auto!important;align-items:end;gap:5px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-three-range .wish-simple-ai-action{margin:0!important;display:flex!important;justify-content:flex-end}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-three-range input{font-size:11px!important;padding-left:5px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-three-range input[data-history-size]{padding-right:25px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-batch-unit{right:5px!important;font-size:9px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-three-range .wish-simple-ai-action button{min-height:32px!important;padding:5px 8px!important;font-size:11px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-fold-all{font-size:10px!important;padding:5px 8px!important;min-height:26px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-character-help{font-size:11px;color:#9292a3;line-height:1.6}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-date-actions{display:flex;gap:6px;flex-wrap:wrap;padding-top:9px}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-date-actions button{font-size:11px!important;padding:6px 9px!important}
+      #rpcm-overlay #rpcm-modal.wish-three .wish-mobile-auto-help{font-size:11px;line-height:1.6;color:#9595a6;margin:5px 0}
+      html body #rpcm-fab.rpcm-header-monitor .wish-mobile-count-badge{position:absolute;z-index:3;right:-2px;bottom:-2px;min-width:13px;padding:1px 3px;border-radius:7px;background:#247cf0;color:white;font:9px/1.2 Arial,sans-serif;border:1px solid white;text-align:center}
+      html body #rpcm-fab.rpcm-header-monitor{overflow:visible!important}
+      html body #rpcm-fab.rpcm-header-monitor .rpcm-header-status-dot{display:none!important}
+      html body #rpcm-fab.rpcm-header-monitor .wish-mobile-count-badge[hidden]{display:none!important}
+      #wish-mobile-done-dialog{position:fixed;inset:0;z-index:2147483647;background:#24283b50;display:grid;place-items:center;padding:18px;font-family:system-ui,sans-serif}
+      #wish-mobile-done-dialog>section{width:min(360px,100%);box-sizing:border-box;padding:24px;border-radius:22px;background:#fff;box-shadow:0 16px 60px #0002;color:#343446}
+      #wish-mobile-done-dialog h2{font-size:18px;margin:0 0 12px}#wish-mobile-done-dialog p{font-size:13px;line-height:1.7;color:#858597}
+      #wish-mobile-done-dialog footer{display:flex;gap:8px;margin-top:18px}#wish-mobile-done-dialog button{flex:1;border:0;border-radius:12px;padding:12px 8px;background:#f0f1f6;color:#858595;cursor:pointer;font:12px system-ui}
+      #wish-mobile-done-dialog button.primary{background:#247cf0;color:#fff}
+    `;document.head.append(style);
+  }
+  function wishMobileOfferReview(room,area){
+    if(state.currentRoom!==room||!aiMemoryConfig(room).areas[area].draft)return;
+    document.getElementById('wish-mobile-done-dialog')?.remove();wishMobileStyles();
+    const root=document.createElement('div');root.id='wish-mobile-done-dialog';root.innerHTML='<section role="dialog" aria-modal="true" aria-labelledby="wish-mobile-done-title"><h2 id="wish-mobile-done-title">✓ 정리가 끝났어요</h2><p>'+esc(AI_MEMORY_AREAS[area].label)+' 결과를 확인하고 기억에 넣을까요?</p><footer><button type="button" data-mobile-later>나중에</button><button type="button" class="primary" data-mobile-review>내용 확인</button></footer></section>';
+    root.querySelector('[data-mobile-later]').onclick=()=>root.remove();root.querySelector('[data-mobile-review]').onclick=()=>{root.remove();if(state.currentRoom===room)aiMemoryReviewDialog(room,area,true);};
+    root.addEventListener('keydown',event=>{if(event.key==='Escape')root.remove();});document.body.append(root);root.querySelector('[data-mobile-review]').focus();
+  }
+  async function wishMobileRunMemory(room,area,controls){
+    if(wishMobileRunArea||aiMemoryRuntime.busy)throw new Error('다른 정리가 끝난 뒤 실행해 주세요.');
+    if(aiMemoryConfig(room).areas[area].draft){aiMemoryReviewDialog(room,area,true);return;}
+    wishMobileRunArea=area;wishCleanUpdateStatus(room);
+    try{
+      await wishCleanSaveEditor(room);
+      if(controls||wishHistoryActive(room,area))await wishHistoryRun(room,area,controls);
+      else await aiMemoryGenerate(room,area,{force:true});
+      renderModalIfOpen();
+      if(aiMemoryConfig(room).areas[area].draft)wishMobileOfferReview(room,area);
+      else notify('✓ 변경할 내용 없이 정리가 끝났어요.','success');
+    }finally{wishMobileRunArea='';wishCleanUpdateStatus(room);}
+  }
+  async function wishMobileSetAutoRecall(room,enabled){
+    if(wishMemoryPrep.busy||wishPreSendRuntime.busy)throw new Error('기억 찾기가 끝난 뒤 바꿔 주세요.');
+    const old={autoLogRecallEnabled:room.autoLogRecallEnabled,wishAutoPreSend:room.wishAutoPreSend};
+    room.autoLogRecallEnabled=enabled;room.wishAutoPreSend=enabled;
+    try{await saveRoom(room,'mobile-auto-recall');}catch(error){Object.assign(room,old);throw error;}
+    if(room.pending)await queuePendingCarrierOperation(room,async()=>{replacePendingLogItems(room);await syncPendingCarrierNow(room,'과거 기억 자동 사용 설정');});
+    wishCleanUpdateStatus(room);
+  }
+  async function wishMobileSyncCharacter(room,slot){
+    if(!room.pending)return;
+    await queuePendingCarrierOperation(room,async()=>{
+      ensureVerifiedPendingSnapshot(room.pending);
+      const items=room.pending.items||(room.pending.items=[]),index=items.findIndex(item=>item.slotId===slot.id);
+      const use=slot.enabled&&String(slot.content||'').trim();
+      if(!use){if(index<0)return;items.splice(index,1);}
+      else if(index<0)items.push(slotToPendingItem(slot));
+      else items[index]={...items[index],title:slot.title,content:String(slot.content).trim(),totalTurns:0};
+      await syncPendingCarrierNow(room,'캐릭터 설정 주입');
+    });
+  }
+  async function wishMobileAddCharacter(room){
+    await wishCleanSaveEditor(room);
+    const slot=makeDynamicSlot('extra','캐릭터 '+((room.slots||[]).filter(s=>s.extraCategory==='캐릭터').length+1));
+    slot.extraCategory='캐릭터';slot.enabled=true;slot.retentionTurns=0;room.slots.push(slot);
+    try{await saveRoom(room,'mobile-add-character');}catch(error){room.slots=room.slots.filter(row=>row.id!==slot.id);throw error;}
+    renderModalIfOpen();const root=state.modal;const outer=root?.querySelector('[data-wish-section="extra"] .wish-mobile-section');if(outer)outer.open=true;
+    const editor=root?.querySelector('#wish-extra-editor');if(editor)editor.hidden=false;
+    root?.querySelector('[data-clean-extra-id="'+slot.id+'"] [data-clean-extra-title]')?.focus();
+  }
+  function wishMobileSuggestedFrom(room,area){
+    const row=aiMemoryConfig(room).areas[area],plan=row.historyPlan;
+    if(plan?.done>0)return plan.from+plan.done;
+    if(row.cursor){const keys=wishCleanAuditRecord(room)?.turnKeys||[],index=keys.indexOf(String(row.cursor));if(index>=0)return index+2;}
+    if(!row.cursor&&row.wishCountBaseTurn)return row.wishCountBaseTurn+1;
+    return wishCoverageInfo(room)?.areas?.[area]?.firstMissing||wishQueueSuggestedStart(room);
+  }
+  function wishMobileCounterLabel(root,room,key,row){
+    const node=root.querySelector('[data-mobile-counter="'+key+'"]');if(!node)return;
+    const entry=wishMobileCounterCache.get(String(room.chatId)),value=entry?.values?.[key];
+    const basis=row.cursor?'마지막 정리 이후':row.wishCountBaseTurn?`기준 ${row.wishCountBaseTurn}턴 이후`:row.baseline?'저장된 기준 이후':'처음부터';
+    node.title=value?.error||'기준 이후 새로 완료된 USER+AI 대화를 세어요.';
+    node.textContent=value?.error?'카운트 확인 필요':`${basis} · 새 대화 ${Number.isInteger(value?.count)?value.count:'확인 중'} / ${row.interval}턴${row.enabled?'':' · 자동 꺼짐'}`;
+    if(row.draft)node.textContent+=' · 결과 확인 대기';
+  }
+  async function wishMobileRefreshCounters(room,force=false){
+    if(state.currentRoom!==room||!state.modal?.querySelector('[data-mobile-counter]')||document.hidden||aiMemoryRuntime.busy||wishHistoryPreparing)return;
+    const key=String(room.chatId),old=wishMobileCounterCache.get(key);
+    if(old?.busy||(!force&&old?.at&&Date.now()-old.at<8000))return;
+    const entry={...(old||{}),busy:true,at:Date.now()};wishMobileCounterCache.set(key,entry);
+    try{
+      const turns=await aiMemoryScopedTurns(room,WISH_CLEAN_AREAS.map(([area])=>area));
+      if(state.currentRoom!==room)return;
+      entry.values={};
+      for(const [area]of WISH_CLEAN_AREAS){try{entry.values[area]={count:aiMemoryPending(room,area,turns).count};}catch(error){entry.values[area]={error:error.message};}}
+    }catch(error){entry.values=Object.fromEntries(WISH_CLEAN_AREAS.map(([area])=>[area,{error:error.message}]));}
+    finally{entry.busy=false;if(state.currentRoom===room)wishCleanUpdateStatus(room);}
+  }
+  function wishMobileDateAfterTurn(turns,target){
+    let found=-1;
+    for(let i=0;i<turns.length;i++){
+      const source=String(turns[i].assistantText||turns[i].text||'');
+      // Use a dated scene header, not a date mentioned later in dialogue or a flashback.
+      const header=source.split('\n').slice(0,18).find(line=>/^\s*(?:\*\*)?[\[【〔#📆📅]/u.test(line)&&/\d{4}\s*(?:년|[-/.])\s*\d{1,2}\s*(?:월|[-/.])\s*\d{1,2}/u.test(line));
+      if(!header)continue;
+      const match=header.match(/(\d{4})\s*(?:년|[-/.])\s*(\d{1,2})\s*(?:월|[-/.])\s*(\d{1,2})/u);
+      const date=match?`${match[1]}-${match[2].padStart(2,'0')}-${match[3].padStart(2,'0')}`:'';
+      if(date===target)found=i;
+    }
+    if(found<0)throw new Error('원문의 날짜 표기와 연결하지 못했어요. 미정리부터 이어서 정리를 이용해 주세요.');
+    return found+2;
+  }
+  async function wishMobileContinueLogs(room,mode){
+    if(aiMemoryConfig(room).areas.logSummary.draft){aiMemoryReviewDialog(room,'logSummary',true);return;}
+    if(aiMemoryRuntime.busy||wishHistoryPreparing||wishMobileRunArea)throw new Error('다른 정리가 끝난 뒤 실행해 주세요.');
+    const turns=await loadRpcmCompletedRange(room,[]);if(state.currentRoom!==room)throw new Error('방이 바뀌었어요.');
+    let from;
+    if(mode==='date'){
+      const selected=wishCompactCalendarState.get(String(room.chatId));if(!selected||typeof selected.day!=='number')throw new Error('달력에서 날짜를 선택해 주세요.');
+      const target=selected.month+'-'+String(selected.day).padStart(2,'0');from=wishMobileDateAfterTurn(turns,target);
+    }else{
+      await wishCleanRefreshTurnAudit(room,true);
+      const coverage=wishCoverageInfo(room);if(!coverage)throw new Error('정리한 범위를 확인하지 못했어요.');from=coverage.areas.logSummary.firstMissing||turns.length+1;
+    }
+    if(from>turns.length){notify('✓ 이어서 정리할 새 대화가 없어요.','success');return;}
+    const controls=state.modal?.querySelector('[data-history-area="logSummary"]');if(!controls)throw new Error('날짜로그 화면을 다시 열어 주세요.');
+    controls.querySelector('[data-history-from]').value=String(from);controls.querySelector('[data-history-to]').value=String(turns.length);
+    await wishMobileRunMemory(room,'logSummary',controls);
+  }
+  function wishMobileLayout(root,room){
+    wishMobileStyles();
+    for(const [area,name]of [['currentState','state'],['logSummary','logs'],['timeline','timeline']]){
+      const section=root.querySelector('[data-wish-section="'+name+'"]');if(!section)continue;
+      const range=section.querySelector('[data-history-area]'),action=section.querySelector('.wish-simple-ai-action');if(range&&action)range.querySelector('.wish-history-fields').append(action);
+      const now=section.querySelector('[data-clean-now]');if(now){now.textContent='다음 대화부터 세기';now.title='이전 대화는 건너뛰고 다음 완료 대화부터 새로 세어요. 기존 기억은 유지돼요.';}
+      const counter=document.createElement('div');counter.className='wish-mobile-counter';counter.innerHTML='<span data-mobile-counter="'+area+'"></span><button type="button" aria-label="새 대화 수 다시 확인">↻</button>';counter.querySelector('button').onclick=()=>void wishMobileRefreshCounters(room,true);section.querySelector('.wish-three-auto')?.before(counter);
+      const progress=section.querySelector('[data-three-progress]');if(progress&&!aiMemoryConfig(room).areas[area].historyPlan)progress.hidden=true;
+    }
+    const logSection=root.querySelector('[data-wish-section="logs"]'),recall=logSection?.querySelector('.wish-three-recall');
+    if(recall){
+      const enabled=room.autoLogRecallEnabled&&room.wishAutoPreSend,partial=!!room.autoLogRecallEnabled!==!!room.wishAutoPreSend;
+      recall.replaceChildren();recall.innerHTML='<summary>과거 기억 자동 사용</summary><label><input type="checkbox" data-mobile-recall '+(enabled?'checked':'')+'> 필요한 과거 기록 자동 사용</label><p class="wish-mobile-auto-help">현재 대화와 내가 작성한 메시지를 보고, 관련 날짜로그를 골라 전달해요.'+(partial?' 이전 검색 설정은 일부만 사용 중이에요.':'')+'</p>';
+      recall.querySelector('input').onchange=async event=>{const input=event.target;input.disabled=true;try{await wishMobileSetAutoRecall(room,input.checked);recall.querySelector('p').textContent='현재 대화와 내가 작성한 메시지를 보고, 관련 날짜로그를 골라 전달해요.';}catch(error){input.checked=!!(room.autoLogRecallEnabled&&room.wishAutoPreSend);notify(error.message,'error');}finally{input.disabled=false;}};
+    }
+    const extra=root.querySelector('[data-wish-section="extra"]');
+    if(extra){
+      const button=document.createElement('button');button.type='button';button.textContent='＋ 캐릭터';button.onclick=async()=>{button.disabled=true;try{await wishMobileAddCharacter(room);}catch(error){notify(error.message,'error');}finally{if(button.isConnected)button.disabled=false;}};extra.querySelector('#wish-extra-edit-toggle')?.after(button);
+      for(const card of extra.querySelectorAll('[data-clean-extra-id]')){const slot=room.slots.find(s=>s.id===card.dataset.cleanExtraId);if(slot?.extraCategory==='캐릭터'){card.querySelector('textarea').placeholder='외모 · 성격 · 말투 · 관계 등 AI가 기억할 캐릭터 설정';card.querySelector('[data-clean-extra-title]').setAttribute('aria-label','캐릭터 이름');card.insertAdjacentHTML('afterbegin','<p class="wish-mobile-character-help">👤 캐릭터 설정 · 주입을 켜고 저장하면 대화에 전달돼요.</p>');}}
+    }
+    const audit=root.querySelector('#wish-clean-story-audit');if(audit){audit.textContent='중복·누락 점검';audit.title='원문과 타임라인을 비교해 확인할 부분을 찾는 추가 AI 작업이에요.';const management=audit.closest('details');if(management){management.querySelector('summary').textContent='⋯ 타임라인 도구';management.querySelector('.wish-settings-copy').textContent='사건이 겹치거나 빠진 것 같을 때만 점검하세요. AI 이용 비용이 발생해요.';}}
+    const mobile=typeof matchMedia==='function'&&matchMedia('(max-width:760px)').matches;
+    for(const name of ['state','logs','timeline','extra']){
+      const section=root.querySelector('[data-wish-section="'+name+'"]'),header=section?.querySelector('.wish-memory-head');if(!section||!header)continue;
+      const key=String(room.chatId)+'|'+name,details=document.createElement('details');details.className='wish-mobile-section';details.dataset.mobileSection=name;
+      let opened=wishMobileFoldState.get(key);if(opened==null){try{const stored=GM_getValue('WISH_MOBILE_FOLD_'+key,null);if(typeof stored==='boolean')opened=stored;}catch(_){}}
+      details.open=opened==null?(!mobile||name==='state'):opened;
+      const summary=document.createElement('summary');summary.append(header);const body=document.createElement('div');body.className='wish-mobile-section-body';while(section.firstChild)body.append(section.firstChild);details.append(summary,body);section.append(details);
+      details.addEventListener('toggle',()=>{const all=root.querySelector('.wish-mobile-fold-all');if(all)all.textContent=[...root.querySelectorAll('.wish-mobile-section')].some(node=>node.open)?'모두 접기':'모두 펼치기';wishMobileFoldState.set(key,details.open);try{GM_setValue('WISH_MOBILE_FOLD_'+key,details.open);}catch(_){}});
+    }
+    const folds=document.createElement('button');folds.type='button';folds.className='wish-mobile-fold-all';folds.textContent=[...root.querySelectorAll('.wish-mobile-section')].some(node=>node.open)?'모두 접기':'모두 펼치기';folds.onclick=()=>{const list=[...root.querySelectorAll('.wish-mobile-section')],open=list.every(node=>!node.open);for(const node of list){node.open=open;wishMobileFoldState.set(String(room.chatId)+'|'+node.dataset.mobileSection,open);}folds.textContent=open?'모두 접기':'모두 펼치기';};root.querySelector('.wish-status-line')?.append(folds);
+    void wishMobileRefreshCounters(room,true);
   }
 
   async function wishLoadFullDialogue(room,onProgress=()=>{}){
@@ -22331,6 +22515,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
 
     wishThreeCompactPanels(root,room);
     wishThreeFlowLayout(root);
+    wishMobileLayout(root,room);
     const style=document.createElement('style');style.textContent=`
       #rpcm-overlay #rpcm-modal-wrap{max-width:min(1200px,98vw)!important;height:min(920px,95dvh)!important}
       #rpcm-overlay #rpcm-modal.wish-three{position:relative}
@@ -22548,25 +22733,15 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     overlay.querySelectorAll('[data-clean-auto-interval]').forEach(node=>node.onchange=async()=>{const row=aiMemoryConfig(room).areas[node.dataset.cleanAutoInterval],n=Number(node.value);if(!Number.isInteger(n)||n<1||n>100){node.value=row.interval;notify('주기는 1~100턴 사이 정수만 입력해 주세요.','warn');return;}row.interval=n;await saveRoom(room);wishCleanUpdateStatus(room);notify('턴 주기를 저장했습니다.','success');});
     overlay.querySelectorAll('[data-clean-auto-apply]').forEach(node=>node.onchange=async()=>{const row=aiMemoryConfig(room).areas[node.dataset.cleanAutoApply];row.autoApply=node.checked;row.applyRevision++;await saveRoom(room);notify(row.autoApply?'변경 없는 내용·표기만 자동 처리':'변경 사항 검토 후 저장','success');});
     overlay.querySelectorAll('[data-clean-main]').forEach(button=>button.onclick=async()=>{
-      const area=button.dataset.cleanMain;
       if(button.disabled)return;
-      button.disabled=true;
-      try{
-        await wishCleanSaveEditor(room);
-        if(aiMemoryConfig(room).areas[area].draft){aiMemoryReviewDialog(room,area);return;}
-        if(wishHistoryActive(room,area))await wishHistoryRun(room,area,overlay.querySelector('[data-history-area="'+area+'"]'));
-        else{const controls=overlay.querySelector('[data-history-area="'+area+'"]');if(controls)await wishHistoryRun(room,area,controls);else await aiMemoryGenerate(room,area,{force:true});}
-        renderModalIfOpen();
-        if(aiMemoryConfig(room).areas[area].draft)aiMemoryReviewDialog(room,area);
-        else notify('변경할 내용이 없어 정리가 완료됐어요.','success');
-      }catch(error){notify('정리 중 확인 필요: '+String(error?.message||error),'error',7000);}
-      finally{if(button.isConnected)button.disabled=false;}
+      try{await wishMobileRunMemory(room,button.dataset.cleanMain,overlay.querySelector('[data-history-area="'+button.dataset.cleanMain+'"]'));}
+      catch(error){notify('정리 확인 필요: '+error.message,'error',7000);}
     });
     overlay.querySelectorAll('[data-clean-run]').forEach(button=>button.onclick=async()=>{const area=button.dataset.cleanRun;button.disabled=true;try{await wishCleanSaveEditor(room);await (wishHistoryActive(room,area)?wishHistoryRun(room,area):aiMemoryGenerate(room,area,{force:true}));notify('AI 정리가 끝났어요. 정리 결과를 확인해 주세요.','success');renderModalIfOpen();}catch(error){notify('AI 실행 실패: '+error.message,'error',7000);}finally{if(button.isConnected)button.disabled=false;}});
     overlay.querySelectorAll('[data-history-run]').forEach(button=>button.onclick=async()=>{if(button.disabled)return;button.disabled=true;const area=button.dataset.historyRun;try{await wishHistoryRun(room,area,button.closest('[data-history-area]'));renderModalIfOpen();if(aiMemoryConfig(room).areas[area].draft)aiMemoryReviewDialog(room,area);else notify('이 구간은 변경이 없어 처리 완료했어요. 다음 구간을 진행하세요.','success');}catch(error){notify('기존 대화 정리: '+error.message,'error',7000);renderModalIfOpen();}finally{if(button.isConnected)button.disabled=false;}});
     overlay.querySelectorAll('[data-history-cancel]').forEach(button=>button.onclick=async()=>{const area=button.dataset.historyCancel,row=aiMemoryConfig(room).areas[area];if(aiMemoryRuntime.busy||row.draft){notify('진행 중인 작업이나 초안을 먼저 처리해 주세요.','warn');return;}if(!confirm('범위 정리를 종료할까요? 이미 적용한 기록은 유지되며, 자동 생성은 기존 설정을 따릅니다.'))return;const previous=row.historyPlan;row.historyPlan=null;try{await saveRoom(room);renderModalIfOpen();}catch(error){row.historyPlan=previous;notify(error.message,'error');}});
     overlay.querySelectorAll('[data-clean-review]').forEach(button=>button.onclick=async()=>{try{await wishCleanSaveEditor(room);aiMemoryReviewDialog(room,button.dataset.cleanReview);}catch(error){notify(error.message,'error');}});
-    overlay.querySelectorAll('[data-clean-now]').forEach(button=>button.onclick=async()=>{if(!confirm('지금까지의 턴을 처리한 것으로 보고 다음 완료 턴부터 셀까요?'))return;await aiMemoryStartFromNow(room,button.dataset.cleanNow);renderModalIfOpen();});
+    overlay.querySelectorAll('[data-clean-now]').forEach(button=>button.onclick=async()=>{if(aiMemoryConfig(room).areas[button.dataset.cleanNow].draft){notify('정리 결과를 먼저 확인해 주세요.','warn');return;}if(!confirm('현재 대화까지는 건너뛰고, 다음 완료 대화부터 새로 셀까요? 기존 기억은 유지돼요.'))return;await aiMemoryStartFromNow(room,button.dataset.cleanNow);await wishMobileRefreshCounters(room,true);renderModalIfOpen();});
     click('wish-clean-chat-download',()=>wishDownloadFullDialogue(room));
     click('wish-clean-backup',async()=>{
       await wishCleanSaveEditor(room);
@@ -22581,7 +22756,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
 
   function wishTabbedStyles(){
     GM_addStyle(`
-      /* WISH 0.17.67-blue-spark - unified one-page layout; no second navigation or separate memory windows. */
+      /* WISH 0.17.68-mobile - unified one-page layout; no second navigation or separate memory windows. */
       #rpcm-overlay #rpcm-modal-wrap{width:min(780px,100%)!important;max-width:min(780px,100%)!important}
       #rpcm-overlay .wish-clean-main.wish-unified-home{display:flex!important;flex-direction:column!important;gap:14px!important;padding:14px!important;overscroll-behavior:contain}
       #rpcm-overlay .wish-status-line[hidden]{display:none!important}
@@ -22962,7 +23137,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
         #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-clean-footer button{padding:9px 12px!important;font-size:11px!important;min-height:40px!important}
       }
 
-      /* v0.17.67-blue-spark: simple mobile reading, only monthly folders collapse */
+      /* v0.17.68-mobile: simple mobile reading, only monthly folders collapse */
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-month .wish-log-day-visible{display:block!important;overflow:visible}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible h3{font-size:13px!important;font-weight:700!important;color:#424553!important;margin:0 0 6px!important;line-height:1.5}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible .wish-log-day-content{padding:0!important}
@@ -23048,7 +23223,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     }
     // 연결되어 있어도 상단이 숨겨지거나 UI 구성이 바뀔 수 있습니다.
     ensureManagerButton();
-    if(state.currentRoom){void aiMemoryPoll(state.currentRoom);}
+    if(state.currentRoom){void aiMemoryPoll(state.currentRoom);void wishMobileRefreshCounters(state.currentRoom);}
   }
 
   function scheduleRouteTick(delay = (document.hidden ? APP.backgroundRoutePollMs : APP.routePollMs)) {
