@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.7.5 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.7.7 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.7.5
+// @version      3.7.7
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
@@ -1043,7 +1043,7 @@ try {
     const k = style.k;
     if (k === 'd') return look.dialogueStyle === 'color' ? (look.dlgColor || theme.dialogueColor) : theme.text;
     if (k === 't') return theme.thought;
-    if (typeof look.narrAlpha === 'number') return rgba(theme.text, look.narrAlpha);
+    if (style.nf && typeof look.narrAlpha === 'number') return rgba(theme.text, look.narrAlpha);
     return look.muteNarration === false ? theme.text : theme.narration;
   }
 
@@ -1606,6 +1606,24 @@ try {
     return 'char';
   }
 
+  // 이미지 한 장 → 블록 (작은 아이콘·프로필은 건너뛴다)
+  function imgSrc(el) {
+    let src = el.currentSrc || el.src || el.getAttribute('data-src') || '';
+    if (!src || src.startsWith('data:image/gif') || src.startsWith('data:image/svg')) {
+      const ss = el.getAttribute('srcset') || el.getAttribute('data-srcset') || '';
+      const first = ss.split(',').map(x => x.trim().split(/\s+/)[0]).filter(Boolean).pop();
+      if (first) { try { src = new URL(first, location.href).href; } catch (e) { src = first; } }
+    }
+    return src;
+  }
+  function imgBlock(el) {
+    const r = el.getBoundingClientRect();
+    const w = el.naturalWidth || el.width || Math.round(r.width), h = el.naturalHeight || el.height || Math.round(r.height);
+    if ((w && h && (w < 40 || h < 40)) || (r.width && r.width < 40)) return null;
+    const src = imgSrc(el);
+    return src ? { type: 'img', src, w: w || 0, h: h || 0 } : null;
+  }
+
   function parseBubble(bubble) {
     const blocks = [];
     let runs = [];
@@ -1628,8 +1646,9 @@ try {
       if (node.nodeType !== Node.ELEMENT_NODE) return;
       const el = node;
       const tag = el.tagName;
-      if (SKIP_TAGS.has(tag)) return;
-      if (el.getAttribute('aria-hidden') === 'true') return;
+      // 크게 보기 버튼 안에 든 이미지는 살린다
+      if (SKIP_TAGS.has(tag) && !((tag === 'BUTTON' || tag === 'A') && el.querySelector('img'))) return;
+      if (el.getAttribute('aria-hidden') === 'true' && !el.querySelector('img')) return;
       if (el.matches(SELECTORS.status) || tag === 'PRE' || tag === 'TABLE') {
         flush();
         const text = statusText(el);
@@ -1639,10 +1658,8 @@ try {
       if (tag === 'BR') { addText('\n', style); return; }
       if (tag === 'HR') { flush(); blocks.push({ type: 'hr' }); return; }
       if (tag === 'IMG') {
-        const w = el.naturalWidth || el.width, h = el.naturalHeight || el.height;
-        if (w && h && (w < 40 || h < 40)) return; // 작은 아이콘은 건너뛴다
-        const src = el.currentSrc || el.src;
-        if (src) { flush(); blocks.push({ type: 'img', src, w: w || 0, h: h || 0 }); }
+        const ib = imgBlock(el);
+        if (ib) { flush(); blocks.push(ib); }
         return;
       }
       const cs = el.nodeType === 1 ? getComputedStyle(el) : null;
@@ -1686,8 +1703,27 @@ try {
   function getUnits(bubble) {
     const cands = Array.from(bubble.querySelectorAll(UNIT_SEL))
       .filter(el => el.closest(SELECTORS.bubble) === bubble && isVisible(el));
-    const units = cands.filter(el => !cands.some(p => p !== el && p.contains(el)));
-    return units.length ? units : [bubble];
+    let units = cands.filter(el => !cands.some(p => p !== el && p.contains(el)));
+    if (!units.length) units = [bubble];
+    const extra = groupImages(bubble);
+    if (extra.length) {
+      units = units.concat(extra).sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+    }
+    return units;
+  }
+
+  // 크랙이 글 상자 밖(같은 메시지 묶음 안)에 띄우는 이미지 — 그 묶음의 첫 말풍선에 붙인다
+  function groupImages(bubble) {
+    const group = bubble.closest(SELECTORS.group);
+    if (!group) return [];
+    const first = Array.from(group.querySelectorAll(SELECTORS.bubble)).find(b => !b.parentElement || !b.parentElement.closest(SELECTORS.bubble));
+    if (first !== bubble) return [];
+    return Array.from(group.querySelectorAll('img')).filter(img => {
+      if (img.closest(SELECTORS.bubble)) return false;
+      if (!isVisible(img)) return false;
+      const r = img.getBoundingClientRect();
+      return r.width >= 80 && r.height >= 60; // 프로필 사진·아이콘 제외
+    });
   }
 
   function getAllUnits() {
@@ -1700,9 +1736,8 @@ try {
   function parseUnit(el) {
     const tag = el.tagName;
     if (tag === 'IMG') {
-      const w = el.naturalWidth || el.width, h = el.naturalHeight || el.height;
-      const src = el.currentSrc || el.src;
-      return src && !(w && h && (w < 40 || h < 40)) ? [{ type: 'img', src, w: w || 0, h: h || 0 }] : [];
+      const ib = imgBlock(el);
+      return ib ? [ib] : [];
     }
     if (tag === 'HR') return [{ type: 'hr' }];
     if (el.matches(SELECTORS.status) || tag === 'PRE' || tag === 'TABLE') {
@@ -2076,7 +2111,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           <div class="seg" data-seg="dialogueStyle"><button data-v="bar">세로선</button><button data-v="bubble">말풍선</button><button data-v="color">글자색</button><button data-v="quote">따옴표</button></div></div>
         <div class="row col"><span class="label">대사 색 <small id="dlg-hint">테마 색 그대로</small></span>
           <div class="colors dlg-colors" id="dlg-colors"></div></div>
-        <div class="row col"><span class="label">서술 진하기 <b id="narr-v" style="color:var(--label2);font-weight:500"></b></span>
+        <div class="row col"><span class="label">‘서술’ 지정 문단 진하기 <b id="narr-v" style="color:var(--label2);font-weight:500"></b><small id="narr-hint">문단을 눌러 ‘서술’로 고른 곳에만 적용돼요</small></span>
           <div class="alpha-row" style="padding:0"><span>연하게</span><input type="range" id="narr-alpha" min="30" max="100" step="5"><span>진하게</span></div></div>
         <button class="row link" id="open-font"><span class="label">글꼴</span><span class="value" id="font-v"></span><span class="chev">›</span></button>
         <button class="row link" id="open-enfont"><span class="label">영어 글꼴</span><span class="value" id="enfont-v"></span><span class="chev">›</span></button>
@@ -2170,6 +2205,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .dlg-colors { padding: 2px 0 0; }
     .dot.auto { background: var(--fill); color: var(--label2); font-size: 10.5px; font-weight: 700; letter-spacing: -0.3px; }
     .dot.auto.on { color: var(--blue); }
+    #narr-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
     #dlg-hint { display: inline; margin-left: 6px; font-size: 12px; color: var(--label2); font-weight: 400; }
     .cc-run:active { opacity: .7; }
     .cc-run:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -2270,7 +2306,13 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   $('pk-cancel').addEventListener('click', () => stopPicking());
 
   function unitFromEvent(e) {
-    const bubble = e.target.closest && e.target.closest(P.SELECTORS.bubble);
+    let bubble = e.target.closest && e.target.closest(P.SELECTORS.bubble);
+    if (!bubble && e.target.tagName === 'IMG') {
+      const group = e.target.closest(P.SELECTORS.group);
+      bubble = group && group.querySelector(P.SELECTORS.bubble);
+      if (bubble && P.getUnits(bubble).includes(e.target)) return { el: e.target, bubble };
+      return null;
+    }
     if (!bubble) return null;
     const units = P.getUnits(bubble);
     const el = units.find(u => u === e.target || u.contains(e.target)) || (units.length === 1 ? units[0] : null);
@@ -2467,7 +2509,15 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       try {
         const blob = src.startsWith('data:') ? await (await fetch(src)).blob() : await netGet(src, 'blob');
         images.set(src, await createImageBitmap(blob));
-      } catch (e) { failed++; }
+      } catch (e) {
+        // 확장 앱이 외부 접속을 막으면 CORS 허용 이미지로 한 번 더
+        try {
+          const im = await new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src; });
+          const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+          c.getContext('2d').drawImage(im, 0, 0); c.toDataURL(); // 막힌 이미지면 여기서 오류
+          images.set(src, await createImageBitmap(c));
+        } catch (e2) { failed++; }
+      }
     }));
     if (failed) toast(`이미지 ${failed}개를 못 불러와서 빼고 만들어요`, 3000);
   }
@@ -2508,6 +2558,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           const force = edits.kind[pid];
           // 대사 여부를 먼저 판별해야 ★가 서술 부분까지 퍼지지 않는다.
           runs = T.classifyRuns(runs, { italicThought: true, force });
+          if (force === 'n') runs = runs.map(r => Object.assign({}, r, { nf: true })); // 내가 '서술'로 지정한 문단
           runs = T.applyEmphasis(runs, names, { dialogueOnly: settings.starScope !== 'all' });
           const pieces = force ? [runs] : T.splitDialogue(runs);
           const offs = T.pieceOffsets(full, pieces);
