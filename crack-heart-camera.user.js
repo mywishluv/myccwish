@@ -1,11 +1,11 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.7.3 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.7.4 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.7.3
-// @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 하단 고정 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
+// @version      3.7.4
+// @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
 // @grant        GM_getValue
@@ -26,7 +26,7 @@
 
 /*
  * 쓰는 법
- *  1) 크랙 채팅방 화면 하단의 작은 하트카메라 버튼을 누른다
+ *  1) 크랙 채팅방 화면의 작은 하트카메라 버튼을 누른다 (끌어서 원하는 곳으로 옮길 수 있어요)
  *     (안 보이면 탬퍼몽키 메뉴의 '📷 익명 캡처 시작')
  *  2) 캡처할 시작 문단 → 끝 문단을 차례로 누른다
  *  3) 아래 탭: 이름(이름 바꾸기·★강조) / 꾸미기(형광펜·밑줄·스티커) / 모양 / 저장
@@ -297,7 +297,7 @@ try {
   function tidyRuns(runs, options) {
     const opt = Object.assign({ punctuation: true }, options);
     let { text, styles } = toStyled(runs);
-    text = text.replace(/\r\n?/g, '\n').replace(/ /g, ' ');
+    text = text.replace(/\r\n?/g, '\n').replace(/ /g, ' ');
     // 공백 정리
     ({ text, styles } = regexReplaceStyled(text, styles, /[ \t　]{2,}/g, ' '));
     ({ text, styles } = regexReplaceStyled(text, styles, / *\n */g, '\n'));
@@ -2141,8 +2141,9 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       background: rgba(255,255,255,.96); color: #35353B;
       font-size: 12px; font-weight: 600; line-height: 1;
       box-shadow: 0 1px 5px rgba(0,0,0,.12);
-      touch-action: manipulation; -webkit-appearance: none;
+      touch-action: none; -webkit-appearance: none; cursor: grab;
     }
+    .cc-run.dragging { cursor: grabbing; opacity: .85; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
     .cc-run svg { width: 24px; height: 24px; display: block; pointer-events: none; }
     .cc-run:active { opacity: .7; }
     .cc-run:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -2283,18 +2284,94 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && stage !== 'idle') stopPicking(); }, true);
 
   /* ---------- 캡처 실행 버튼: 화면 하단 고정 ---------- */
-  $('cc-run').addEventListener('click', e => {
-    e.preventDefault(); e.stopPropagation(); startPicking();
+  // 버튼은 손가락(마우스)으로 끌어서 아무 데나 옮길 수 있고, 위치는 기억해 둔다.
+  const runBtn = $('cc-run');
+  function placeRun() {
+    const pos = store.get('runPos', null);
+    if (!pos) { runBtn.style.left = ''; runBtn.style.top = ''; runBtn.style.bottom = ''; runBtn.style.transform = ''; return; }
+    const w = root.clientWidth || window.innerWidth, h = root.clientHeight || window.innerHeight;
+    const bw = runBtn.offsetWidth || 38, bh = runBtn.offsetHeight || 34;
+    const x = Math.max(bw / 2 + 4, Math.min(w - bw / 2 - 4, pos.x * w));
+    const y = Math.max(bh / 2 + 4, Math.min(h - bh / 2 - 4, pos.y * h));
+    runBtn.style.left = x + 'px';
+    runBtn.style.top = y + 'px';
+    runBtn.style.bottom = 'auto';
+    runBtn.style.transform = 'translate(-50%, -50%)';
+  }
+  let runDrag = null, runMoved = false;
+  function dragStart(x, y) {
+    const r = runBtn.getBoundingClientRect();
+    runDrag = { sx: x, sy: y, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
+    runMoved = false;
+  }
+  function dragMove(x, y) {
+    if (!runDrag) return;
+    const dx = x - runDrag.sx, dy = y - runDrag.sy;
+    if (!runMoved && Math.hypot(dx, dy) < 6) return;
+    runMoved = true;
+    runBtn.classList.add('dragging');
+    const rr = root.getBoundingClientRect();
+    const w = rr.width || window.innerWidth, h = rr.height || window.innerHeight;
+    store.set('runPos', { x: (runDrag.cx + dx - rr.left) / w, y: (runDrag.cy + dy - rr.top) / h });
+    placeRun();
+  }
+  function dragEnd() {
+    const moved = runMoved;
+    runDrag = null;
+    runBtn.classList.remove('dragging');
+    return moved;
+  }
+  // 손가락: 화면이 같이 스크롤되지 않게 터치를 직접 처리한다
+  runBtn.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    dragStart(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  runBtn.addEventListener('touchmove', e => {
+    if (!runDrag) return;
+    e.preventDefault();
+    dragMove(e.touches[0].clientX, e.touches[0].clientY);
+  }, { passive: false });
+  runBtn.addEventListener('touchend', e => {
+    if (!runDrag) return;
+    e.preventDefault();
+    if (!dragEnd()) startPicking(); // 옮기지 않고 톡 눌렀으면 실행
+  }, { passive: false });
+  runBtn.addEventListener('touchcancel', () => { dragEnd(); });
+  // 마우스
+  runBtn.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    dragStart(e.clientX, e.clientY);
+    const mm = ev => dragMove(ev.clientX, ev.clientY);
+    const mu = () => { document.removeEventListener('mousemove', mm, true); document.removeEventListener('mouseup', mu, true); runMoved = dragEnd(); };
+    document.addEventListener('mousemove', mm, true);
+    document.addEventListener('mouseup', mu, true);
   });
+  runBtn.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();
+    if (runMoved) { runMoved = false; return; } // 옮기기만 했을 때는 실행하지 않는다
+    startPicking();
+  });
+  window.addEventListener('resize', placeRun);
+  if (window.visualViewport) window.visualViewport.addEventListener('resize', placeRun);
+  placeRun();
+  setTimeout(placeRun, 300);
   function updateLauncher() {
     $('cc-run').classList.toggle('hidden', editorOpen || stage !== 'idle');
+    placeRun();
   }
   updateLauncher();
 
   // 탬퍼몽키 메뉴에서도 시작할 수 있게
   try {
-    if (typeof GM_registerMenuCommand === 'function') GM_registerMenuCommand('📷 익명 캡처 시작', startPicking);
-    else if (typeof GM !== 'undefined' && GM && typeof GM.registerMenuCommand === 'function') GM.registerMenuCommand('📷 익명 캡처 시작', startPicking);
+    const resetRun = () => { store.set('runPos', null); placeRun(); toast('버튼을 처음 자리로 옮겼어요'); };
+    if (typeof GM_registerMenuCommand === 'function') {
+      GM_registerMenuCommand('📷 익명 캡처 시작', startPicking);
+      GM_registerMenuCommand('📍 버튼 위치 처음으로', resetRun);
+    } else if (typeof GM !== 'undefined' && GM && typeof GM.registerMenuCommand === 'function') {
+      GM.registerMenuCommand('📷 익명 캡처 시작', startPicking);
+      GM.registerMenuCommand('📍 버튼 위치 처음으로', resetRun);
+    }
   } catch (e) { /* 무시 */ }
 
   /* ======================= 2. 편집 화면 ======================= */
@@ -3168,7 +3245,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   function serialize(el) {
     const runs = [];
     const walk = (node, style) => {
-      if (node.nodeType === 3) { if (node.nodeValue) runs.push(Object.assign({ t: node.nodeValue.replace(/ /g, ' ') }, style)); return; }
+      if (node.nodeType === 3) { if (node.nodeValue) runs.push(Object.assign({ t: node.nodeValue.replace(/ /g, ' ') }, style)); return; }
       if (node.nodeType !== 1) return;
       if (node.tagName === 'BR') { runs.push({ t: '\n' }); return; }
       const s = Object.assign({}, style);
