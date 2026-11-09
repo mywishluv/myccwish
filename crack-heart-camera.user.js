@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.7.4 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.7.5 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.7.4
+// @version      3.7.5
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
@@ -775,11 +775,13 @@ try {
           let deco = null;
           if (isDialogueBlock && opt.dialogueStyle === 'bar') deco = 'bar';
           if (isDialogueBlock && opt.dialogueStyle === 'bubble') deco = 'bubble';
-          const barGap = Math.round(S * 0.95);
+          if (isDialogueBlock && opt.dialogueStyle === 'quote') deco = 'quote';
+          const barGap = deco === 'quote' ? Math.round(S * 1.6) : Math.round(S * 0.95);
           const padX = deco === 'bubble' ? Math.round(S * 0.85) : 0;
           const padY = deco === 'bubble' ? Math.round(S * 0.5) : 0;
-          const x = turnX + (deco === 'bar' ? barGap : 0) + padX;
-          const avail = turnW - (deco === 'bar' ? barGap : 0) - padX * 2;
+          const indentBar = deco === 'bar' || deco === 'quote';
+          const x = turnX + (indentBar ? barGap : 0) + padX;
+          const avail = turnW - (indentBar ? barGap : 0) - padX * 2;
           const indent = opt.indent && (b.kind === 'narration' || b.kind === 'mixed') ? S : 0;
           const lines = breakLines(b.runs, avail, textCtx, indent);
           const maxLineW = Math.max(...lines.map(l => l.w), S);
@@ -796,7 +798,7 @@ try {
             flow.push({
               kind: 'line', h: opt.lineH, before: li === 0 ? before : 0, x, line: ln,
               size: S, family: opt.family, block: bid, turn: turn.id, pid: b.pid, mi: b.mi, off: b.off || 0,
-              keepNext: li === 0 && lines.length > 2,
+              keepNext: li === 0 && lines.length > 2, first: li === 0,
               forceBreak: li === 0 && deco !== 'bubble' ? b.forceBreak : false
             });
           });
@@ -914,6 +916,10 @@ try {
             const top = lines[0].y + opt.lineH * 0.2;
             const bottom = lines[lines.length - 1].y + opt.lineH * 0.8;
             decos.push({ type: 'bar', x: b.barX, y: top, w: Math.max(2, Math.round(opt.size * 0.17)), h: bottom - top, z: 1, color: b.color });
+          } else if (b.deco === 'quote') {
+            // 큰 따옴표는 대사 첫 줄이 있는 쪽에만
+            const firstLine = g.items.find(x => x.kind === 'line' && x.first);
+            if (firstLine) decos.push({ type: 'quote', x: b.x, y: firstLine.y, h: firstLine.h, z: 1, color: b.color });
           } else {
             decos.push({ type: b.deco, x: b.x, y: g.top, w: b.w, h: g.bottom - g.top, z: 1, pid: b.pid, color: b.color });
           }
@@ -1035,8 +1041,9 @@ try {
     if (item.isTitle) return theme.text;
     if (style.nm) return theme.nameColor;
     const k = style.k;
-    if (k === 'd') return look.dialogueStyle === 'color' ? theme.dialogueColor : theme.text;
+    if (k === 'd') return look.dialogueStyle === 'color' ? (look.dlgColor || theme.dialogueColor) : theme.text;
     if (k === 't') return theme.thought;
+    if (typeof look.narrAlpha === 'number') return rgba(theme.text, look.narrAlpha);
     return look.muteNarration === false ? theme.text : theme.narration;
   }
 
@@ -1475,9 +1482,18 @@ try {
     // 1) 장식
     for (const d of page.decos || []) {
       if (d.type === 'card') { ctx.fillStyle = theme.card; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 1.05)); ctx.fill(); }
-      else if (d.type === 'bubble') { ctx.fillStyle = d.color ? rgba(d.color, theme.dark ? 0.16 : 0.11) : theme.bubble; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 0.95)); ctx.fill(); }
+      else if (d.type === 'bubble') { const bc = d.color || look.dlgColor; ctx.fillStyle = bc ? rgba(bc, theme.dark ? 0.18 : 0.12) : theme.bubble; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 0.95)); ctx.fill(); }
       else if (d.type === 'status') { ctx.fillStyle = theme.status; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 0.7)); ctx.fill(); }
-      else if (d.type === 'bar') { ctx.fillStyle = d.color || theme.accent; ctx.globalAlpha = 0.85; roundRect(ctx, d.x, d.y, d.w, d.h, d.w / 2); ctx.fill(); ctx.globalAlpha = 1; }
+      else if (d.type === 'quote') {
+        ctx.save();
+        ctx.fillStyle = d.color || look.dlgColor || theme.accent;
+        ctx.globalAlpha = 0.6;
+        ctx.font = `700 ${Math.round(opt.size * 2.6)}px Georgia, "Times New Roman", serif`;
+        ctx.textBaseline = 'top';
+        ctx.fillText('\u201C', d.x - opt.size * 0.05, d.y - opt.size * 0.12);
+        ctx.restore();
+      }
+      else if (d.type === 'bar') { ctx.fillStyle = d.color || look.dlgColor || theme.accent; ctx.globalAlpha = 0.85; roundRect(ctx, d.x, d.y, d.w, d.h, d.w / 2); ctx.fill(); ctx.globalAlpha = 1; }
     }
 
     // 2) 형광펜·형광 밑줄 (글자 뒤)
@@ -1775,7 +1791,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
 
   /* ---------- 설정 ---------- */
   const DEFAULTS = {
-    rules: [{ from: '', to: '', star: false }], starScope: 'dialogue', theme: 'paper', dialogueStyle: 'bar', font: 'noto', enFont: 'auto', fontSize: 16, pageMode: 'long',
+    rules: [{ from: '', to: '', star: false }], starScope: 'dialogue', theme: 'paper', dialogueStyle: 'bar', dlgColor: '', narrAlpha: 0.72, font: 'noto', enFont: 'auto', fontSize: 16, pageMode: 'long',
     pattern: 'none', frame: 'none', decor: 'deco', format: 'webp', tool: 'hl', color: '#FFD60A', customColor: '#FF7EB6', hlAlpha: 0.35, ulAlpha: 0.85, ulStyle: 'line', stStyle: 'hand'
   };
   let settings = Object.assign(clone(DEFAULTS), store.get('settings', {}));
@@ -2057,7 +2073,11 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       </div>
       <div class="group mt12">
         <div class="row col"><span class="label">대사 표시</span>
-          <div class="seg" data-seg="dialogueStyle"><button data-v="bar">세로선</button><button data-v="bubble">말풍선</button><button data-v="color">글자색</button></div></div>
+          <div class="seg" data-seg="dialogueStyle"><button data-v="bar">세로선</button><button data-v="bubble">말풍선</button><button data-v="color">글자색</button><button data-v="quote">따옴표</button></div></div>
+        <div class="row col"><span class="label">대사 색 <small id="dlg-hint">테마 색 그대로</small></span>
+          <div class="colors dlg-colors" id="dlg-colors"></div></div>
+        <div class="row col"><span class="label">서술 진하기 <b id="narr-v" style="color:var(--label2);font-weight:500"></b></span>
+          <div class="alpha-row" style="padding:0"><span>연하게</span><input type="range" id="narr-alpha" min="30" max="100" step="5"><span>진하게</span></div></div>
         <button class="row link" id="open-font"><span class="label">글꼴</span><span class="value" id="font-v"></span><span class="chev">›</span></button>
         <button class="row link" id="open-enfont"><span class="label">영어 글꼴</span><span class="value" id="enfont-v"></span><span class="chev">›</span></button>
         <div class="row"><span class="label">글자 크기 <b id="fs-v" style="color:var(--label2);font-weight:500"></b></span>
@@ -2145,6 +2165,12 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     }
     .cc-run.dragging { cursor: grabbing; opacity: .85; box-shadow: 0 6px 18px rgba(0,0,0,.25); }
     .cc-run svg { width: 24px; height: 24px; display: block; pointer-events: none; }
+    .kind-pop button.del { color: var(--red); }
+    .kind-pop button.del:hover { background: color-mix(in srgb, var(--red) 12%, transparent); }
+    .dlg-colors { padding: 2px 0 0; }
+    .dot.auto { background: var(--fill); color: var(--label2); font-size: 10.5px; font-weight: 700; letter-spacing: -0.3px; }
+    .dot.auto.on { color: var(--blue); }
+    #dlg-hint { display: inline; margin-left: 6px; font-size: 12px; color: var(--label2); font-weight: 400; }
     .cc-run:active { opacity: .7; }
     .cc-run:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
     @media (prefers-color-scheme: dark) {
@@ -2517,7 +2543,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       indent: false, showLabels: false, pageMode: settings.pageMode, maxLongHeight: maxH, title: '', pageNumbers: true
     };
   }
-  const look = () => ({ theme: settings.theme, dialogueStyle: settings.dialogueStyle, muteNarration: true, pageNumbers: true, pattern: 'none', decor: settings.decor });
+  const look = () => ({ theme: settings.theme, dialogueStyle: settings.dialogueStyle, muteNarration: true, pageNumbers: true, pattern: 'none', decor: settings.decor, dlgColor: settings.dlgColor || '', narrAlpha: Number(settings.narrAlpha) || 0.72 });
 
   function fontNeeds(model) {
     const fs = fontSet();
@@ -2737,12 +2763,18 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     const pop = document.createElement('div');
     pop.className = 'kind-pop';
     const cur = edits.kind[pid] || 'auto';
-    [['auto', '자동'], ['d', '대사'], ['n', '서술'], ['t', '속마음']].forEach(([k, label]) => {
+    [['auto', '자동'], ['d', '대사'], ['n', '서술'], ['t', '속마음'], ['del', '삭제']].forEach(([k, label]) => {
       const b = document.createElement('button');
       b.textContent = label;
       b.classList.toggle('on', k === cur);
+      if (k === 'del') b.className = 'del';
       b.addEventListener('click', () => {
         hideKindPop();
+        if (k === 'del') {
+          change(ed => { ed.hidden[pid] = true; });
+          toast('문단을 지웠어요 · 위 ↶ 버튼으로 되돌릴 수 있어요', 2200);
+          return;
+        }
         if (k === cur) return;
         change(ed => { if (k === 'auto') delete ed.kind[pid]; else ed.kind[pid] = k; });
         toast(k === 'auto' ? '자동으로 구분해요' : `‘${label}’로 바꿨어요`, 1200);
@@ -3145,7 +3177,57 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     bar(42, 142, 126, th.narration, 0.55);
     bar(42, 166, 80, th.narration, 0.55);
   }
+  function syncDlgColors() {
+    const box = $('dlg-colors');
+    if (!box.children.length) {
+      const auto = document.createElement('button');
+      auto.className = 'dot auto';
+      auto.dataset.c = '';
+      auto.title = '테마 색 그대로';
+      auto.textContent = '자동';
+      box.appendChild(auto);
+      R.PALETTE.forEach(([hex, name]) => {
+        const b = document.createElement('button');
+        b.className = 'dot';
+        b.title = name;
+        b.dataset.c = hex;
+        b.style.background = hex;
+        box.appendChild(b);
+      });
+      const custom = document.createElement('label');
+      custom.className = 'dot custom';
+      custom.title = '직접 고르기';
+      custom.innerHTML = '<input type="color">';
+      box.appendChild(custom);
+      box.addEventListener('click', e => {
+        const b = e.target.closest('button.dot');
+        if (!b) return;
+        settings.dlgColor = b.dataset.c; saveSettings(); syncDlgColors(); scheduleRefresh(0);
+      });
+      custom.querySelector('input').addEventListener('input', e => {
+        settings.dlgColor = e.target.value.toUpperCase(); saveSettings(); syncDlgColors(); scheduleRefresh(80);
+      });
+    }
+    const cur = settings.dlgColor || '';
+    const inPalette = !cur || R.PALETTE.some(([hex]) => hex === cur);
+    box.querySelectorAll('button.dot').forEach(b => b.classList.toggle('on', b.dataset.c === cur));
+    const custom = box.querySelector('.custom');
+    custom.classList.toggle('on', !inPalette);
+    if (!inPalette) { custom.style.setProperty('--cc', cur); custom.querySelector('input').value = cur; }
+    const names = { bar: '세로선', bubble: '말풍선 배경', color: '대사 글자', quote: '따옴표' };
+    $('dlg-hint').textContent = cur ? `${names[settings.dialogueStyle] || '대사'}에 이 색을 써요` : '테마 색 그대로';
+    const na = Math.round((Number(settings.narrAlpha) || 0.72) * 100);
+    $('narr-alpha').value = na;
+    $('narr-v').textContent = na + '%';
+  }
+  $('narr-alpha').addEventListener('input', () => {
+    settings.narrAlpha = Number($('narr-alpha').value) / 100;
+    $('narr-v').textContent = $('narr-alpha').value + '%';
+    saveSettings();
+    scheduleRefresh(60);
+  });
   function syncLook() {
+    syncDlgColors();
     const box = $('themes');
     if (!box.children.length) {
       Object.entries(R.THEMES).forEach(([key, th]) => {
