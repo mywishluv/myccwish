@@ -2,6 +2,8 @@
 // @name         크랙 하트카메라 캡처 v3.7.3 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
+// @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
+// @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @version      3.7.3
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 하단 고정 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
