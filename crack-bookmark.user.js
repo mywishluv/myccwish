@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         크랙 대화 북마크
 // @namespace    https://github.com/mywishluv/wishlite
-// @version      1.1.0
+// @version      1.1.1
 // @description  크랙 채팅에서 마음에 드는 메시지에 ☆를 눌러 저장하고, 메모를 달고, 목록에서 눌러 그 턴으로 바로 이동해요.
 // @author       muz
 // @match        https://crack.wrtn.ai/*
@@ -11,6 +11,7 @@
 // @downloadURL  https://github.com/mywishluv/wishlite/raw/main/crack-bookmark.user.js
 // @updateURL    https://github.com/mywishluv/wishlite/raw/main/crack-bookmark.user.js
 // ==/UserScript==
+// v1.1.1 - 설정 창 '대화 북마크' 아이콘을 노란 그라데이션 별 + 분홍 반짝이로 변경
 // v1.1.0 - 떠 있던 ★ 버튼 없애고 채팅방 설정 '전체 설정' 밑에 '대화 북마크' 메뉴로 이동, 북마크마다 메모 추가
 // v1.0.0 - 첫 버전: 메시지마다 ☆ 저장, ★ 목록, 그 턴으로 이동(예전 대화 자동 불러오기)
 // 내 대화는 크랙에서 읽기만 하고 다른 곳으로 보내지 않아요. (저장은 이 브라우저 안에만)
@@ -178,7 +179,15 @@
   }
 
   /* ───────── 채팅방 설정 창에 '대화 북마크' 메뉴 ───────── */
-  const STAR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="var(--icon_secondary)"><path d="M12 2.6l2.82 5.72 6.31.92-4.57 4.45 1.08 6.29L12 17l-5.64 2.98 1.08-6.29L2.87 9.24l6.31-.92z" fill="none" stroke="var(--icon_secondary)" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+  // 말랑한 노란 별 + 반짝이 (크랙 아이콘 색에 안 묻히게 색을 직접 지정)
+  const STAR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">' +
+    '<defs><linearGradient id="cbm-star-g" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0" stop-color="#FFE27A"/><stop offset="1" stop-color="#FFB547"/></linearGradient></defs>' +
+    '<path d="M11.2 4.3c.33-.67 1.27-.67 1.6 0l1.9 3.86 4.26.62c.73.1 1.03 1 .5 1.52l-3.08 3 .73 4.24c.12.73-.64 1.29-1.3.94L12 16.5l-3.81 2c-.66.35-1.42-.21-1.3-.94l.73-4.24-3.08-3c-.53-.52-.23-1.41.5-1.52l4.26-.62z" style="fill:url(#cbm-star-g);stroke:#F29A1F;stroke-width:1.1;stroke-linejoin:round"/>' +
+    '<ellipse cx="9.7" cy="9.9" rx="1.3" ry=".8" transform="rotate(-30 9.7 9.9)" style="fill:#fff;opacity:.75"/>' +
+    '<path d="M19.6 2.2l.42 1.1 1.1.42-1.1.42-.42 1.1-.42-1.1-1.1-.42 1.1-.42z" style="fill:#FF8FB1"/>' +
+    '<circle cx="4.3" cy="4.6" r=".7" style="fill:#FF8FB1;opacity:.8"/>' +
+    '</svg>';
 
   let warnedMenu = false, menuMissSince = 0;
   function ensureMenu() {
