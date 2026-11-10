@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.8.3 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.8.4 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.8.3
+// @version      3.8.4
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
@@ -12,6 +12,7 @@
 // @grant        GM_setValue
 // @grant        GM_xmlhttpRequest
 // @grant        GM_registerMenuCommand
+// @grant        GM_setClipboard
 // @grant        GM.xmlHttpRequest
 // @grant        GM.registerMenuCommand
 // @connect      fonts.googleapis.com
@@ -1795,12 +1796,13 @@ try {
   function bubbleKey(bubble) {
     const group = bubble.closest(SELECTORS.group);
     const gid = group && group.getAttribute('data-message-group-id');
+    const t = (bubble.textContent || '').replace(/\s+/g, ' ').trim();
+    const h = hashStr(t) + ':' + t.length; // 같은 묶음 번호가 여러 메시지에 붙어 있어도 내용으로 구분
     if (gid) {
       const list = Array.from(group.querySelectorAll(SELECTORS.bubble)).filter(b => !b.parentElement || !b.parentElement.closest(SELECTORS.bubble));
-      return 'g' + gid + ':' + list.indexOf(bubble);
+      return 'g' + gid + ':' + list.indexOf(bubble) + ':' + h;
     }
-    const t = (bubble.textContent || '').replace(/\s+/g, ' ').trim();
-    return 'h' + hashStr(t) + ':' + t.length;
+    return 'h' + h;
   }
   function unitKey(u) {
     const bk = bubbleKey(u.bubble);
@@ -2385,6 +2387,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   /* 고르는 동안 화면에 나타난 문단을 순서대로 모아 둔다.
      크랙은 스크롤로 지나간 메시지를 화면(DOM)에서 지워 버려서, 끝 문단을 누를 때 중간이 사라져 있을 수 있다. */
   let seen = [];            // [{ key, bkey, role, blocks, el }]
+  let lastDiag = null;      // 문제 생겼을 때 복사해서 보내 줄 정보
   let seenKeys = new Map(); // key → 기록
   let lastScrollDir = 1, seenTimer = 0;
   function recordUnits() {
@@ -2526,8 +2529,27 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       return;
     }
     // 끝 문단
-    recordUnits();
     seenObserver.disconnect();
+    if (start.el && start.el.isConnected) {
+      // 시작 문단이 아직 화면에 있으면 지금 화면 순서 그대로 (가장 정확)
+      const all = P.getAllUnits();
+      const a0 = all.findIndex(x => x.el === start.el && x.part === start.part);
+      const b0 = all.findIndex(x => x.el === u.el && x.part === u.part);
+      lastDiag = { v: '3.8.4', path: 'live', all: all.length, a0, b0, bubbles: P.getBubbles().length,
+        units: all.slice(Math.max(0, Math.min(a0, b0) - 2), Math.max(a0, b0) + 3).map(x => ({ g: (x.bubble.closest(P.SELECTORS.group) || {}).getAttribute ? x.bubble.closest(P.SELECTORS.group).getAttribute('data-message-group-id') : null, role: P.getRole(x.bubble), tag: x.el.tagName, cls: String(x.el.className || '').slice(0, 40), t: (x.el.textContent || '').trim().slice(0, 14) })) };
+      if (a0 !== -1 && b0 !== -1) {
+        const live = all.slice(Math.min(a0, b0), Math.max(a0, b0) + 1);
+        live.forEach(x => markPart(x, 'cc-picked'));
+        const msgs = P.collectUnits(live);
+        setTimeout(() => {
+          stopPicking(true);
+          if (!msgs.length) { toast('가져올 내용이 없어요.'); updateLauncher(); return; }
+          openEditor({ messages: msgs, meta: { url: location.href, at: Date.now() }, edits: {} });
+        }, 180);
+        return;
+      }
+    }
+    recordUnits();
     const endKey = P.unitKey(u);
     let a = seen.findIndex(x => x.key === start.key);
     const b = seen.findIndex(x => x.key === endKey);
@@ -2537,6 +2559,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       seen.unshift(rec); a = 0;
     }
     const picked = seen.slice(Math.min(a, b), Math.max(a, b) + 1);
+    lastDiag = Object.assign(lastDiag || {}, { path2: 'seen', seen: seen.length, a, b, keys: seen.slice(Math.max(0, Math.min(a, b) - 2), Math.max(a, b) + 3).map(x => x.key.slice(0, 40) + ' ' + (x.blocks[0] && x.blocks[0].runs ? x.blocks[0].runs.map(r => r.t).join('').slice(0, 10) : '')) });
     picked.forEach(x => { if (x.el && x.el.isConnected) markPart(x, 'cc-picked'); });
     const list = picked.map(x => ({ el: x.key.replace(/\.\d+$/, ''), part: x.part, bubble: x.bkey, role: x.role, blocks: clone(x.blocks) }));
     const messages = P.collectUnits(list);
@@ -2630,9 +2653,18 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   // 탬퍼몽키 메뉴에서도 시작할 수 있게
   try {
     const resetRun = () => { store.set('runPos', null); placeRun(); toast('버튼을 처음 자리로 옮겼어요'); };
+    const copyDiag = async () => {
+      const text = '[하트카메라 진단]\n' + JSON.stringify(lastDiag || { none: '먼저 캡처 범위를 한 번 골라 주세요' });
+      let ok = false;
+      try { if (typeof GM_setClipboard === 'function') { GM_setClipboard(text); ok = true; } } catch (e) { /* 아래로 */ }
+      if (!ok) try { await navigator.clipboard.writeText(text); ok = true; } catch (e) { /* 아래로 */ }
+      if (!ok) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { ok = document.execCommand('copy'); } catch (e) { /* 무시 */ } ta.remove(); }
+      toast(ok ? '진단 정보를 복사했어요. 댓글이나 채팅에 붙여 넣어 주세요' : '복사를 못 했어요', 2600);
+    };
     if (typeof GM_registerMenuCommand === 'function') {
       GM_registerMenuCommand('📷 익명 캡처 시작', startPicking);
       GM_registerMenuCommand('📍 버튼 위치 처음으로', resetRun);
+      GM_registerMenuCommand('🔧 진단 정보 복사 (오류 제보용)', copyDiag);
     } else if (typeof GM !== 'undefined' && GM && typeof GM.registerMenuCommand === 'function') {
       GM.registerMenuCommand('📷 익명 캡처 시작', startPicking);
       GM.registerMenuCommand('📍 버튼 위치 처음으로', resetRun);
@@ -3463,7 +3495,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       auto.title = '테마 색 그대로';
       auto.textContent = '자동';
       box.appendChild(auto);
-      R.PALETTE.forEach(([hex, name]) => {
+      R.PALETTE.filter(([, name]) => name !== '노랑' && name !== '하늘').forEach(([hex, name]) => { // 대사 색은 글씨라 잘 안 보이는 노랑·비슷한 하늘은 뺀다
         const b = document.createElement('button');
         b.className = 'dot';
         b.title = name;
