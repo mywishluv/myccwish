@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         크랙 말랑펫
 // @namespace    https://github.com/mywishluv/wishlite
-// @version      3.1.0
+// @version      3.2.0
 // @description  내 정실을 닮은 픽셀 펫. 크랙 대화(내 말+정실 답장)에 반응하고, 화면 위를 걸어다니고, 나만의 방에서 함께 살아요.
 // @author       muz
 // @match        https://crack.wrtn.ai/*
@@ -13,6 +13,7 @@
 // @downloadURL  https://github.com/mywishluv/wishlite/raw/main/crack-mallang-pet.user.js
 // @updateURL    https://github.com/mywishluv/wishlite/raw/main/crack-mallang-pet.user.js
 // ==/UserScript==
+// v3.2.0 - 32×32 도트 지도 조립·6종 몸·24종 의상·겹치는 흉터·2프레임 캐시·데이터 이전·계절 가구 기본 제공
 // v3.1.0 - 디자인 정리(도트 크기 통일·레트로 UI·탭 5개), 정실 답장에도 반응, 크랙 화면 걷기, 오늘의 날씨·출석·기념 가구 선물·명대사 액자, 가구 추가
 // v3.0.0 - 미니룸·밥주기·꾸미기·여러 캐릭터·사진관·백업
 // v2.0.0 - 픽셀 펫, 크랙에서 내가 보낸 말에 반응
@@ -39,6 +40,7 @@
     messageId: 'data-message-group-id',
     text: '.wrtn-markdown',
     botOnly: 'img[alt="model"]',
+    input: 'textarea,[contenteditable="true"]',
     isMine(msg, textEl) {
       const box = textEl.parentElement;
       if (!box || msg.querySelector(this.botOnly)) return false;
@@ -61,311 +63,104 @@
   const josa = (s, a, b) => s + (hasBatchim(s) ? a : b);
 
   /* =========================================================
-   * 픽셀 펫 (24 x 24 도트)
+   * 픽셀 펫 (32 x 32 도트)
    * ========================================================= */
-  const N = 24;
-  const INK = '#3A2E2E';
-  const K = '#4a3b44'; // 화면 테두리·가구 외곽선
-
-  const SHAPES = {
-    round: { name: '동글', rx: 9.5, ry: 8, n: 2 },
-    mochi: { name: '말랑', rx: 10.5, ry: 7, n: 2.8 },
-    tall: { name: '길쭉', rx: 7.5, ry: 9.5, n: 2.2 },
-    square: { name: '네모', rx: 9, ry: 8, n: 4 },
+  // v3.2: 모든 부품은 역할 문자를 담은 도트 지도입니다. 중심선은 x=15.5.
+  const N=32, INK='#2e2228', K='#4a3b44';
+  const SHAPES={
+    round:{name:'동글',x:3,y:9,rows:[[9,16],[6,19],[4,21],[3,22],[2,23],[1,24],[1,24],[0,25],[0,25],[0,25],[0,25],[0,25],[0,25],[0,25],[0,25],[0,25],[1,24],[1,24],[2,23],[3,22],[5,20],[8,17]],eyeX:10,eyeY:16,mouthY:20,earX:7,earY:10,outfitY:25,headTop:9},
+    mochi:{name:'말랑',x:2,y:13,rows:[[8,19],[5,22],[3,24],[2,25],[1,26],[0,27],[0,27],[0,27],[0,27],[0,27],[0,27],[0,27],[1,26],[1,26],[2,25],[3,24],[5,22],[7,20]],eyeX:10,eyeY:17,mouthY:21,earX:6,earY:14,outfitY:26,headTop:13},
+    tall:{name:'길쭉',x:6,y:7,rows:[[7,12],[4,15],[3,16],[2,17],[1,18],[1,18],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[0,19],[1,18],[1,18],[2,17],[3,16],[5,14]],eyeX:11,eyeY:15,mouthY:19,earX:9,earY:8,outfitY:24,headTop:7},
+    drop:{name:'물방울',x:4,y:7,rows:[[11,12],[10,13],[9,14],[8,15],[7,16],[6,17],[5,18],[4,19],[3,20],[2,21],[1,22],[0,23],[0,23],[0,23],[0,23],[0,23],[0,23],[0,23],[1,22],[1,22],[2,21],[3,20],[5,18],[8,15]],eyeX:10,eyeY:17,mouthY:21,earX:13,earY:13,outfitY:26,headTop:7},
+    bean:{name:'콩',x:3,y:11,rows:[[6,12],[3,16],[2,19],[1,21],[0,23],[0,24],[0,24],[0,25],[0,25],[0,25],[0,25],[0,25],[0,25],[0,25],[1,24],[2,23],[3,22],[4,21],[6,19],[9,16]],eyeX:10,eyeY:17,mouthY:20,earX:7,earY:12,outfitY:25,headTop:11},
+    sd:{name:'SD 꼬마형',x:4,y:4,rows:[[7,16],[4,19],[3,20],[2,21],[1,22],[1,22],[0,23],[0,23],[0,23],[0,23],[0,23],[0,23],[1,22],[1,22],[2,21],[4,19]],eyeX:10,eyeY:11,mouthY:15,earX:7,earY:5,outfitY:20,headTop:4,
+      torso:{x:10,y:20,rows:[[1,10],[0,11],[0,11],[0,11],[0,11],[0,11],[1,10]]}}
   };
-  const STAGE_SCALE = { baby: 0.64, child: 0.82, adult: 1 };
-  const TOPS = { none: '없음', bear: '곰귀', cat: '고양이귀', bunny: '토끼귀', antenna: '더듬이', sprout: '새싹' };
-  const FRONTS = { none: '없음', straight: '일자', part: '가르마', short: '짧은', curl: '곱슬', side: '옆으로', messy: '삐죽', swoop: '한쪽 눈 덮기' };
-  const BACKS = { none: '없음', bob: '단발', long: '긴 머리', wave: '웨이브', pony: '포니테일', twin: '양갈래' };
-  const EYES = {
-    dot: { name: '점눈', rows: ['E', 'E'] },
-    round: { name: '동글눈', rows: ['EW', 'EE'] },
-    big: { name: '왕눈', rows: ['EEW', 'EEE', '.E.'] },
-    shine: { name: '반짝눈', rows: ['EWE', 'EEE', 'EEW'] },
-    sleepy: { name: '졸린눈', rows: ['KKK', 'EEE'] },
-    sharp: { name: '째릿눈', rows: ['KKK', '.EE'], mirror: true },
-    smile: { name: '웃는눈', rows: ['.K.', 'K.K'] },
+  const TOPS={none:'없음',bear:'곰',cat:'고양이',bunny:'토끼',fox:'여우',dog:'강아지',antenna:'더듬이',sprout:'새싹'};
+  const FRONTS={none:'없음',straight:'일자',part:'가르마',short:'짧은',curl:'곱슬',side:'옆으로',messy:'삐죽',swoop:'한쪽 눈 덮기'};
+  const BACKS={none:'없음',bob:'단발',long:'긴 머리',wave:'웨이브',pony:'포니테일',twin:'양갈래'};
+  const EYES={dot:{name:'점',rows:['KK','KK']},round:{name:'동글',rows:['.KK.','KEwK','KEEK','.KK.']},big:{name:'왕눈',rows:['.KKK.','KEEwK','KEEEK','KEEEK','.KKK.']},shine:{name:'반짝',rows:['.KK.','KwKK','KKKK','KEEK','.KK.']},sleepy:{name:'졸린',rows:['KKKK','KEEK','.KK.']},sharp:{name:'째릿',rows:['KKKKK','.KEEw','..KK.'],mirror:true},smile:{name:'웃는',rows:['.KK.','K..K']},droop:{name:'처진눈',rows:['K...','.KKK','.KEw','..KK'],mirror:true}};
+  const EXPR_EYES={happy:['.KK.','K..K'],sleep:['KKKK'],love:['LL.LL','LLLLL','.LLL.','..L..'],sick:['K..K','.KK.','K..K']};
+  const NOSES={none:{name:'없음',rows:[]},dot:{name:'점코',rows:['K']},pink:{name:'분홍코',rows:['pp','pp']},animal:{name:'동물코',rows:['KKK','.K.']}};
+  const MOUTHS={small:{name:'미소',rows:['K..K','.KK.']},smile:{name:'활짝',rows:['KKKKKK','.KMMK.','..KK..']},cat:{name:'고양이입',rows:['K.KK.K','.K..K.']},o:{name:'오',rows:['.KK.','KMMK','.KK.']},tongue:{name:'메롱',rows:['KKKK','.MM.','.MM.']},line:{name:'무표정',rows:['KKKK']}};
+  const CHEEKS={none:{name:'없음',rows:[]},blush:{name:'발그레',rows:['ppp']},round:{name:'동글볼',rows:['.pp.','pppp','.pp.']},line:{name:'빗금',rows:['p.p.p','p.p.p']}};
+  const OUTFITS={none:'없음',shirt:'티셔츠',dress:'원피스',sailor:'세일러',tie:'셔츠+넥타이',suit:'정장',knit:'니트',cardigan:'가디건',hoodie:'후드티',blazer:'교복 블레이저',gakuran:'학란',pajama:'잠옷',apron:'앞치마',tactical:'전술조끼',military:'군복',doctor:'의사 가운',police:'경찰',butler:'집사',maid:'메이드',bartender:'바텐더 조끼',knight:'기사 갑옷',wizard:'마법사 로브',prince:'왕자 망토',priest:'사제복',hanbok:'한복·도포'};
+  const WINGS={none:'없음',angel:'천사',bat:'악마',fairy:'요정'},TAILS={none:'없음',cat:'고양이',fox:'여우',devil:'악마',bunny:'토끼'},MARKS={none:'없음',mole:'눈물점',freckles:'주근깨'};
+  const SCARS={eye:{name:'눈 위 세로',rows:['.r.','RrR','.r.','.r.','RrR','.r.','.r.']},cross:{name:'볼 X자',rows:['r...r','.r.r.','..r..','.r.r.','r...r']},nose:{name:'콧등 가로',rows:['R.R.R','rrrrr']},mouth:{name:'입가',rows:['r..','rR.','r..']},forehead:{name:'이마',rows:['r.r','RrR','r.r']},neck:{name:'목',rows:['rrrrrr','.R.R..']}};
+  const SCAR_COLORS={pink:'#ca8b98',brown:'#855549'};
+  const EAR_MAPS={cat:['o......','oo.....','obo....','obpo...','obppo..','obbppo.','obbbbbo'],bear:['.oooo.','olbbbo','obppbo','obppbo','.obbo.'],bunny:['.oo.','olbo','obpo','obpo','obpo','obpo','obpo','obbo','obbo','obbo'],fox:['o.......','oo......','olo.....','obpo....','obbpo...','obbbpo..','obbbbpo.','obbbbbbo'],dog:['.oooo.','olbbbo','obppbo','obppbo','obbbbo','obbbso','obssso','.OOOO.'],antenna:['..oo..','..ll..','...o..','....o.','....o.'],sprout:['.ll......','.bbl..ll.','..bbobbl.','....o....','....o....']};
+  const FRONT_MAPS={
+    straight:['..oooooooooooooooo..','.ollllllllllllllllbO','obbbbbbbbbbbbbbbbbbs','obbbbbbbbbbbbbbbbbbs','.ObbbObbbObbbObbbbO.','..OOO.OOO.OOO.OOOO..'],
+    part:['..oooooooooooooooo..','.olllllll..lllllllbO','obbbbbbbO..obbbbbbbs','obbbbbO......obbbbbs','.ObbbO........ObbbO.','..OOO..........OOO..'],
+    short:['..oooooooooooooooo..','.ollllllllllllllllbO','obbbbbbbbbbbbbbbbbbs','.ObbObbbObbbObbbObO.','..OO.OOO.OOO.OOO.O..'],
+    curl:['..oooo..oooo..oooo..','.olllbOolllbOolllbO.','obbbbbbbbbbbbbbbbbbs','obbbbbbbbbbbbbbbbbbs','.ObbObbObbObbObbObO.','..OO.OO.OO.OO.OO.O..'],
+    side:['..oooooooooooooooo..','.ollllllllllllllllbO','obbbbbbbbbbbbbbbbbbs','.ObbbbbbbbbbbbbbbbsO','..ObbbbbbbbbbbbbbsO.','...ObbbbbbbbbbbbsO..','....ObbbbbbbbbbO....','.....ObbbbbbbO......'],
+    messy:['....oo.....oo.......','..oolbO..oolbo......','.olllbbOOllllbbOoo..','obbbbbbbbbbbbbbbbsO.','obbbObbbbbObbbbbbbO.','.OOO.ObbbO.ObbbObbO.','......OOO...OOO.OO..'],
+    swoop:['..oooooooooooooooo..','.ollllllllllllllllbO','obbbbbbbbbbbbbbbbbbs','obbbbbbbbbbbbbbbbsO.','obbbbbbbbbbbbbbsO...','obbbbbbbbbbbbsO.....','obbbbbbbbbbsO.......','.ObbbbbbbO..........','..ObbbbO............','...OOO..............']
   };
-  const EXPR_EYES = { happy: ['.K.', 'K.K'], sleep: ['K.K', '.K.'], sick: ['K.K', '.K.', 'K.K'], love: ['L.L', 'LLL', '.L.'] };
-  const NOSES = { none: { name: '없음', rows: [] }, dot: { name: '점코', rows: ['K'] }, pink: { name: '분홍코', rows: ['N'] }, animal: { name: '동물코', rows: ['KKK', '.K.'] } };
-  const MOUTHS = {
-    small: { name: '미소', rows: ['K.K', '.K.'] },
-    smile: { name: '활짝', rows: ['K...K', '.KKK.'] },
-    cat: { name: '고양이입', rows: ['K.K.K', '.K.K.'] },
-    o: { name: '오', rows: ['.K.', 'K.K', '.K.'] },
-    tongue: { name: '메롱', rows: ['KKK', '.M.'] },
-    line: { name: '무표정', rows: ['KKK'] },
+  const BACK_MAPS={bob:['oob','olb','obb','obs','obs','obs','obs','obs','obs','obs','.OO'],long:['oob','olb','obb','obb','obb','obb','obb','obs','obs','obs','obs','obs','obs','obs','obs','obs','obs','obs','obs','obs','obs','.OO'],wave:['.oo','olb','obb','obs','obs','.Ob','..O','oob','olb','obb','obs','.Ob','..O','oob','obb','obs','.OO'],pony:['.oo.','olbo','obbo','.ObO','..ob','..ob','..ob','.obb','obbs','obbs','obbs','.ObO','..O.'],twin:['.oo.','olbo','obbo','obbs','obbs','obbs','obbs','obbs','obbs','obbs','.ObO','..O.']};
+  const CLOTH_MAPS={
+    shirt:['ccWWWcc','.ccWcc.','..ccc..'],dress:['ccWWWcc','.ccWcc.','ccccccc','WcWcWcW'],sailor:['WWcccWW','.WWcWW.','..ptp..','...T...'],tie:['cWWtWWc','.cWtWc.','..CTC..','...T...','...T...'],suit:['CWWtWWC','.CWtWC.','..CTC..','...T...','...T...'],knit:['WcWcWcW','cWcWcWc','WcWcWcW'],cardigan:['ClWWWlC','ClcWclC','ClcKclC','ClcKclC'],hoodie:['WcWWWcW','.WcWcW.','..WcW..','.CCCCC.','.CcccC.'],blazer:['CWWtWWC','.CWtWC.','cCCTCcc','cWcTcWc'],gakuran:['CCWWWCC','cccKccc','cccKccc','cccKccc','CCCWCCC'],pajama:['WWcccWW','cccKccc','ccwKccw','ccwKccw'],apron:['cWcccWc','cWWWWWc','ccWWWcc','WWWWWWW'],tactical:['CCccCCC','cWcCcWc','CCCcCCC','cCcCcCc','CCCCCCC'],military:['scclccs','cscKcsc','lcscscl','cccKccc','CscscsC'],doctor:['WWWtWWW','WWcTcWW','WWcKcWW','WccKccW','WWcKcWW'],police:['WWctcWW','ccYtccc','cWcKcWc','cccKccc'],butler:['CWWtWWC','CCptpCC','CCCWCCC','CCcKcCC'],maid:['cWcccWc','WcWWWcW','.WWWWW.','WWcWcWW'],bartender:['CWWtWWC','.CCWCC.','cCcKcCc','CCcKcCC'],knight:['oWWWWW O','WWcWcWW','cCWWWcC','CCcWcCC','CCCWCCC'].map(s=>s.replace(/ /g,'')),wizard:['cWWtWWc','.cWtWc.','ccctccc','cwctcwc','cccTccc'],prince:['RWWYWWR','RRctcRR','RRcTcRR','RRcccRR','Rcccc cR'].map(s=>s.replace(/ /g,'')),priest:['CCWWWCC','cccWccc','ccWWWcc','cccWccc','cccWccc'],hanbok:['ccWWccc','cccWWcc','ccccWWc','cTTTTTc','cccTccc']
   };
-  const CHEEKS = { none: { name: '없음', rows: [] }, blush: { name: '발그레', rows: ['PP'] }, round: { name: '동글볼', rows: ['PP', 'PP'] }, line: { name: '빗금', rows: ['.Q', 'Q.'] } };
-  const OUTFITS = { none: '없음', shirt: '티셔츠', dress: '원피스', hoodie: '후드티', suit: '정장', sailor: '세일러' };
-  const WINGS = { none: '없음', angel: '천사', bat: '악마', fairy: '요정' };
-  const TAILS = { none: '없음', cat: '고양이', fox: '여우', devil: '악마', bunny: '토끼' };
-  const MARKS = { none: '없음', mole: '눈물점', scar: '흉터', freckles: '주근깨' };
-  const ACC = {
-    ribbon: { name: '리본', c: '#FF6F91', rows: ['RR.RR', 'RRDRR', 'RR.RR'] },
-    flower: { name: '꽃', c: '#FFFFFF', rows: ['.R.', 'RYR', '.R.'] },
-    crown: { name: '왕관', c: '#FFD54A', rows: ['R.R.R', 'RRRRR', 'DDDDD'] },
-    hat: { name: '모자', c: '#4A4A5A', rows: ['.RRRRR.', '.RRRRR.', '.BBBBB.', 'RRRRRRR'] },
-    glasses: { name: '안경', c: '#3A3A44', rows: ['RRRRR...RRRRR', 'R...RRRRR...R', 'R...R...R...R', 'RRRRR...RRRRR'] },
-    heart: { name: '하트', c: '#FF4D7A', rows: ['RR.RR', 'RRRRR', '.RRR.', '..R..'] },
-    star: { name: '별', c: '#FFD54A', rows: ['..R..', '.RRR.', 'RRRRR', '.R.R.'] },
-    bow: { name: '나비넥타이', c: '#D94B72', rows: ['RR.RR', 'RRDRR', 'RR.RR'] },
-    bandage: { name: '반창고', c: '#F3D3A3', rows: ['RWWR'] },
-  };
-
-  const BODY_COLORS = ['#FFC8B4', '#FFB3C7', '#FFEBA8', '#BDEBD6', '#C4DEFF', '#E2D2FF', '#E3C3A8', '#F4F4F4', '#6E6E7A', '#4A4A58'];
-  const HAIR_COLORS = ['#3A2E2E', '#8A5A3C', '#F2D16B', '#E8E8EE', '#FF8FB1', '#7DA7F0', '#9C7BE0', '#D9534F', '#4A4A58'];
-  const EYE_COLORS = ['#3A2E2E', '#7B4A2A', '#3D7BE0', '#3FA36B', '#D64545', '#8B5CD6', '#E0A800'];
-  const CLOTH_COLORS = ['#718FAF', '#2F3A4F', '#F4F4F4', '#FF8FB1', '#D9534F', '#6CC46A', '#9C7BE0', '#3A2E2E'];
-  const DEFAULT_LOOK = { shape: 'round', top: 'bear', eyes: 'round', nose: 'none', mouth: 'small', cheeks: 'blush', body: '#FFC8B4', hair: null, eye: '#3A2E2E' };
-  const DEFAULT_EXTRA = { front: 'none', back: 'none', outfit: 'none', wings: 'none', tail: 'none', mark: 'none', cloth: '#718FAF', eye2: '#57443C', hetero: false, accessories: [], pixels: Array(576).fill(null) };
-
-  function hexToRgb(h) {
-    h = String(h || '#000').replace('#', '');
-    if (h.length === 3) h = h.split('').map((c) => c + c).join('');
-    const n = parseInt(h, 16) || 0;
-    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  const WING_MAPS={angel:['o.....','olo...','oblo..','obblO.','obbblo','ObbssO','.OOOO.'],bat:['o.....','obo...','obbo..','obbooo','obbbbs','ObOssO','.O.OO.'],fairy:['.oooo.','olllbo','obbbbo','.ObbO.','olllbo','obssso','.OOOO.']};
+  const TAIL_MAPS={cat:['...oo.','..olbo','...obO','...ob.','...ob.','.oobb.','obbsO.','.OOO..'],fox:['...oo.','..owwo','.owwbo','olbbbo','obbbso','obbsO.','.OsO..','..O...'],devil:['..o...','.obo..','obbbO.','..o...','..o...','..o...','ooO...'],bunny:['.ooo.','olbbo','obbso','.OOO.']};
+  const ACC={
+    ribbon:{name:'리본',c:'#FF6F91',rows:['oo...oo','olboobo','obbsbbs','.OsssO.','oo.O.oo']},flower:{name:'꽃',c:'#FFB3C7',rows:['..ooo..','..lbb..','olbYbbo','.ObbbO.','..OOO..']},crown:{name:'왕관',c:'#FFD54A',rows:['o..o..o','bl.bl.b','bbbbbbb','sssssss','OOOOOOO']},hat:{name:'모자',c:'#4A4A5A',rows:['..ooooo..','..lbbbb..','..bbbbb..','..ppppp..','olbbbbbbO']},glasses:{name:'안경',c:'#574557',rows:['ooooo...ooooo','o...ooooo...o','o...o...o...o','OOOOO...OOOOO']},heart:{name:'하트',c:'#FF4D7A',rows:['oo.oo','bl.bl','bbbbb','.sss.','..O..']},star:{name:'별',c:'#FFD54A',rows:['..o..','..l..','olbbo','.bss.','O...O']},bow:{name:'나비넥타이',c:'#D94B72',rows:['bb.bb','bbsbb','bb.bb']},bandage:{name:'반창고',c:'#F3D3A3',rows:['.ooooo.','olWWWbo','.OOOOO.']},bandagewrap:{name:'붕대',c:'#F3EEE8',rows:['WWWWWWWWW','sssssssss','WWWWWWWWW']},eyepatch:{name:'안대',c:'#554b5b',rows:['oo.....o','obbo..o.','obbbOo..','.OOO....']},scarf:{name:'목도리',c:'#d37992',rows:['bbbbbbbbb','sssssssss','..bb.....','..bb.....','..ss.....']},choker:{name:'초커',c:'#554b5b',rows:['bbbbbYbbbbb','sssssssssss']},dogtag:{name:'인식표 목걸이',c:'#b7b8c2',rows:['o.......o','.o.....o.','..o...o..','...ooo...','...bbb...','...bKb...','...sss...']},headphones:{name:'헤드폰',c:'#9c7be0',rows:['..ooooooo..','.obbbbbbbO.','ob.......bO','ob.......bO','bb.......bb','bb.......bb']},mask:{name:'마스크',c:'#e5e2e8',rows:['oWWWWWWWo','.WsssssW.','..OOOOO..']},lollipop:{name:'막대사탕',c:'#e980a6',rows:['.ooo.','olpbo','obpbo','.OOO.','..W..','..W..','..W..']},sword:{name:'검',c:'#9aafc6',rows:['..w..','..wb.','..wb.','..wb.','..wb.','YWWWY','..t..','..T..']},cup:{name:'컵',c:'#b7ddd5',rows:['ooooo..','obbbOoo','obbbO.o','ObssOOO','.OOO...']},flowerhand:{name:'손에 쥔 꽃',c:'#e9a8ba',rows:['.b.b.','bbYbb','.bbb.','..g..','.gg..','..g..']}};
+  const BODY_COLORS=['#FFC8B4','#FFB3C7','#FFEBA8','#BDEBD6','#C4DEFF','#E2D2FF','#E3C3A8','#F4F4F4','#6E6E7A','#4A4A58'],HAIR_COLORS=['#3A2E2E','#8A5A3C','#F2D16B','#E8E8EE','#FF8FB1','#7DA7F0','#9C7BE0','#D9534F','#4A4A58'],EYE_COLORS=['#3A2E2E','#7B4A2A','#3D7BE0','#3FA36B','#D64545','#8B5CD6','#E0A800'],CLOTH_COLORS=['#718FAF','#2F3A4F','#F4F4F4','#FF8FB1','#D9534F','#6CC46A','#9C7BE0','#3A2E2E'];
+  const DEFAULT_LOOK={shape:'round',top:'bear',eyes:'round',nose:'none',mouth:'small',cheeks:'blush',body:'#FFC8B4',hair:null,eye:'#3A2E2E'};
+  const DEFAULT_EXTRA={front:'none',back:'none',outfit:'none',wings:'none',tail:'none',mark:'none',cloth:'#718FAF',eye2:'#57443C',hetero:false,accessories:[],scars:[],pixelVersion:32,pixels:Array(1024).fill(null)};
+  const hexToRgb=h=>{h=String(h||'#000000').replace('#','');if(h.length===3)h=[...h].map(c=>c+c).join('');const n=parseInt(h,16)||0;return[n>>16&255,n>>8&255,n&255];};
+  const toHex=(r,g,b)=>'#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');
+  const mix=(a,b,f)=>{const A=hexToRgb(a),B=hexToRgb(b);return toHex(...A.map((v,i)=>v+(B[i]-v)*f));};
+  const shade=(h,f)=>mix(h,'#000000',1-f),tint=(h,f)=>mix(h,'#ffffff',f),lineOf=h=>mix(shade(h,.55),'#3a2040',.25);
+  function palette(c,cloth=c,eye=INK){return{l:tint(c,.35),b:c,s:mix(shade(c,.82),'#6a4c93',.12),o:lineOf(c),O:mix(shade(c,.38),'#2a1830',.3),K:INK,E:eye,w:'#ffffff',W:'#fff6ef',p:'#ff9db0',M:'#d6455d',L:'#ff4d7a',r:'#ca8b98',R:'#985968',c:cloth,C:mix(shade(cloth,.82),'#6a4c93',.12),t:'#ba6781',T:'#884b69',Y:'#f1c65d',g:'#6b9c70',B:'#7ec8ff'};}
+  function Canvas(w=N,h=N){const g=Array.from({length:h},()=>Array(w).fill(null));return{g,w,h,set(x,y,c){x=Math.round(x);y=Math.round(y);if(c&&x>=0&&x<w&&y>=0&&y<h)g[y][x]=c;}};}
+  function stamp(cv,rows,left,top,pal,clip){rows.forEach((row,dy)=>[...row].forEach((ch,dx)=>{if(ch==='.'||ch===' ')return;const x=Math.round(left+dx),y=Math.round(top+dy);if(!clip||clip(x,y))cv.set(x,y,pal[ch]);}));}
+  const flipRows=rows=>rows.map(row=>[...row.padEnd(Math.max(...rows.map(r=>r.length)),'.')].reverse().join(''));
+  function stampPair(cv,rows,cL,top,pal,clip,mirror=true,palR){if(!rows.length)return;const w=Math.max(...rows.map(r=>r.length)),left=Math.round(cL-w/2);stamp(cv,rows,left,top,pal,clip);stamp(cv,mirror?flipRows(rows):rows,31-left-w+1,top,palR||pal,clip);}
+  function svgRects(cv){let s='';for(let y=0;y<cv.h;y++)for(let x=0;x<cv.w;){const c=cv.g[y][x];if(!c){x++;continue;}let w=1;while(x+w<cv.w&&cv.g[y][x+w]===c)w++;s+=`<rect x="${x}" y="${y}" width="${w}" height="1" fill="${c}"/>`;x+=w;}return s;}
+  const toSVG=(cv,extra='')=>`<svg viewBox="0 0 ${cv.w} ${cv.h}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"${extra}>${svgRects(cv)}</svg>`;
+  function geom(p){const S=SHAPES[p.look?.shape]||SHAPES.round;const has=(x,y)=>{const r=S.rows[y-S.y];return!!r&&x>=S.x+r[0]&&x<=S.x+r[1];};const torso=S.torso;const mask=(x,y)=>has(x,y)||(torso&&y>=torso.y&&y<torso.y+torso.rows.length&&x>=torso.x+torso.rows[y-torso.y][0]&&x<=torso.x+torso.rows[y-torso.y][1]);return{...S,top:S.headTop,cL:S.eyeX,eyeMid:S.eyeY,inBody:mask,interior:(x,y)=>mask(x,y)&&mask(x-1,y)&&mask(x+1,y)&&mask(x,y-1)&&mask(x,y+1),ox:16-S.earX};}
+  function silhouette(cv,part,pal){const mask=(x,y)=>{const r=part.rows[y-part.y];return!!r&&x>=part.x+r[0]&&x<=part.x+r[1];};part.rows.forEach(([a,b],dy)=>{const y=part.y+dy;for(let x=part.x+a;x<=part.x+b;x++){let ch='b';if(!mask(x+1,y)||!mask(x,y+1))ch='O';else if(!mask(x-1,y)||!mask(x,y-1))ch='o';else if(!mask(x+2,y)||!mask(x,y+2))ch='s';else if(!mask(x-2,y)||!mask(x,y-2))ch='l';cv.set(x,y,pal[ch]);}});}
+  function defaultAccPos(type,p){const G=geom(p),def=ACC[type],w=Math.max(...def.rows.map(r=>r.length));if(['sword','flowerhand','cup','lollipop'].includes(type))return{x:G.name==='SD 꼬마형'?23:26,y:G.outfitY-1};if(['bow','scarf','choker','dogtag'].includes(type))return{x:Math.round(15.5-w/2),y:G.outfitY};if(['glasses','eyepatch','mask'].includes(type))return{x:type==='glasses'?9:G.eyeX-2,y:type==='mask'?G.mouthY:G.eyeY-2};return{x:type==='headphones'?10:20,y:Math.max(0,G.headTop-4)};}
+  function scarPos(G,s){const right=s.side==='right',cx=right?31-G.eyeX:G.eyeX;switch(s.type){case'eye':return{x:cx-1,y:G.eyeY-4};case'cross':return{x:right?24:3,y:G.eyeY+2};case'nose':return{x:13,y:G.mouthY-3};case'mouth':return{x:right?22:7,y:G.mouthY};case'forehead':return{x:right?18:11,y:G.headTop+4};case'neck':return{x:right?17:9,y:G.outfitY-1};default:return{x:2,y:2};}}
+  const DRAW_CACHE=new Map(),CANVAS_CACHE=new Map();
+  function cachePut(cache,key,value){if(cache.size>=360)cache.delete(cache.keys().next().value);cache.set(key,value);return value;}
+  function petCanvas(p,expr='normal',frame=0,motion='idle'){
+    const L={...DEFAULT_LOOK,...p.look},E={...DEFAULT_EXTRA,...p.extra},key=JSON.stringify([L,E,p.stage,expr,frame,motion]);if(CANVAS_CACHE.has(key))return CANVAS_CACHE.get(key);
+    const cv=Canvas(),G=geom({...p,look:L}),body=expr==='sick'?mix(L.body,'#c8d7b8',.22):L.body,pal=palette(body,E.cloth,L.eye),hairPal=palette(color(L.hair,body)),clothPal=palette(E.cloth,E.cloth,L.eye);
+    if(p.stage==='egg'){silhouette(cv,{x:6,y:6,rows:[[8,11],[6,13],[5,14],[4,15],[3,16],[2,17],[2,17],[1,18],[1,18],[0,19],[0,19],[0,19],[0,19],[0,19],[1,18],[1,18],[2,17],[3,16],[5,14],[8,11]]},palette('#fff3df'));stamp(cv,['bb','bb'],12,12,pal);stamp(cv,['.b.','bbb','.b.'],20,18,pal);cv.set(12,9,'#ffffff');return cachePut(CANVAS_CACHE,key,cv);}
+    if(E.wings!=='none'){const rows=WING_MAPS[E.wings]||WING_MAPS.angel,wp=palette(E.wings==='angel'?'#fff5e7':E.wings==='bat'?'#746282':'#b7dedb');stampPair(cv,rows,3,G.eyeY+1,wp,null,true);}
+    if(E.tail!=='none')stamp(cv,TAIL_MAPS[E.tail]||TAIL_MAPS.cat,25,G.outfitY-6,hairPal);
+    if(E.back!=='none'){const rows=BACK_MAPS[E.back]||BACK_MAPS.bob;stampPair(cv,rows,4,G.headTop+3,hairPal,null,true);}
+    silhouette(cv,G,pal);if(G.torso){silhouette(cv,G.torso,pal);stampPair(cv,['olbo','obbo','obsO','.OO.'],7,22,pal,null,true);stampPair(cv,['obbo','obso','OOOO'],13,27,pal,null,true);}
+    // 두 발 지도를 번갈아 쓰고, 숨쉬기는 완성된 도트를 한 줄 옮겨요.
+    const foot=motion==='walk'?(frame?['obbO','OOO.']:['olbo','.OOO']):['obbo','OOOO'];stamp(cv,foot,G.torso?11:7,29,pal);stamp(cv,flipRows(motion==='walk'?frame?['olbo','.OOO']:['obbO','OOO.']:foot),G.torso?17:21,29,pal);
+    cv.set(G.x+G.rows[3][0]+2,G.y+2,'#fff9f3');cv.set(G.x+G.rows[3][0]+3,G.y+2,'#fff9f3');cv.set(G.x+G.rows[3][0]+2,G.y+3,'#fff9f3');
+    if(E.outfit!=='none'){for(let y=G.outfitY;y<31;y++)for(let x=0;x<32;x++)if(G.inBody(x,y)){const edge=!G.inBody(x+1,y)||!G.inBody(x,y+1);cv.set(x,y,edge?clothPal.O:!G.inBody(x-1,y)?clothPal.o:!G.inBody(x+2,y)||!G.inBody(x,y+2)?clothPal.s:x<16?clothPal.l:clothPal.b);}const rows=CLOTH_MAPS[E.outfit]||CLOTH_MAPS.shirt;stamp(cv,rows,Math.floor(16-Math.max(...rows.map(r=>r.length))/2),G.outfitY,{...clothPal,c:clothPal.b,C:clothPal.s,R:mix(E.cloth,'#b15676',.4)},G.inBody);}
+    if(E.front!=='none'){const rows=FRONT_MAPS[E.front]||FRONT_MAPS.straight;stamp(cv,rows,6,G.headTop,hairPal,(x,y)=>G.inBody(x,y)&&y<G.eyeY-1+(E.front==='swoop'&&x<13?4:0));}
+    // 귀는 앞머리 다음에 그려, 최소 두 칸이 머리 위로 드러나게 해요.
+    if(L.top!=='none'){const rows=EAR_MAPS[L.top]||EAR_MAPS.cat,earTop=Math.max(0,Math.min(G.earY-rows.length+2,G.headTop-2));if(L.top==='sprout')stamp(cv,rows,12,earTop,{...hairPal,b:'#7eb26d',l:'#b7dca2',o:'#638955'});else stampPair(cv,rows,G.earX,earTop,hairPal,null,true);}
+    let er=EXPR_EYES[expr]||(EYES[L.eyes]||EYES.round).rows;const ey=G.eyeY-Math.floor(er.length/2);stampPair(cv,er,G.eyeX,ey,pal,(x,y)=>!(E.front==='swoop'&&x<16&&FRONT_MAPS.swoop[y-G.headTop]?.[x-6]&&FRONT_MAPS.swoop[y-G.headTop][x-6]!=='.'),!!EXPR_EYES[expr]||!!EYES[L.eyes]?.mirror,E.hetero?{...pal,E:E.eye2}:pal);
+    const cheeks=expr==='shy'?CHEEKS.round:CHEEKS[L.cheeks]||CHEEKS.none;stampPair(cv,cheeks.rows,G.eyeX-1,G.mouthY-1,{...pal,p:expr==='shy'?'#ef7099':pal.p},G.inBody,true);
+    const nose=NOSES[L.nose]||NOSES.none;stamp(cv,nose.rows,Math.floor(16-(nose.rows[0]?.length||0)/2),G.mouthY-2,pal,G.inBody);
+    let mr=(MOUTHS[L.mouth]||MOUTHS.small).rows;if(expr==='happy'||expr==='love')mr=MOUTHS.smile.rows;else if(expr==='shy')mr=['.K.K.','K.K.K'];else if(expr==='angry')mr=['KKKK'];else if(expr==='sad'||expr==='sick')mr=['.KK.','K..K'];else if(expr==='sleep')mr=['KK'];stamp(cv,mr,Math.floor(16-Math.max(...mr.map(r=>r.length))/2),G.mouthY,pal,G.inBody);
+    if(expr==='angry')stampPair(cv,['K...','.KKK'],G.eyeX,G.eyeY-4,pal,null,true);if(expr==='sad')stampPair(cv,['B','B','w'],G.eyeX+2,G.eyeY+2,pal,null,true);
+    if(E.mark==='mole')cv.set(31-G.eyeX+2,G.eyeY+2,INK);if(E.mark==='freckles')stampPair(cv,['r.r.r'],G.eyeX,G.mouthY-1,pal,G.inBody);
+    for(const sc of E.scars||[]){const def=SCARS[sc.type];if(!def)continue;const pos=scarPos(G,sc),r=SCAR_COLORS[sc.color]||SCAR_COLORS.pink;stamp(cv,sc.side==='right'?flipRows(def.rows):def.rows,pos.x,pos.y,{r,R:lineOf(r)},(x,y)=>G.inBody(x,y)&&!(y>=G.mouthY&&y<G.mouthY+mr.length&&x>=12&&x<=20));}
+    for(const a of E.accessories||[]){const def=ACC[a.type];if(!def)continue;stamp(cv,a.flip?flipRows(def.rows):def.rows,a.x,a.y,palette(color(a.c,def.c)));}
+    (E.pixels||[]).forEach((c,i)=>{if(c)cv.set(i%32,Math.floor(i/32),c);});
+    let result=cv;if(expr==='sleep'){stamp(result,frame?['KKK','..K','.K.','KKK']:['KK','K.','KK'],24,3,{K:INK});}else if(frame&&motion!=='walk'){result=Canvas();for(let y=0;y<31;y++)for(let x=0;x<32;x++)if(cv.g[y][x])result.set(x,y+1,cv.g[y][x]);}
+    return cachePut(CANVAS_CACHE,key,result);
   }
-  const toHex = (r, g, b) => '#' + [r, g, b].map((v) => clamp(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
-  const shade = (h, f) => { const [r, g, b] = hexToRgb(h); return toHex(r * f, g * f, b * f); };
-  const tint = (h, f) => { const [r, g, b] = hexToRgb(h); return toHex(r + (255 - r) * f, g + (255 - g) * f, b + (255 - b) * f); };
-  const mix = (a, b, f) => { const A = hexToRgb(a), B = hexToRgb(b); return toHex(A[0] + (B[0] - A[0]) * f, A[1] + (B[1] - A[1]) * f, A[2] + (B[2] - A[2]) * f); };
-  const luma = (h) => { const [r, g, b] = hexToRgb(h); return 0.299 * r + 0.587 * g + 0.114 * b; };
-  const lineOf = (h) => (luma(h) < 90 ? shade(h, 0.55) : shade(h, 0.7));
+  function drawPet(p,expression='normal',motion='idle'){const key=JSON.stringify([p.look,p.extra,p.stage,expression,motion]);if(DRAW_CACHE.has(key))return DRAW_CACHE.get(key);const a=petCanvas(p,expression,0,motion),b=petCanvas(p,expression,1,motion);return cachePut(DRAW_CACHE,key,`<svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"><g class="sprite-a">${svgRects(a)}</g><g class="sprite-b" style="visibility:hidden">${svgRects(b)}</g></svg>`);}
 
-  function Canvas(w = N, h = N) {
-    const g = [];
-    for (let y = 0; y < h; y++) g.push(new Array(w).fill(null));
-    return { g, w, h, set(x, y, c) { x = Math.round(x); y = Math.round(y); if (c && x >= 0 && x < w && y >= 0 && y < h) g[y][x] = c; } };
-  }
-  function fillMask(cv, mask, fill, line) {
-    for (let y = 0; y < cv.h; y++) for (let x = 0; x < cv.w; x++) {
-      if (!mask(x, y)) continue;
-      const edge = !mask(x - 1, y) || !mask(x + 1, y) || !mask(x, y - 1) || !mask(x, y + 1);
-      cv.set(x, y, edge ? line : fill);
-    }
-  }
-  function stamp(cv, rows, left, top, pal, clip) {
-    rows.forEach((row, dy) => [...row].forEach((ch, dx) => {
-      if (ch === '.' || ch === ' ') return;
-      const x = left + dx, y = top + dy;
-      if (clip && !clip(x, y)) return;
-      cv.set(x, y, pal[ch]);
-    }));
-  }
-  function stampPair(cv, rows, cL, top, pal, clip, mirrorContent, palR) {
-    if (!rows.length) return;
-    const w = Math.max(...rows.map((r) => r.length));
-    const l = cL - Math.floor(w / 2);
-    stamp(cv, rows, l, top, pal, clip);
-    const rRows = mirrorContent ? rows.map((r) => [...r.padEnd(w, '.')].reverse().join('')) : rows;
-    stamp(cv, rRows, 22 - (l + w - 1), top, palR || pal, clip);
-  }
-  function toSVG(cv, extra = '') {
-    let s = '';
-    for (let y = 0; y < cv.h; y++) {
-      let x = 0;
-      while (x < cv.w) {
-        const c = cv.g[y][x];
-        if (!c) { x++; continue; }
-        let w = 1;
-        while (x + w < cv.w && cv.g[y][x + w] === c) w++;
-        s += `<rect x="${x}" y="${y}" width="${w}" height="1.03" fill="${c}"/>`;
-        x += w;
-      }
-    }
-    return `<svg viewBox="0 0 ${cv.w} ${cv.h}" xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"${extra}>${s}</svg>`;
-  }
-
-  function geom(p) {
-    const L = Object.assign({}, DEFAULT_LOOK, p.look || {});
-    const S = SHAPES[L.shape] || SHAPES.round;
-    const k = STAGE_SCALE[p.stage] || 1;
-    const rx = S.rx * k, ry = S.ry * k, n = S.n, cy = 22 - ry;
-    const inBody = (x, y) => x >= 0 && x < N && y >= 0 && y < N && Math.pow(Math.abs((x - 11) / rx), n) + Math.pow(Math.abs((y + 0.5 - cy) / ry), n) <= 1;
-    const interior = (x, y) => inBody(x, y) && inBody(x - 1, y) && inBody(x + 1, y) && inBody(x, y - 1) && inBody(x, y + 1);
-    let top = 0; while (top < N && !inBody(11, top)) top++;
-    const eyeMid = Math.round(cy - ry * 0.1);
-    const eDX = Math.max(3, Math.round(rx * 0.42));
-    return { L, k, rx, ry, n, cy, inBody, interior, top, ox: Math.max(2, Math.round(rx * 0.6)), eyeMid, eDX, cL: 11 - eDX };
-  }
-
-  function eggCanvas(p) {
-    const cv = Canvas();
-    const body = color(p.look && p.look.body, '#FFC8B4');
-    const cy = 14;
-    const mask = (x, y) => {
-      const dy = y + 0.5 - cy;
-      const kx = dy < 0 ? 6.6 * (1 + dy / 30) : 6.6, ry = dy < 0 ? 8.2 : 7.6;
-      return x >= 0 && y >= 0 && x < N && y < N && Math.pow((x - 11) / kx, 2) + Math.pow(dy / ry, 2) <= 1;
-    };
-    for (let x = 6; x <= 16; x++) cv.set(x, 22, 'rgba(0,0,0,0.10)');
-    fillMask(cv, mask, '#FFF6E9', lineOf(body));
-    const inner = (x, y) => mask(x, y) && mask(x - 1, y) && mask(x + 1, y) && mask(x, y - 1) && mask(x, y + 1);
-    [[8, 10], [9, 10], [8, 11], [13, 8], [14, 15], [15, 15], [14, 16], [15, 16], [7, 18], [11, 19], [12, 19]].forEach(([x, y]) => inner(x, y) && cv.set(x, y, body));
-    cv.set(9, 9, '#FFFFFF');
-    const prog = clamp((((Date.now() - p.born) / 60000) + (p.xp || 0) * CONFIG.chatGrowHours * 60) / CONFIG.hatchMinutes * 100) / 100;
-    if (prog > 0.5) [[6, 13], [7, 12], [8, 13], [9, 12], [10, 13], [11, 12], [12, 13], [13, 12], [14, 13], [15, 12], [16, 13]].forEach(([x, y]) => inner(x, y) && cv.set(x, y, INK));
-    if (prog > 0.85) [[11, 8], [12, 9], [11, 10]].forEach(([x, y]) => inner(x, y) && cv.set(x, y, INK));
-    return cv;
-  }
-
-  function defaultAccPos(type, p) {
-    const G = geom(Object.assign({}, p, { stage: p.stage === 'egg' ? 'adult' : p.stage }));
-    const w = ACC[type].rows[0].length;
-    switch (type) {
-      case 'ribbon': return { x: 11 + G.ox - 2, y: G.top - 1 };
-      case 'flower': return { x: 11 - G.ox, y: G.top };
-      case 'crown': return { x: 9, y: G.top - 2 };
-      case 'hat': return { x: 8, y: G.top - 3 };
-      case 'glasses': return { x: G.cL - 2, y: G.eyeMid - 2 };
-      case 'heart': return { x: 11 + G.ox, y: G.top - 3 };
-      case 'star': return { x: 11 - G.ox - 2, y: G.top - 3 };
-      case 'bow': return { x: 9, y: G.eyeMid + 5 };
-      case 'bandage': return { x: 22 - G.cL - 1, y: G.eyeMid + 2 };
-      default: return { x: 11 - Math.floor(w / 2), y: G.top };
-    }
-  }
-
-  function petCanvas(p, expr) {
-    if (p.stage === 'egg') return eggCanvas(p);
-    const G = geom(p), L = G.L, E = Object.assign({}, DEFAULT_EXTRA, p.extra || {});
-    const { k, rx, ry, cy, inBody, interior, top, ox, eyeMid, cL } = G;
-    const cv = Canvas();
-    let body = color(L.body, '#FFC8B4');
-    if (expr === 'sick') body = mix(body, '#B9E4B2', 0.4);
-    const line = lineOf(body);
-    const hair = color(L.hair, body), hairLine = lineOf(hair);
-    const pal = { K: INK, E: color(L.eye, INK), W: '#FFFFFF', M: '#D6455D', P: expr === 'shy' ? '#FF7A9A' : '#FF9DB0', N: '#E8507A', Q: '#F27A93', L: '#FF4D7A', B: '#7EC8FF' };
-    const palR = E.hetero ? Object.assign({}, pal, { E: color(E.eye2, pal.E) }) : pal;
-
-    for (let x = 0; x < N; x++) if (Math.abs(x - 11) <= rx * 0.75) cv.set(x, 22, 'rgba(0,0,0,0.10)');
-
-    // 날개
-    if (E.wings !== 'none') {
-      const wc = { angel: ['#FFFFFF', '#C9B8C0'], fairy: ['#C9F1EC', '#7CC7C0'], bat: ['#6B5A78', '#3D3347'] }[E.wings];
-      const wx = 11 - rx - 0.5, wy = cy - 3;
-      const m = E.wings === 'bat'
-        ? (x, y) => { const dx = Math.abs(x - 11) - (rx - 1); const dy = y - (wy - 2); return dx >= 0 && dx <= 4 && dy >= 0 && dy <= 6 - dx && !(dy === 6 - dx && dx % 2); }
-        : (x, y) => Math.pow((Math.abs(x - 11) - (11 - wx)) / 3.4, 2) + Math.pow((y - wy) / 2.6, 2) <= 1;
-      fillMask(cv, m, wc[0], wc[1]);
-    }
-    // 꼬리
-    if (E.tail !== 'none') {
-      const tx = Math.min(22, Math.round(11 + rx - 1)), ty = Math.round(cy + ry * 0.4);
-      if (E.tail === 'cat') { [[0, 0], [1, -1], [2, -2], [2, -3], [2, -4], [1, -5]].forEach(([dx, dy]) => { cv.set(tx + dx, ty + dy, hairLine); cv.set(tx + dx + 1, ty + dy, hair); }); }
-      else if (E.tail === 'fox') { fillMask(cv, (x, y) => Math.pow((x - tx - 1.5) / 2.6, 2) + Math.pow((y - ty + 2) / 3.6, 2) <= 1, hair, hairLine); cv.set(tx + 1, ty - 5, '#FFFFFF'); cv.set(tx + 2, ty - 5, '#FFFFFF'); }
-      else if (E.tail === 'devil') { [[0, 0], [1, -1], [2, -2], [2, -3], [2, -4]].forEach(([dx, dy]) => cv.set(tx + dx, ty + dy, '#CE7890')); stamp(cv, ['.R.', 'RRR'], tx + 1, ty - 6, { R: '#CE7890' }); }
-      else if (E.tail === 'bunny') { fillMask(cv, (x, y) => Math.hypot(x - tx - 0.5, y - ty) <= 1.8, '#FFFFFF', '#D9CBD2'); }
-    }
-    // 뒷머리
-    if (E.back !== 'none') {
-      const inExp = (x, y, d) => Math.pow(Math.abs((x - 11) / (rx + d)), G.n) + Math.pow(Math.abs((y + 0.5 - cy) / (ry + d)), G.n) <= 1;
-      let m;
-      if (E.back === 'bob') m = (x, y) => inExp(x, y, 1.3) && y <= cy + ry * 0.25;
-      else if (E.back === 'long') m = (x, y) => (inExp(x, y, 1.3) || (Math.abs(x - 11) <= rx + 1 && y > cy && y <= 21)) && y >= top;
-      else if (E.back === 'wave') m = (x, y) => (inExp(x, y, 1.3 + (y % 3 === 0 ? 0.7 : 0)) || (Math.abs(x - 11) <= rx + (y % 3 === 0 ? 1.5 : 0.8) && y > cy && y <= 21)) && y >= top;
-      else if (E.back === 'pony') m = (x, y) => Math.hypot(x - (11 + rx - 1), y - (top + 3)) <= 2.6 || (x >= 11 + rx - 1 && x <= 11 + rx + 1 && y >= top + 3 && y <= cy + 3);
-      else if (E.back === 'twin') m = (x, y) => [11 - rx + 0.5, 11 + rx - 0.5].some((c) => Math.hypot(x - c, y - (top + 3)) <= 2.3 || (Math.abs(x - c - (c < 11 ? -1 : 1)) <= 1 && y >= top + 3 && y <= cy + 4));
-      if (m) fillMask(cv, m, hair, hairLine);
-    }
-    // 귀
-    const t = L.top;
-    if (t === 'bear') {
-      const r = 1.5 + 0.8 * k;
-      fillMask(cv, (x, y) => Math.hypot(x - (11 - ox), y - (top + 0.5)) <= r || Math.hypot(x - (11 + ox), y - (top + 0.5)) <= r, hair, hairLine);
-      if (p.stage !== 'baby') { cv.set(11 - ox, top, pal.P); cv.set(11 + ox, top, pal.P); }
-    } else if (t === 'cat') {
-      const h = Math.round(3 + 2 * k);
-      fillMask(cv, (x, y) => { const r = y - (top + 1 - h); if (r < 0 || r > h + 1) return false; const hw = Math.floor(r * 0.65); return Math.abs(x - (11 - ox)) <= hw || Math.abs(x - (11 + ox)) <= hw; }, hair, hairLine);
-      if (p.stage !== 'baby') { cv.set(11 - ox, top - 1, pal.P); cv.set(11 + ox, top - 1, pal.P); }
-    } else if (t === 'bunny') {
-      const bx = Math.max(2, Math.round(rx * 0.4)), h = Math.round(4 + 3 * k);
-      fillMask(cv, (x, y) => y >= top + 1 - h && y <= top + 1 && [11 - bx, 11 + bx].some((c) => Math.abs(x - c) <= 1 && !(y === top + 1 - h && Math.abs(x - c) === 1)), hair, hairLine);
-      for (let y = top + 2 - h; y <= top - 1; y++) { cv.set(11 - bx, y, pal.P); cv.set(11 + bx, y, pal.P); }
-    }
-    // 몸
-    fillMask(cv, inBody, body, line);
-    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) if (interior(x, y) && !inBody(x, y + 2)) cv.set(x, y, shade(body, 0.93));
-    const hx = 11 - Math.round(rx * 0.55);
-    [[hx, top + 2], [hx + 1, top + 2], [hx, top + 3]].forEach(([x, y]) => interior(x, y) && cv.set(x, y, tint(body, 0.6)));
-
-    // 얼굴 위치 계산
-    const no = NOSES[L.nose] || NOSES.none;
-    const mTop = eyeMid + 2 + Math.max(1, no.rows.length);
-    // 옷
-    if (E.outfit !== 'none') {
-      const cloth = color(E.cloth, '#718FAF'), cl = lineOf(cloth);
-      const y0 = Math.max(mTop + 3, Math.round(cy + ry * 0.4));
-      for (let y = y0; y < N; y++) for (let x = 0; x < N; x++) if (inBody(x, y)) cv.set(x, y, interior(x, y) ? cloth : cl);
-      const W2 = '#FFF7EC';
-      if (E.outfit === 'shirt') { cv.set(10, y0, W2); cv.set(12, y0, W2); cv.set(11, y0 + 1, W2); }
-      if (E.outfit === 'dress') { for (let x = 0; x < N; x++) if (interior(x, 20)) cv.set(x, 20, W2); cv.set(11, y0, W2); }
-      if (E.outfit === 'hoodie') { for (let x = 0; x < N; x++) if (interior(x, y0)) cv.set(x, y0, tint(cloth, 0.3)); cv.set(10, y0 + 1, W2); cv.set(10, y0 + 2, W2); cv.set(12, y0 + 1, W2); cv.set(12, y0 + 2, W2); }
-      if (E.outfit === 'suit') { for (let i = 0; i < 3; i++) for (let x = 11 - (2 - i); x <= 11 + (2 - i); x++) cv.set(x, y0 + i, W2); cv.set(11, y0 + 1, '#D9534F'); cv.set(11, y0 + 2, '#D9534F'); cv.set(11, y0 + 3, '#D9534F'); }
-      if (E.outfit === 'sailor') { for (let x = 0; x < N; x++) if (interior(x, y0)) cv.set(x, y0, W2); [[10, y0 + 1], [12, y0 + 1], [11, y0 + 2]].forEach(([x, y]) => cv.set(x, y, '#E8607F')); }
-    }
-    // 앞머리
-    if (E.front !== 'none') {
-      const base = Math.round(1.5 + 2 * k);
-      const depth = {
-        straight: () => base, short: () => base - 1, curl: (x) => base + (x % 2 ? 1 : 0),
-        part: (x) => (x === 11 ? 0 : base + (Math.abs(x - 11) >= 3 ? 1 : 0)),
-        side: (x) => base + Math.round(((x - (11 - rx)) / (2 * rx)) * 3) - 1,
-        messy: (x) => base + [0, 2, 0, 1, 2, 0, 1][x % 7],
-        swoop: (x) => base + (x < 11 ? Math.min(4, 11 - x) : 0),
-      }[E.front] || (() => base);
-      for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-        if (!inBody(x, y)) continue;
-        const d = depth(x);
-        if (y > top + d) continue;
-        cv.set(x, y, !interior(x, y) || y === top + d ? hairLine : hair);
-      }
-    }
-    // 눈
-    const EY = EYES[L.eyes] || EYES.round;
-    const eyeRows = EXPR_EYES[expr] || EY.rows;
-    const eyeTop = eyeMid - Math.floor(eyeRows.length / 2);
-    stampPair(cv, eyeRows, cL, eyeTop, pal, null, !EXPR_EYES[expr] && EY.mirror, palR);
-    if (expr === 'angry') stampPair(cv, ['K..', '.KK'], cL, eyeTop - 2, pal, interior, true);
-    if (expr === 'sad') [[cL - 1, eyeTop + eyeRows.length], [cL - 1, eyeTop + eyeRows.length + 1]].forEach(([x, y]) => interior(x, y) && cv.set(x, y, pal.B));
-    // 볼
-    const ch = expr === 'shy' ? CHEEKS.round : CHEEKS[L.cheeks] || CHEEKS.none;
-    stampPair(cv, ch.rows, cL - 1, eyeMid + 3 - ch.rows.length, pal, interior);
-    // 코·입
-    if (no.rows.length) { const w = no.rows[0].length; stamp(cv, no.rows, 11 - Math.floor(w / 2), eyeMid + 2, pal, interior); }
-    let mRows = (MOUTHS[L.mouth] || MOUTHS.small).rows;
-    if ((expr === 'happy' || expr === 'love') && !['cat', 'tongue'].includes(L.mouth)) mRows = ['KKKKK', '.MMM.'];
-    else if (expr === 'sad' || expr === 'sick') mRows = ['.K.', 'K.K'];
-    else if (expr === 'angry') mRows = ['KKK'];
-    else if (expr === 'sleep') mRows = ['K'];
-    else if (expr === 'shy') mRows = ['.K.K.', 'K.K.K'];
-    const mw = Math.max(...mRows.map((r) => r.length));
-    stamp(cv, mRows, 11 - Math.floor(mw / 2), mTop, pal, interior);
-    // 포인트
-    if (E.mark === 'mole') cv.set(22 - cL + 1, eyeMid + 2, INK);
-    if (E.mark === 'scar') [[cL + 2, eyeMid - 3], [cL + 1, eyeMid - 2], [cL, eyeMid - 1]].forEach(([x, y]) => interior(x, y) && cv.set(x, y, '#C9787F'));
-    if (E.mark === 'freckles') [[cL - 1, eyeMid + 2], [cL + 1, eyeMid + 2], [22 - cL - 1, eyeMid + 2], [22 - cL + 1, eyeMid + 2]].forEach(([x, y]) => interior(x, y) && cv.set(x, y, '#C98A6A'));
-    if (expr === 'sick') [[11 + Math.round(rx * 0.6), top + 2], [11 + Math.round(rx * 0.6), top + 3]].forEach(([x, y]) => interior(x, y) && cv.set(x, y, pal.B));
-    // 장식
-    (E.accessories || []).forEach((a) => {
-      const def = ACC[a.type]; if (!def) return;
-      const c = color(a.c, def.c);
-      let rows = def.rows;
-      if (a.flip) rows = rows.map((r) => [...r].reverse().join(''));
-      stamp(cv, rows, a.x, a.y, { R: c, D: shade(c, 0.78), Y: '#FFD54A', B: '#FF6F91', W: '#FFF5DC' });
-    });
-    // 직접 그린 도트
-    (E.pixels || []).forEach((c, i) => { if (c) cv.set(i % 24, Math.floor(i / 24), c); });
-    return cv;
-  }
-  const drawPet = (p, expr = 'normal') => toSVG(petCanvas(p, expr));
 
   /* =========================================================
-   * 방 그림 — 방·가구·펫 모두 같은 도트 크기 (방 = 120 x 84 도트)
+   * 방 그림 — 방·가구·펫 모두 같은 도트 크기 (방 = 160 x 112 도트)
    * ========================================================= */
-  const RW = 120, RH = 84;
-  const FLOOR_Y = 52;
+  const RW = 160, RH = 112;
+  const FLOOR_Y = 69;
   let weatherCache = { mood: 'calm', night: false };
 
   function rectsSVG(w, h, draw, flip) {
@@ -378,107 +173,2009 @@
   const heartR = (r, x, y, c) => { r(x, y, 2, 1, c); r(x + 3, y, 2, 1, c); r(x, y + 1, 5, 1, c); r(x + 1, y + 2, 3, 1, c); r(x + 2, y + 3, 1, 1, c); };
 
   const FURN = {
-    window: { name: '창문', w: 30, h: 28, wall: 1, c: '#C98F78', draw(r, c) {
-      r(2, 0, 26, 24, K);
-      const { mood, night } = weatherCache;
-      let sky = { sweet: '#BFE6FF', shy: '#FFD6E4', storm: '#8C96A8', sad: '#5E6E96', calm: '#BFE6FF' }[mood];
-      if (night) sky = mood === 'calm' ? '#2E3157' : mix(sky, '#2E3157', 0.45);
-      r(4, 2, 22, 20, sky); r(4, 16, 22, 6, tint(sky, 0.18));
-      if (mood === 'sweet') { r(17, 4, 5, 5, '#FFD54A'); r(16, 5, 7, 3, '#FFD54A'); r(18, 3, 3, 7, '#FFD54A'); heartR(r, 6, 4, '#FF7AA2'); heartR(r, 8, 14, '#FF9DBB'); heartR(r, 19, 15, '#FF7AA2'); }
-      else if (mood === 'shy') { [[6, 4], [10, 9], [19, 5], [22, 12], [7, 16], [15, 18], [12, 3]].forEach(([x, y]) => { r(x, y, 2, 1, '#FF8FB1'); r(x + 1, y + 1, 1, 1, '#FFB3CC'); }); }
-      else if (mood === 'storm') { r(5, 3, 12, 4, '#6E7788'); r(8, 2, 6, 1, '#6E7788'); for (let i = 0; i < 9; i++) r(5 + ((i * 7) % 20), 8 + ((i * 5) % 12), 1, 2, '#D6E6F5'); }
-      else if (mood === 'sad') { for (let i = 0; i < 14; i++) r(5 + ((i * 7) % 20), 3 + ((i * 5) % 18), 1, 1, '#FFFFFF'); }
-      else if (night) { r(19, 4, 4, 4, '#FFF1A8'); r(20, 4, 3, 3, sky); r(19, 5, 2, 3, '#FFF1A8'); [[6, 5], [10, 9], [7, 14], [14, 4], [23, 13]].forEach(([x, y]) => r(x, y, 1, 1, '#FFF1A8')); }
-      else { r(6, 5, 8, 3, '#FFFFFF'); r(8, 4, 4, 1, '#FFFFFF'); r(17, 13, 7, 2, '#FFFFFF'); }
-      r(14, 2, 2, 20, K); r(4, 11, 22, 2, K);
-      r(0, 24, 30, 3, c); r(0, 24, 30, 1, tint(c, 0.35));
-    } },
-    curtain: { name: '커튼', w: 38, h: 30, wall: 1, c: '#FF9DBB', draw(r, c) {
-      r(0, 0, 38, 2, K); r(0, 0, 2, 3, K); r(36, 0, 2, 3, K);
-      const d = shade(c, 0.85);
-      r(2, 2, 7, 27, c); r(29, 2, 7, 27, c);
-      for (let y = 4; y < 28; y += 3) { r(4, y, 1, 2, d); r(7, y + 1, 1, 2, d); r(31, y, 1, 2, d); r(34, y + 1, 1, 2, d); }
-      r(2, 17, 7, 2, '#FFD54A'); r(29, 17, 7, 2, '#FFD54A');
-    } },
-    lights: { name: '조명줄', w: 60, h: 7, wall: 1, c: '#8A6F6A', gift: 300, draw(r, c) {
-      for (let x = 0; x < 60; x++) { const y = 1 + Math.round(Math.sin(x / 9) * 1.5 + 1.5); r(x, y, 1, 1, c); if (x % 7 === 3) r(x - 1, y + 1, 3, 2, ['#FF8FB1', '#FFD54A', '#8FD3FF', '#B9F5A0'][x % 4]); }
-    } },
-    frame: { name: '액자', w: 12, h: 12, wall: 1, c: '#E8A0B4', draw(r, c) { r(0, 0, 12, 12, K); r(1, 1, 10, 10, c); r(2, 2, 8, 8, '#FFF6EF'); heartR(r, 4, 4, c); } },
-    quote: { name: '명대사 액자', w: 22, h: 18, wall: 1, c: '#F2C86A', draw(r, c) { r(0, 0, 22, 18, shade(c, 0.8)); r(1, 1, 20, 16, c); r(3, 3, 16, 12, '#FFF8EC'); r(5, 5, 10, 1, '#9B8A86'); r(5, 8, 12, 1, '#9B8A86'); r(5, 11, 7, 1, '#9B8A86'); heartR(r, 12, 10, '#FF7AA2'); } },
-    clock: { name: '시계', w: 10, h: 10, wall: 1, c: '#FF9DBB', draw(r, c) {
-      r(2, 0, 6, 10, K); r(0, 2, 10, 6, K); r(1, 1, 8, 8, K); r(2, 1, 6, 8, c); r(1, 2, 8, 6, c); r(2, 2, 6, 6, '#FFF8EC');
-      const h = new Date().getHours() % 12; r(4, 4, 2, 2, K);
-      const dir = [[0, -1], [1, -1], [1, 0], [1, 0], [1, 1], [0, 1], [0, 1], [-1, 1], [-1, 0], [-1, 0], [-1, -1], [0, -1]][h];
-      r(4 + dir[0] * 2 + (dir[0] < 0 ? 1 : 0), 4 + dir[1] * 2 + (dir[1] < 0 ? 1 : 0), 1, 1, K);
-    } },
-    bed: { name: '포근한 침대', w: 30, h: 18, c: '#FF9DBB', draw(r, c) {
-      r(0, 2, 3, 16, K); r(1, 3, 1, 14, '#B07A66');
-      r(3, 8, 27, 8, K); r(4, 9, 25, 6, c); r(4, 9, 25, 1, tint(c, 0.4));
-      r(4, 5, 10, 6, K); r(5, 6, 8, 4, '#FFF6EF');
-      for (let x = 16; x < 28; x += 4) r(x, 12, 2, 1, tint(c, 0.4));
-      r(3, 16, 2, 2, K); r(27, 16, 2, 2, K);
-    } },
-    canopy: { name: '캐노피 침대', w: 32, h: 32, c: '#E2D2FF', gift: 1000, draw(r, c) {
-      r(0, 0, 2, 32, K); r(30, 0, 2, 32, K); r(0, 0, 32, 3, K); r(2, 1, 28, 1, c);
-      const t = tint(c, 0.45); r(2, 3, 5, 15, t); r(25, 3, 5, 15, t); for (let y = 5; y < 18; y += 3) { r(4, y, 1, 2, c); r(27, y, 1, 2, c); }
-      r(2, 22, 28, 8, K); r(3, 23, 26, 6, c); r(3, 23, 26, 1, tint(c, 0.5)); r(4, 19, 9, 5, K); r(5, 20, 7, 3, '#FFF6EF'); r(2, 30, 2, 2, K); r(28, 30, 2, 2, K);
-    } },
-    chair: { name: '의자', w: 12, h: 18, c: '#E8A0B4', draw(r, c) { r(1, 0, 10, 9, K); r(2, 1, 8, 7, c); r(0, 9, 12, 3, K); r(1, 9, 10, 2, tint(c, 0.3)); r(1, 12, 2, 6, K); r(9, 12, 2, 6, K); } },
-    sofa: { name: '소파', w: 32, h: 16, c: '#C4A3E0', gift: 100, draw(r, c) {
-      r(0, 2, 32, 12, K); r(2, 3, 28, 5, c); r(2, 8, 28, 4, tint(c, 0.25));
-      r(0, 4, 4, 10, K); r(1, 5, 2, 8, c); r(28, 4, 4, 10, K); r(29, 5, 2, 8, c);
-      r(11, 8, 1, 4, shade(c, 0.8)); r(20, 8, 1, 4, shade(c, 0.8)); r(2, 14, 2, 2, K); r(28, 14, 2, 2, K);
-    } },
-    desk: { name: '책상', w: 24, h: 16, c: '#D6A07F', draw(r, c) { r(0, 4, 24, 3, K); r(1, 4, 22, 2, c); r(1, 7, 2, 9, K); r(21, 7, 2, 9, K); r(14, 7, 8, 5, K); r(15, 8, 6, 3, c); r(17, 9, 2, 1, K); r(5, 0, 9, 4, K); r(6, 1, 7, 2, '#A3CED2'); } },
-    shelf: { name: '책장', w: 18, h: 26, c: '#C9A180', draw(r, c) {
-      r(0, 0, 18, 26, K); r(1, 1, 16, 24, c); r(1, 9, 16, 1, K); r(1, 17, 16, 1, K);
-      const books = ['#FF8FB1', '#7DA7F0', '#FFD54A', '#6CC46A', '#9C7BE0', '#FFF6EF'];
-      [2, 10, 18].forEach((y, i) => { for (let x = 2, j = i; x < 15; x += 3, j++) r(x, y + (j % 2), 2, 7 - (j % 2), books[j % books.length]); });
-    } },
-    plant: { name: '화분', w: 10, h: 18, c: '#E8A07F', draw(r, c) { const g = '#6CC46A', d = '#3E8E41'; r(3, 0, 4, 4, g); r(0, 3, 4, 5, g); r(6, 2, 4, 6, g); r(2, 6, 6, 5, g); r(4, 3, 2, 8, d); r(1, 11, 8, 7, K); r(2, 12, 6, 5, c); r(2, 12, 6, 1, tint(c, 0.4)); } },
-    sakura: { name: '벚꽃 화분', w: 14, h: 26, c: '#F0B48A', season: [3, 4, 5], draw(r, c) {
-      r(6, 8, 2, 11, '#8A5A44'); [[4, 0, 7], [0, 6, 6], [8, 7, 6], [4, 12, 5]].forEach(([x, y, s]) => { r(x, y, s, s, '#FFB3CC'); r(x + 1, y + 1, 2, 2, '#FFD9E6'); });
-      r(2, 19, 10, 7, K); r(3, 20, 8, 5, c);
-    } },
-    tree: { name: '트리', w: 20, h: 30, c: '#4FA36B', season: [12, 1, 2], draw(r, c) {
-      const d = shade(c, 0.75);
-      for (let i = 0; i < 4; i++) { const w = 6 + i * 4, y = 3 + i * 5; r(10 - w / 2, y, w, 6, d); r(10 - w / 2 + 1, y, w - 2, 5, c); }
-      r(8, 0, 4, 4, '#FFD54A'); r(9, 23, 2, 4, '#8A5A44'); r(5, 26, 10, 4, '#D9534F'); r(9, 26, 2, 4, '#FFD54A');
-      [[7, 9], [12, 14], [6, 18], [14, 20], [9, 21]].forEach(([x, y], i) => r(x, y, 2, 2, ['#FF8FB1', '#FFD54A', '#8FD3FF'][i % 3]));
-    } },
-    snowman: { name: '눈사람', w: 12, h: 18, c: '#FFFFFF', season: [12, 1, 2], draw(r, c) { r(3, 0, 6, 6, '#C9D6E3'); r(4, 1, 4, 4, c); r(1, 6, 10, 11, '#C9D6E3'); r(2, 7, 8, 9, c); r(5, 2, 1, 1, K); r(7, 2, 1, 1, K); r(6, 3, 2, 1, '#FF9F43'); r(2, 5, 8, 2, '#D9534F'); r(6, 10, 1, 1, K); r(6, 13, 1, 1, K); } },
-    balloons: { name: '생일 풍선', w: 12, h: 26, c: '#FF8FB1', special: 'birthday', draw(r, c) {
-      [[0, 0, c], [6, 2, '#FFD54A'], [3, 6, '#8FD3FF']].forEach(([x, y, col]) => { r(x, y, 6, 7, shade(col, 0.85)); r(x + 1, y, 4, 6, col); r(x + 1, y + 1, 1, 2, '#FFFFFF'); });
-      r(3, 9, 1, 15, '#9B8A86'); r(8, 9, 1, 15, '#9B8A86'); r(5, 13, 1, 11, '#9B8A86'); r(2, 23, 8, 3, K); r(3, 23, 6, 2, '#FFF6EF');
-    } },
-    rug: { name: '러그', w: 40, h: 10, c: '#FFD1DC', draw(r, c) {
-      for (let y = 0; y < 10; y++) { const hw = Math.round(20 * Math.sqrt(1 - Math.pow((y - 4.5) / 5, 2))); r(20 - hw, y, hw * 2, 1, y === 0 || y === 9 ? shade(c, 0.75) : c); }
-      for (let x = 4; x < 36; x += 6) r(x, 5, 3, 1, shade(c, 0.85));
-    } },
-    cushion: { name: '별 쿠션', w: 12, h: 8, c: '#FFD54A', draw(r, c) { r(1, 1, 10, 6, K); r(0, 2, 12, 4, K); r(1, 2, 10, 4, c); r(2, 1, 8, 1, c); r(5, 3, 2, 2, tint(c, 0.5)); } },
-    bear: { name: '곰 인형', w: 12, h: 14, c: '#C99A6A', draw(r, c) { r(0, 0, 4, 4, K); r(8, 0, 4, 4, K); r(1, 1, 2, 2, c); r(9, 1, 2, 2, c); r(1, 2, 10, 7, K); r(2, 3, 8, 5, c); r(4, 4, 1, 1, K); r(7, 4, 1, 1, K); r(5, 6, 2, 1, K); r(2, 9, 8, 5, K); r(3, 9, 6, 4, c); r(4, 10, 4, 2, tint(c, 0.4)); } },
-    lamp: { name: '스탠드', w: 10, h: 26, c: '#FFD1DC', draw(r, c) { r(1, 0, 8, 1, K); r(0, 1, 10, 7, K); r(1, 1, 8, 6, c); r(4, 8, 2, 16, K); r(1, 24, 8, 2, K); } },
-    nightstand: { name: '무드등 협탁', w: 10, h: 18, c: '#D6A07F', draw(r, c) { r(2, 0, 6, 1, '#FFD54A'); r(1, 1, 8, 5, '#FFF1A8'); r(4, 6, 2, 1, K); r(0, 7, 10, 11, K); r(1, 8, 8, 9, c); r(1, 12, 8, 1, K); r(4, 10, 2, 1, K); r(4, 14, 2, 1, K); } },
-    roundtable: { name: '원형 테이블', w: 16, h: 14, c: '#D6A07F', draw(r, c) { r(5, 0, 5, 5, K); r(6, 1, 3, 3, '#FFF6EF'); r(10, 1, 2, 2, K); r(0, 5, 16, 3, K); r(1, 5, 14, 2, c); r(7, 8, 2, 5, K); r(4, 13, 8, 1, K); } },
-    coffee: { name: '커피머신', w: 10, h: 14, c: '#7DA7F0', draw(r, c) { r(0, 0, 10, 14, K); r(1, 1, 8, 4, c); r(1, 5, 2, 8, c); r(7, 5, 2, 8, c); r(3, 6, 4, 1, K); r(4, 10, 3, 3, '#FFF6EF'); r(7, 2, 1, 1, '#FF8FB1'); } },
-    tv: { name: 'TV', w: 22, h: 20, c: '#9C7BE0', gift: 500, draw(r, c) { r(0, 0, 22, 14, K); r(2, 2, 18, 10, '#2E3157'); heartR(r, 9, 5, '#FF8FB1'); r(3, 3, 3, 1, '#5E6E96'); r(9, 14, 4, 2, K); r(2, 16, 18, 4, K); r(3, 17, 16, 2, c); } },
-    wardrobe: { name: '옷장', w: 18, h: 30, c: '#E3C3A8', gift: 1500, draw(r, c) { r(0, 0, 18, 30, K); r(1, 1, 16, 27, c); r(9, 1, 1, 27, K); r(7, 12, 1, 4, K); r(10, 12, 1, 4, K); r(1, 1, 16, 1, tint(c, 0.4)); r(1, 28, 2, 2, K); r(15, 28, 2, 2, K); } },
-    vanity: { name: '화장대', w: 18, h: 26, c: '#FFB3C7', gift: 2000, draw(r, c) { r(4, 0, 10, 12, K); r(5, 1, 8, 10, '#CFE8F2'); r(6, 2, 2, 3, '#FFFFFF'); r(0, 12, 18, 3, K); r(1, 12, 16, 2, c); r(1, 15, 6, 6, K); r(2, 16, 4, 4, c); r(11, 15, 6, 6, K); r(12, 16, 4, 4, c); r(1, 21, 2, 5, K); r(15, 21, 2, 5, K); r(13, 9, 2, 3, '#FF6F91'); } },
-    cake: { name: '케이크 테이블', w: 16, h: 16, c: '#FFB3C7', draw(r, c) { r(4, 0, 2, 3, '#FFD54A'); r(3, 3, 10, 6, K); r(4, 4, 8, 4, c); r(4, 4, 8, 1, '#FFF6EF'); r(0, 9, 16, 3, K); r(1, 9, 14, 2, '#D6A07F'); r(2, 12, 2, 4, K); r(12, 12, 2, 4, K); } },
-  };
-  const FREE_FURN = ['window', 'curtain', 'frame', 'quote', 'clock', 'bed', 'chair', 'desk', 'shelf', 'plant', 'rug', 'cushion', 'bear', 'lamp', 'nightstand', 'roundtable', 'coffee', 'cake'];
-  const GIFTS = [[100, 'sofa'], [300, 'lights'], [500, 'tv'], [1000, 'canopy'], [1500, 'wardrobe'], [2000, 'vanity']];
-  const furnSVG = (type, c, flip) => { const F = FURN[type]; return rectsSVG(F.w, F.h, (r) => F.draw(r, color(c, F.c)), flip); };
-
-  function roomBG(R) {
-    const wall = color(R.wall, '#FFE3D3'), floor = color(R.floor, '#E8B896');
-    return rectsSVG(RW, RH, (r) => {
-      r(0, 0, RW, FLOOR_Y, wall); for (let x = 0; x < RW; x += 8) r(x, 0, 4, FLOOR_Y, shade(wall, 0.975));
-      r(0, FLOOR_Y - 2, RW, 3, shade(wall, 0.78));
-      r(0, FLOOR_Y + 1, RW, RH - FLOOR_Y, floor);
-      for (let y = FLOOR_Y + 6; y < RH; y += 6) { r(0, y, RW, 1, shade(floor, 0.93)); for (let x = ((y / 6) % 2) * 10; x < RW; x += 20) r(x, y - 5, 1, 5, shade(floor, 0.95)); }
-    });
+  "window": {
+    "name": "창문",
+    "w": 30,
+    "h": 28,
+    "c": "#C98F78",
+    "wall": 1,
+    "rows": [
+      "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+      "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+      "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+      "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+      "..aabbbbccccbbaabbbbbbbbbbaa..",
+      "..aabbccccccccaabbbbbbbbbbaa..",
+      "..aabbccccccccaabbbbbbbbbbaa..",
+      "..aabbccccccccaabbbbbbbbbbaa..",
+      "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+      "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+      "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+      "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+      "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+      "..aabbbbbbbbbbaabcccccccbbaa..",
+      "..aabbbbbbbbbbaabcccccccbbaa..",
+      "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+      "..aaddddddddddaaddddddddddaa..",
+      "..aaddddddddddaaddddddddddaa..",
+      "..aaddddddddddaaddddddddddaa..",
+      "..aaddddddddddaaddddddddddaa..",
+      "..aaddddddddddaaddddddddddaa..",
+      "..aaddddddddddaaddddddddddaa..",
+      "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+      "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+      "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "ffffffffffffffffffffffffffffff",
+      "ffffffffffffffffffffffffffffff",
+      ".............................."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "#BFE6FF",
+      "c": "#FFFFFF",
+      "d": "#cbebff",
+      "e": "$l",
+      "f": "$b"
+    },
+    "maps": {
+      "calm": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbccccbbaabbbbbbbbbbaa..",
+          "..aabbccccccccaabbbbbbbbbbaa..",
+          "..aabbccccccccaabbbbbbbbbbaa..",
+          "..aabbccccccccaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabcccccccbbaa..",
+          "..aabbbbbbbbbbaabcccccccbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "ffffffffffffffffffffffffffffff",
+          "ffffffffffffffffffffffffffffff",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#BFE6FF",
+          "c": "#FFFFFF",
+          "d": "#cbebff",
+          "e": "$l",
+          "f": "$b"
+        }
+      },
+      "calmNight": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbcbbbbbbaa..",
+          "..aabbcbbbbbbbaabbbccbbbbbaa..",
+          "..aabbbbbbbbbbaabbbccbbbbbaa..",
+          "..aabbbbbbbbbbaabbbccccbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbcbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbcbbaa..",
+          "..aabbbcbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "ffffffffffffffffffffffffffffff",
+          "ffffffffffffffffffffffffffffff",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#2E3157",
+          "c": "#FFF1A8",
+          "d": "#545675",
+          "e": "$l",
+          "f": "$b"
+        }
+      },
+      "sweet": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbcccbbbbbaa..",
+          "..aabbddbddbbbaabcccccbbbbaa..",
+          "..aabbdddddbbbaacccccccbbbaa..",
+          "..aabbbdddbbbbaacccccccbbbaa..",
+          "..aabbbbdbbbbbaacccccccbbbaa..",
+          "..aabbbbbbbbbbaabcccccbbbbaa..",
+          "..aabbbbbbbbbbaabbcccbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbeebeebaabbbbbbbbbbaa..",
+          "..aabbbbeeeeebaabbbddbddbbaa..",
+          "..aafffffeeeffaafffdddddffaa..",
+          "..aaffffffefffaaffffdddfffaa..",
+          "..aaffffffffffaafffffdffffaa..",
+          "..aaffffffffffaaffffffffffaa..",
+          "..aaffffffffffaaffffffffffaa..",
+          "..aaffffffffffaaffffffffffaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "gggggggggggggggggggggggggggggg",
+          "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+          "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#BFE6FF",
+          "c": "#FFD54A",
+          "d": "#FF7AA2",
+          "e": "#FF9DBB",
+          "f": "#cbebff",
+          "g": "$l",
+          "h": "$b"
+        }
+      },
+      "sweetNight": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbcccbbbbbaa..",
+          "..aabbddbddbbbaabcccccbbbbaa..",
+          "..aabbdddddbbbaacccccccbbbaa..",
+          "..aabbbdddbbbbaacccccccbbbaa..",
+          "..aabbbbdbbbbbaacccccccbbbaa..",
+          "..aabbbbbbbbbbaabcccccbbbbaa..",
+          "..aabbbbbbbbbbaabbcccbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbeebeebaabbbbbbbbbbaa..",
+          "..aabbbbeeeeebaabbbddbddbbaa..",
+          "..aafffffeeeffaafffdddddffaa..",
+          "..aaffffffefffaaffffdddfffaa..",
+          "..aaffffffffffaafffffdffffaa..",
+          "..aaffffffffffaaffffffffffaa..",
+          "..aaffffffffffaaffffffffffaa..",
+          "..aaffffffffffaaffffffffffaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "gggggggggggggggggggggggggggggg",
+          "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+          "hhhhhhhhhhhhhhhhhhhhhhhhhhhhhh",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#7e95b3",
+          "c": "#FFD54A",
+          "d": "#FF7AA2",
+          "e": "#FF9DBB",
+          "f": "#95a8c1",
+          "g": "$l",
+          "h": "$b"
+        }
+      },
+      "shy": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbccaabbbbbbbbbbaa..",
+          "..aabbccbbbbbdaabbbbbbbbbbaa..",
+          "..aabbbdbbbbbbaabbbccbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbdbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbccbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbdbbaabbbbbbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbdbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaeeecceeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeedeeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaceeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaadeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "ffffffffffffffffffffffffffffff",
+          "gggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggg",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#FFD6E4",
+          "c": "#FF8FB1",
+          "d": "#FFB3CC",
+          "e": "#ffdde9",
+          "f": "$l",
+          "g": "$b"
+        }
+      },
+      "shyNight": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbccaabbbbbbbbbbaa..",
+          "..aabbccbbbbbdaabbbbbbbbbbaa..",
+          "..aabbbdbbbbbbaabbbccbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbdbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbccbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbdbbaabbbbbbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbdbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aaeeecceeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeedeeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaceeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaadeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "ffffffffffffffffffffffffffffff",
+          "gggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggg",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#a18ca5",
+          "c": "#FF8FB1",
+          "d": "#FFB3CC",
+          "e": "#b2a1b5",
+          "f": "$l",
+          "g": "$b"
+        }
+      },
+      "storm": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbccccccaabbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabdbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabdbbbbbbbbaabbbbdbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbdbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbdbaabbbbbdbbbbaa..",
+          "..aabbbdbbbbdbaabbbbbbbbbbaa..",
+          "..aabbbdbbbbbbaabbbbbbbbbbaa..",
+          "..aaeeeeeeeeedaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeedaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeedeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeedeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "ffffffffffffffffffffffffffffff",
+          "gggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggg",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#8C96A8",
+          "c": "#6E7788",
+          "d": "#D6E6F5",
+          "e": "#a1a9b8",
+          "f": "$l",
+          "g": "$b"
+        }
+      },
+      "stormNight": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbccccccaabbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabcccccccccaacbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabdbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabdbbbbbbbbaabbbbdbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbdbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbdbaabbbbbdbbbbaa..",
+          "..aabbbdbbbbdbaabbbbbbbbbbaa..",
+          "..aabbbdbbbbbbaabbbbbbbbbbaa..",
+          "..aaeeeeeeeeedaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeedaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeedeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeedeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaeeeeeeeeeeaaeeeeeeeeeeaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "ffffffffffffffffffffffffffffff",
+          "gggggggggggggggggggggggggggggg",
+          "gggggggggggggggggggggggggggggg",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#626984",
+          "c": "#6E7788",
+          "d": "#D6E6F5",
+          "e": "#7e849a",
+          "f": "$l",
+          "g": "$b"
+        }
+      },
+      "sad": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabcbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbcbbbaa..",
+          "..aabbbbbbbbbcaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbcbbbbaa..",
+          "..aabbbbbbbbcbaabbbbbbbbbbaa..",
+          "..aabbbbbcbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbcbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbcbbbbbbaa..",
+          "..aabbbbbbbbbbaacbbbbbbbbbaa..",
+          "..aabbbcbbbbbbaabbbbbbbbbbaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddcdddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "ffffffffffffffffffffffffffffff",
+          "ffffffffffffffffffffffffffffff",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#5E6E96",
+          "c": "#FFFFFF",
+          "d": "#7b88a9",
+          "e": "$l",
+          "f": "$b"
+        }
+      },
+      "sadNight": {
+        "rows": [
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabcbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbcbbbaa..",
+          "..aabbbbbbbbbcaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbbcbbbbaa..",
+          "..aabbbbbbbbcbaabbbbbbbbbbaa..",
+          "..aabbbbbcbbbbaabbbbbbbbbbaa..",
+          "..aabbbbbbbbbbaabbbbcbbbbbaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aabbbbbbbbbbaabbbcbbbbbbaa..",
+          "..aabbbbbbbbbbaacbbbbbbbbbaa..",
+          "..aabbbcbbbbbbaabbbbbbbbbbaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddcdddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaddddddddddaaddddddddddaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "..aaaaaaaaaaaaaaaaaaaaaaaaaa..",
+          "eeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+          "ffffffffffffffffffffffffffffff",
+          "ffffffffffffffffffffffffffffff",
+          ".............................."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "#48537a",
+          "c": "#FFFFFF",
+          "d": "#697292",
+          "e": "$l",
+          "f": "$b"
+        }
+      }
+    }
+  },
+  "curtain": {
+    "name": "커튼",
+    "w": 38,
+    "h": 30,
+    "c": "#FF9DBB",
+    "wall": 1,
+    "rows": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "aabbbbbbb....................bbbbbbbaa",
+      "..bbbbbbb....................bbbbbbb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..ddddddd....................ddddddd..",
+      "..ddddddd....................ddddddd..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbcbbbb....................bbcbbbb..",
+      "..bbcbbcb....................bbcbbcb..",
+      "..bbbbbcb....................bbbbbcb..",
+      "..bbbbbbb....................bbbbbbb..",
+      "......................................"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "$s",
+      "d": "#FFD54A"
+    }
+  },
+  "lights": {
+    "name": "조명줄",
+    "w": 60,
+    "h": 7,
+    "c": "#8A6F6A",
+    "wall": 1,
+    "gift": 300,
+    "rows": [
+      "............................................................",
+      "...................................aaaaaaaaaaaaaaa..........",
+      ".............................aaaaaa..bbb....ccc...aaaaaaa...",
+      "aaaaaaa...............aaaaaaa.ddd....bbb....ccc....eee...aaa",
+      "..ddd..aaaaaaaaaaaaaaa.eee....ddd..................eee....dd",
+      "..ddd....bbb....ccc....eee................................dd",
+      ".........bbb....ccc........................................."
+    ],
+    "palette": {
+      "a": "$b",
+      "b": "#8FD3FF",
+      "c": "#FFD54A",
+      "d": "#B9F5A0",
+      "e": "#FF8FB1"
+    }
+  },
+  "frame": {
+    "name": "액자",
+    "w": 12,
+    "h": 12,
+    "c": "#E8A0B4",
+    "wall": 1,
+    "rows": [
+      "aaaaaaaaaaaa",
+      "abbbbbbbbbba",
+      "abccccccccba",
+      "abccccccccba",
+      "abccbbcbbcba",
+      "abccbbbbbcba",
+      "abcccbbbccba",
+      "abccccbcccba",
+      "abccccccccba",
+      "abccccccccba",
+      "abbbbbbbbbba",
+      "aaaaaaaaaaaa"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "#FFF6EF"
+    }
+  },
+  "quote": {
+    "name": "명대사 액자",
+    "w": 22,
+    "h": 18,
+    "c": "#F2C86A",
+    "wall": 1,
+    "rows": [
+      "aaaaaaaaaaaaaaaaaaaaaa",
+      "abbbbbbbbbbbbbbbbbbbba",
+      "abbbbbbbbbbbbbbbbbbbba",
+      "abbccccccccccccccccbba",
+      "abbccccccccccccccccbba",
+      "abbccddddddddddccccbba",
+      "abbccccccccccccccccbba",
+      "abbccccccccccccccccbba",
+      "abbccddddddddddddccbba",
+      "abbccccccccccccccccbba",
+      "abbccccccccceeceeccbba",
+      "abbccdddddddeeeeeccbba",
+      "abbcccccccccceeecccbba",
+      "abbccccccccccceccccbba",
+      "abbccccccccccccccccbba",
+      "abbbbbbbbbbbbbbbbbbbba",
+      "abbbbbbbbbbbbbbbbbbbba",
+      "aaaaaaaaaaaaaaaaaaaaaa"
+    ],
+    "palette": {
+      "a": "$s",
+      "b": "$b",
+      "c": "#FFF8EC",
+      "d": "#9B8A86",
+      "e": "#FF7AA2"
+    }
+  },
+  "clock": {
+    "name": "시계",
+    "w": 10,
+    "h": 10,
+    "c": "#FF9DBB",
+    "wall": 1,
+    "rows": [
+      "..aaaaaa..",
+      ".abbbbbba.",
+      "abccccccba",
+      "abccccccba",
+      "abccaaacba",
+      "abccaaccba",
+      "abccccccba",
+      "abccccccba",
+      ".abbbbbba.",
+      "..aaaaaa.."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "#FFF8EC"
+    },
+    "maps": {
+      "calm": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaacba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour0": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccacccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour1": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccacba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour2": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaacba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour3": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaacba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour4": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccccacba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour5": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccacccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour6": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccacccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour7": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abcaccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour8": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abcaaaccba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour9": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccccccba",
+          "abcaaaccba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour10": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abcaccccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      },
+      "hour11": {
+        "rows": [
+          "..aaaaaa..",
+          ".abbbbbba.",
+          "abccccccba",
+          "abccacccba",
+          "abccaaccba",
+          "abccaaccba",
+          "abccccccba",
+          "abccccccba",
+          ".abbbbbba.",
+          "..aaaaaa.."
+        ],
+        "palette": {
+          "a": "$O",
+          "b": "$b",
+          "c": "#FFF8EC"
+        }
+      }
+    }
+  },
+  "bed": {
+    "name": "포근한 침대",
+    "w": 30,
+    "h": 18,
+    "c": "#FF9DBB",
+    "wall": 0,
+    "rows": [
+      "..............................",
+      "..............................",
+      "aaa...........................",
+      "aba...........................",
+      "aba...........................",
+      "aba.aaaaaaaaaa................",
+      "aba.acccccccca................",
+      "aba.acccccccca................",
+      "abaaaccccccccaaaaaaaaaaaaaaaaa",
+      "abaaaccccccccaddddddddddddddda",
+      "abaaaaaaaaaaaaeeeeeeeeeeeeeeea",
+      "abaaeeeeeeeeeeeeeeeeeeeeeeeeea",
+      "abaaeeeeeeeeeeeeddeeddeeddeeea",
+      "abaaeeeeeeeeeeeeeeeeeeeeeeeeea",
+      "abaaeeeeeeeeeeeeeeeeeeeeeeeeea",
+      "abaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "abaaa......................aa.",
+      "aaaaa......................aa."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "#B07A66",
+      "c": "#FFF6EF",
+      "d": "$l",
+      "e": "$b"
+    }
+  },
+  "canopy": {
+    "name": "캐노피 침대",
+    "w": 32,
+    "h": 32,
+    "c": "#E2D2FF",
+    "wall": 0,
+    "gift": 1000,
+    "rows": [
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "aabbbbbbbbbbbbbbbbbbbbbbbbbbbbaa",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "aaccccc..................cccccaa",
+      "aaccccc..................cccccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccccc..................cccccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccccc..................cccccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccccc..................cccccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccbcc..................ccbccaa",
+      "aaccccc..................cccccaa",
+      "aaccbcc..................ccbccaa",
+      "aa..b......................b..aa",
+      "aa..aaaaaaaaa.................aa",
+      "aa..addddddda.................aa",
+      "aa..addddddda.................aa",
+      "aaaaadddddddaaaaaaaaaaaaaaaaaaaa",
+      "aaaeaaaaaaaaaeeeeeeeeeeeeeeeeaaa",
+      "aaabbbbbbbbbbbbbbbbbbbbbbbbbbaaa",
+      "aaabbbbbbbbbbbbbbbbbbbbbbbbbbaaa",
+      "aaabbbbbbbbbbbbbbbbbbbbbbbbbbaaa",
+      "aaabbbbbbbbbbbbbbbbbbbbbbbbbbaaa",
+      "aaabbbbbbbbbbbbbbbbbbbbbbbbbbaaa",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "aaaa........................aaaa",
+      "aaaa........................aaaa"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "$l",
+      "d": "#FFF6EF",
+      "e": "$l"
+    }
+  },
+  "chair": {
+    "name": "의자",
+    "w": 12,
+    "h": 18,
+    "c": "#E8A0B4",
+    "wall": 0,
+    "rows": [
+      ".aaaaaaaaaa.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".aaaaaaaaaa.",
+      "acccccccccca",
+      "acccccccccca",
+      "aaaaaaaaaaaa",
+      ".aa......aa.",
+      ".aa......aa.",
+      ".aa......aa.",
+      ".aa......aa.",
+      ".aa......aa.",
+      ".aa......aa."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "$l"
+    }
+  },
+  "sofa": {
+    "name": "소파",
+    "w": 32,
+    "h": 16,
+    "c": "#C4A3E0",
+    "wall": 0,
+    "gift": 100,
+    "rows": [
+      "................................",
+      "................................",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "aabbbbbbbbbbbbbbbbbbbbbbbbbbbbaa",
+      "aaaabbbbbbbbbbbbbbbbbbbbbbbbaaaa",
+      "abbabbbbbbbbbbbbbbbbbbbbbbbbabba",
+      "abbabbbbbbbbbbbbbbbbbbbbbbbbabba",
+      "abbabbbbbbbbbbbbbbbbbbbbbbbbabba",
+      "abbacccccccdccccccccdcccccccabba",
+      "abbacccccccdccccccccdcccccccabba",
+      "abbacccccccdccccccccdcccccccabba",
+      "abbacccccccdccccccccdcccccccabba",
+      "abbaaaaaaaaaaaaaaaaaaaaaaaaaabba",
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "..aa........................aa..",
+      "..aa........................aa.."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "$l",
+      "d": "$s"
+    }
+  },
+  "desk": {
+    "name": "책상",
+    "w": 24,
+    "h": 16,
+    "c": "#D6A07F",
+    "wall": 0,
+    "rows": [
+      ".....aaaaaaaaa..........",
+      ".....abbbbbbba..........",
+      ".....abbbbbbba..........",
+      ".....aaaaaaaaa..........",
+      "acccccccccccccccccccccca",
+      "acccccccccccccccccccccca",
+      "aaaaaaaaaaaaaaaaaaaaaaaa",
+      ".aa...........aaaaaaaaa.",
+      ".aa...........accccccaa.",
+      ".aa...........accaaccaa.",
+      ".aa...........accccccaa.",
+      ".aa...........aaaaaaaaa.",
+      ".aa..................aa.",
+      ".aa..................aa.",
+      ".aa..................aa.",
+      ".aa..................aa."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "#A3CED2",
+      "c": "$b"
+    }
+  },
+  "shelf": {
+    "name": "책장",
+    "w": 18,
+    "h": 26,
+    "c": "#C9A180",
+    "wall": 0,
+    "rows": [
+      "aaaaaaaaaaaaaaaaaa",
+      "abbbbbbbbbbbbbbbba",
+      "abccbbbbddbbbbeeba",
+      "abccbffbddbggbeeba",
+      "abccbffbddbggbeeba",
+      "abccbffbddbggbeeba",
+      "abccbffbddbggbeeba",
+      "abccbffbddbggbeeba",
+      "abccbffbddbggbeeba",
+      "aaaaaaaaaaaaaaaaaa",
+      "abbbbddbbbbeebbbba",
+      "abffbddbggbeebhhba",
+      "abffbddbggbeebhhba",
+      "abffbddbggbeebhhba",
+      "abffbddbggbeebhhba",
+      "abffbddbggbeebhhba",
+      "abffbddbggbeebhhba",
+      "aaaaaaaaaaaaaaaaaa",
+      "abddbbbbeebbbbccba",
+      "abddbggbeebhhbccba",
+      "abddbggbeebhhbccba",
+      "abddbggbeebhhbccba",
+      "abddbggbeebhhbccba",
+      "abddbggbeebhhbccba",
+      "abddbggbeebhhbccba",
+      "aaaaaaaaaaaaaaaaaa"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "#FF8FB1",
+      "d": "#FFD54A",
+      "e": "#9C7BE0",
+      "f": "#7DA7F0",
+      "g": "#6CC46A",
+      "h": "#FFF6EF"
+    }
+  },
+  "plant": {
+    "name": "화분",
+    "w": 10,
+    "h": 18,
+    "c": "#E8A07F",
+    "wall": 0,
+    "rows": [
+      "...aaaa...",
+      "...aaaa...",
+      "...aaaaaaa",
+      "aaaabbaaaa",
+      "aaaabbaaaa",
+      "aaaabbaaaa",
+      "aaaabbaaaa",
+      "aaaabbaaaa",
+      "..aabbaa..",
+      "..aabbaa..",
+      "..aabbaa..",
+      ".cccccccc.",
+      ".cddddddc.",
+      ".ceeeeeec.",
+      ".ceeeeeec.",
+      ".ceeeeeec.",
+      ".ceeeeeec.",
+      ".cccccccc."
+    ],
+    "palette": {
+      "a": "#6CC46A",
+      "b": "#3E8E41",
+      "c": "$O",
+      "d": "$l",
+      "e": "$b"
+    }
+  },
+  "sakura": {
+    "name": "벚꽃 화분",
+    "w": 14,
+    "h": 26,
+    "c": "#F0B48A",
+    "wall": 0,
+    "season": [
+      3,
+      4,
+      5
+    ],
+    "rows": [
+      "....aaaaaaa...",
+      "....abbaaaa...",
+      "....abbaaaa...",
+      "....aaaaaaa...",
+      "....aaaaaaa...",
+      "....aaaaaaa...",
+      "aaaaaaaaaaa...",
+      "abbaaa..aaaaaa",
+      "abbaaaccabbaaa",
+      "aaaaaaccabbaaa",
+      "aaaaaaccaaaaaa",
+      "aaaaaaccaaaaaa",
+      "....aaaaaaaaaa",
+      "....abbaa.....",
+      "....abbaa.....",
+      "....aaaaa.....",
+      "....aaaaa.....",
+      "......cc......",
+      "......cc......",
+      "..dddddddddd..",
+      "..deeeeeeeed..",
+      "..deeeeeeeed..",
+      "..deeeeeeeed..",
+      "..deeeeeeeed..",
+      "..deeeeeeeed..",
+      "..dddddddddd.."
+    ],
+    "palette": {
+      "a": "#FFB3CC",
+      "b": "#FFD9E6",
+      "c": "#8A5A44",
+      "d": "$O",
+      "e": "$b"
+    }
+  },
+  "tree": {
+    "name": "트리",
+    "w": 20,
+    "h": 30,
+    "c": "#4FA36B",
+    "wall": 0,
+    "season": [
+      12,
+      1,
+      2
+    ],
+    "rows": [
+      "........aaaa........",
+      "........aaaa........",
+      "........aaaa........",
+      ".......baaaab.......",
+      ".......bccccb.......",
+      ".......bccccb.......",
+      ".......bccccb.......",
+      ".......bccccb.......",
+      ".....bccccccccb.....",
+      ".....bcddcccccb.....",
+      ".....bcddcccccb.....",
+      ".....bccccccccb.....",
+      ".....bccccccccb.....",
+      "...bccccccccccccb...",
+      "...bccccccccaaccb...",
+      "...bccccccccaaccb...",
+      "...bccccccccccccb...",
+      "...bccccccccccccb...",
+      ".bcccceeccccccccccb.",
+      ".bcccceeccccccccccb.",
+      ".bccccccccccccddccb.",
+      ".bcccccccaacccddccb.",
+      ".bcccccccaacccccccb.",
+      ".bbbbbbbbffbbbbbbbb.",
+      ".........ff.........",
+      ".........ff.........",
+      ".....ggggaagggg.....",
+      ".....ggggaagggg.....",
+      ".....ggggaagggg.....",
+      ".....ggggaagggg....."
+    ],
+    "palette": {
+      "a": "#FFD54A",
+      "b": "$s",
+      "c": "$b",
+      "d": "#FF8FB1",
+      "e": "#8FD3FF",
+      "f": "#8A5A44",
+      "g": "#D9534F"
+    }
+  },
+  "snowman": {
+    "name": "눈사람",
+    "w": 12,
+    "h": 18,
+    "c": "#FFFFFF",
+    "wall": 0,
+    "season": [
+      12,
+      1,
+      2
+    ],
+    "rows": [
+      "...aaaaaa...",
+      "...abbbba...",
+      "...abcbca...",
+      "...abbdda...",
+      "...abbbba...",
+      "..eeeeeeee..",
+      ".aeeeeeeeea.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbcbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".abbbbcbbba.",
+      ".abbbbbbbba.",
+      ".abbbbbbbba.",
+      ".aaaaaaaaaa.",
+      "............"
+    ],
+    "palette": {
+      "a": "#C9D6E3",
+      "b": "$b",
+      "c": "$O",
+      "d": "#FF9F43",
+      "e": "#D9534F"
+    }
+  },
+  "balloons": {
+    "name": "생일 풍선",
+    "w": 12,
+    "h": 26,
+    "c": "#FF8FB1",
+    "wall": 0,
+    "special": "birthday",
+    "rows": [
+      "abbbba......",
+      "acbbba......",
+      "acbbbadeeeed",
+      "abbbbadceeed",
+      "abbbbadceeed",
+      "abbbbadeeeed",
+      "aaafggggfeed",
+      "...fcgggfeed",
+      "...fcgggfddd",
+      "...hggggh...",
+      "...hggggh...",
+      "...hggggh...",
+      "...hffffh...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "...h.h..h...",
+      "..ijjjjjji..",
+      "..ijjjjjji..",
+      "..iiiiiiii.."
+    ],
+    "palette": {
+      "a": "$s",
+      "b": "$b",
+      "c": "#FFFFFF",
+      "d": "#d9b53f",
+      "e": "#FFD54A",
+      "f": "#7ab3d9",
+      "g": "#8FD3FF",
+      "h": "#9B8A86",
+      "i": "$O",
+      "j": "#FFF6EF"
+    }
+  },
+  "rug": {
+    "name": "러그",
+    "w": 40,
+    "h": 10,
+    "c": "#FFD1DC",
+    "wall": 0,
+    "rows": [
+      "...........aaaaaaaaaaaaaaaaaa...........",
+      "......bbbbbbbbbbbbbbbbbbbbbbbbbbbb......",
+      "...bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb...",
+      ".bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.",
+      "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "bbbbcccbbbcccbbbcccbbbcccbbbcccbbbcccbbb",
+      ".bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb.",
+      "...bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb...",
+      "......bbbbbbbbbbbbbbbbbbbbbbbbbbbb......",
+      "...........aaaaaaaaaaaaaaaaaa..........."
+    ],
+    "palette": {
+      "a": "$s",
+      "b": "$b",
+      "c": "$s"
+    }
+  },
+  "cushion": {
+    "name": "별 쿠션",
+    "w": 12,
+    "h": 8,
+    "c": "#FFD54A",
+    "wall": 0,
+    "rows": [
+      "............",
+      ".abbbbbbbba.",
+      "abbbbbbbbbba",
+      "abbbbccbbbba",
+      "abbbbccbbbba",
+      "abbbbbbbbbba",
+      ".aaaaaaaaaa.",
+      "............"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "$l"
+    }
+  },
+  "bear": {
+    "name": "곰 인형",
+    "w": 12,
+    "h": 14,
+    "c": "#C99A6A",
+    "wall": 0,
+    "rows": [
+      "aaaa....aaaa",
+      "abba....abba",
+      "aaaaaaaaaaaa",
+      "aabbbbbbbbaa",
+      ".abbabbabba.",
+      ".abbbbbbbba.",
+      ".abbbaabbba.",
+      ".abbbbbbbba.",
+      ".aaaaaaaaaa.",
+      "..abbbbbba..",
+      "..abccccba..",
+      "..abccccba..",
+      "..abbbbbba..",
+      "..aaaaaaaa.."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "$l"
+    }
+  },
+  "lamp": {
+    "name": "스탠드",
+    "w": 10,
+    "h": 26,
+    "c": "#FFD1DC",
+    "wall": 0,
+    "rows": [
+      ".aaaaaaaa.",
+      "abbbbbbbba",
+      "abbbbbbbba",
+      "abbbbbbbba",
+      "abbbbbbbba",
+      "abbbbbbbba",
+      "abbbbbbbba",
+      "aaaaaaaaaa",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      "....aa....",
+      ".aaaaaaaa.",
+      ".aaaaaaaa."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b"
+    }
+  },
+  "nightstand": {
+    "name": "무드등 협탁",
+    "w": 10,
+    "h": 18,
+    "c": "#D6A07F",
+    "wall": 0,
+    "rows": [
+      "..aaaaaa..",
+      ".bbbbbbbb.",
+      ".bbbbbbbb.",
+      ".bbbbbbbb.",
+      ".bbbbbbbb.",
+      ".bbbbbbbb.",
+      "....cc....",
+      "cccccccccc",
+      "cddddddddc",
+      "cddddddddc",
+      "cdddccdddc",
+      "cddddddddc",
+      "cccccccccc",
+      "cddddddddc",
+      "cdddccdddc",
+      "cddddddddc",
+      "cddddddddc",
+      "cccccccccc"
+    ],
+    "palette": {
+      "a": "#FFD54A",
+      "b": "#FFF1A8",
+      "c": "$O",
+      "d": "$b"
+    }
+  },
+  "roundtable": {
+    "name": "원형 테이블",
+    "w": 16,
+    "h": 14,
+    "c": "#D6A07F",
+    "wall": 0,
+    "rows": [
+      ".....aaaaa......",
+      ".....abbbaaa....",
+      ".....abbbaaa....",
+      ".....abbba......",
+      ".....aaaaa......",
+      "acccccccccccccca",
+      "acccccccccccccca",
+      "aaaaaaaaaaaaaaaa",
+      ".......aa.......",
+      ".......aa.......",
+      ".......aa.......",
+      ".......aa.......",
+      ".......aa.......",
+      "....aaaaaaaa...."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "#FFF6EF",
+      "c": "$b"
+    }
+  },
+  "coffee": {
+    "name": "커피머신",
+    "w": 10,
+    "h": 14,
+    "c": "#7DA7F0",
+    "wall": 0,
+    "rows": [
+      "aaaaaaaaaa",
+      "abbbbbbbba",
+      "abbbbbbcba",
+      "abbbbbbbba",
+      "abbbbbbbba",
+      "abbaaaabba",
+      "abbaaaabba",
+      "abbaaaabba",
+      "abbaaaabba",
+      "abbaaaabba",
+      "abbadddbba",
+      "abbadddbba",
+      "abbadddbba",
+      "aaaaaaaaaa"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$b",
+      "c": "#FF8FB1",
+      "d": "#FFF6EF"
+    }
+  },
+  "tv": {
+    "name": "TV",
+    "w": 22,
+    "h": 20,
+    "c": "#9C7BE0",
+    "wall": 0,
+    "gift": 500,
+    "rows": [
+      "aaaaaaaaaaaaaaaaaaaaaa",
+      "aaaaaaaaaaaaaaaaaaaaaa",
+      "aabbbbbbbbbbbbbbbbbbaa",
+      "aabcccbbbbbbbbbbbbbbaa",
+      "aabbbbbbbbbbbbbbbbbbaa",
+      "aabbbbbbbddbddbbbbbbaa",
+      "aabbbbbbbdddddbbbbbbaa",
+      "aabbbbbbbbdddbbbbbbbaa",
+      "aabbbbbbbbbdbbbbbbbbaa",
+      "aabbbbbbbbbbbbbbbbbbaa",
+      "aabbbbbbbbbbbbbbbbbbaa",
+      "aabbbbbbbbbbbbbbbbbbaa",
+      "aaaaaaaaaaaaaaaaaaaaaa",
+      "aaaaaaaaaaaaaaaaaaaaaa",
+      ".........aaaa.........",
+      ".........aaaa.........",
+      "..aaaaaaaaaaaaaaaaaa..",
+      "..aeeeeeeeeeeeeeeeea..",
+      "..aeeeeeeeeeeeeeeeea..",
+      "..aaaaaaaaaaaaaaaaaa.."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "#2E3157",
+      "c": "#5E6E96",
+      "d": "#FF8FB1",
+      "e": "$b"
+    }
+  },
+  "wardrobe": {
+    "name": "옷장",
+    "w": 18,
+    "h": 30,
+    "c": "#E3C3A8",
+    "wall": 0,
+    "gift": 1500,
+    "rows": [
+      "aaaaaaaaaaaaaaaaaa",
+      "abbbbbbbbbbbbbbbba",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccacaacccccca",
+      "accccccacaacccccca",
+      "accccccacaacccccca",
+      "accccccacaacccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "accccccccaccccccca",
+      "aaaaaaaaaaaaaaaaaa",
+      "aaaaaaaaaaaaaaaaaa"
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "$l",
+      "c": "$b"
+    }
+  },
+  "vanity": {
+    "name": "화장대",
+    "w": 18,
+    "h": 26,
+    "c": "#FFB3C7",
+    "wall": 0,
+    "gift": 2000,
+    "rows": [
+      "....aaaaaaaaaa....",
+      "....abbbbbbbba....",
+      "....abccbbbbba....",
+      "....abccbbbbba....",
+      "....abccbbbbba....",
+      "....abbbbbbbba....",
+      "....abbbbbbbba....",
+      "....abbbbbbbba....",
+      "....abbbbbbbba....",
+      "....abbbbbbbbdd...",
+      "....abbbbbbbbdd...",
+      "....aaaaaaaaadd...",
+      "aeeeeeeeeeeeeeeeea",
+      "aeeeeeeeeeeeeeeeea",
+      "aaaaaaaaaaaaaaaaaa",
+      ".aaaaaa....aaaaaa.",
+      ".aeeeea....aeeeea.",
+      ".aeeeea....aeeeea.",
+      ".aeeeea....aeeeea.",
+      ".aeeeea....aeeeea.",
+      ".aaaaaa....aaaaaa.",
+      ".aa............aa.",
+      ".aa............aa.",
+      ".aa............aa.",
+      ".aa............aa.",
+      ".aa............aa."
+    ],
+    "palette": {
+      "a": "$O",
+      "b": "#CFE8F2",
+      "c": "#FFFFFF",
+      "d": "#FF6F91",
+      "e": "$b"
+    }
+  },
+  "cake": {
+    "name": "케이크 테이블",
+    "w": 16,
+    "h": 16,
+    "c": "#FFB3C7",
+    "wall": 0,
+    "rows": [
+      "....aa..........",
+      "....aa..........",
+      "....aa..........",
+      "...bbbbbbbbbb...",
+      "...bccccccccb...",
+      "...bddddddddb...",
+      "...bddddddddb...",
+      "...bddddddddb...",
+      "...bbbbbbbbbb...",
+      "beeeeeeeeeeeeeeb",
+      "beeeeeeeeeeeeeeb",
+      "bbbbbbbbbbbbbbbb",
+      "..bb........bb..",
+      "..bb........bb..",
+      "..bb........bb..",
+      "..bb........bb.."
+    ],
+    "palette": {
+      "a": "#FFD54A",
+      "b": "$O",
+      "c": "#FFF6EF",
+      "d": "$b",
+      "e": "#D6A07F"
+    }
   }
+};
+  const FOOD_MAPS = {
+  "rice": {
+    "rows": [
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "..............aaaaa.............",
+      "..............aaaaa.............",
+      "..............aaaaa.............",
+      "..............bbbbb.............",
+      ".........aaaaabbbbbaaaa.........",
+      ".........aaaaabbbbbaaaa.........",
+      ".........aaaaabbbbbaaaa.........",
+      ".........aabbbbbbbbbbbb.........",
+      ".....aaaaaabbbbbbbbbbbbaaaa.....",
+      ".....aaaaaabbbbbbbbbbbbaaaa.....",
+      ".....aaaaaabbbbbbbbbbbbaaaa.....",
+      ".....aaabbbbbbbbbbbbbbbbaaa.....",
+      ".....aaabbbbbbbbbbbbbbbbaaa.....",
+      ".....aaabbbbccccccccbbbbaaa.....",
+      ".....aaabbbbccccccccbbbbaaa.....",
+      ".....aaabbbbccccccccbbbbaaa.....",
+      ".....aaabbbbccccccccbbbbaaa.....",
+      ".....aaabbbbccccccccbbbbaaa.....",
+      ".....aaaaaaaccccccccaaaaaaa.....",
+      ".....aaaaaaaccccccccaaaaaaa.....",
+      ".....aaaaaaaccccccccaaaaaaa.....",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#534655",
+      "b": "#fff5dc",
+      "c": "#547b66"
+    }
+  },
+  "cake": {
+    "rows": [
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "..............aaaa..............",
+      "..............aaaa..............",
+      ".............baaaab.............",
+      ".............bbbbbb.............",
+      ".............bbbbbb.............",
+      ".............bbbbbb.............",
+      ".............bbbbbb.............",
+      ".............bbbbbb.............",
+      ".............bbbbbb.............",
+      "....cccccccccccccccccccccccc....",
+      "....cccccccccccccccccccccccc....",
+      "....cccccccccccccccccccccccc....",
+      "....cccccccccccccccccccccccc....",
+      "....dddddddddddddddddddddddd....",
+      "....dddddddddddddddddddddddd....",
+      "....dddddddddddddddddddddddd....",
+      "....dddddddddddddddddddddddd....",
+      "....cccccccccccccccccccccccc....",
+      "....cccccccccccccccccccccccc....",
+      "....cccccccccccccccccccccccc....",
+      "....dddddddddddddddddddddddd....",
+      "....dddddddddddddddddddddddd....",
+      "....dddddddddddddddddddddddd....",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#7ca78c",
+      "b": "#d96779",
+      "c": "#fff5dc",
+      "d": "#e889a3"
+    }
+  },
+  "cookie": {
+    "rows": [
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      ".........aaaaaaaaaaaaaa.........",
+      ".........aaaaaaaaaaaaaa.........",
+      ".........aaaaaaaaaaaaaa.........",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaabbbaaaaaaabbbaaa.....",
+      ".....aaaaaabbbaaaaaaabbbaaa.....",
+      ".....aaaaaabbbaaaaaaabbbaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaaaaaaaaabbbaaaaaaa.....",
+      ".....aaaaaaaaaaaabbbaaaaaaa.....",
+      ".....aaaaaaaaaaaabbbaaaaaaa.....",
+      ".....aaaaaaaaaaaaaaaaaaaaaa.....",
+      ".....aaaaabbbaaaaaaaaaabbba.....",
+      ".....aaaaabbbaaaaaaaaaabbba.....",
+      ".........abbbaaaaaaaaaabbb......",
+      ".........aaaaaaaaaaaaaa.........",
+      ".........aaaaaaaaaaaaaa.........",
+      ".........aaaaaaaaaaaaaa.........",
+      "................................",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#ce995f",
+      "b": "#76513f"
+    }
+  },
+  "milk": {
+    "rows": [
+      "................................",
+      "................................",
+      "..........aaaaaaaaaaa...........",
+      ".........aaaaaaaaaaaaa..........",
+      "........aaaaaaaaaaaaaaa.........",
+      "........aaabbbbbbbbbaaa.........",
+      ".......aaaabbbbbbbbbaaaa........",
+      "......aaaaabbbbbbbbbaaaaa.......",
+      "......aaaaaaaaaaaaaaaaaaa.......",
+      "......aaaaaaaaaaaaaaaaaaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aabbbbbbbbbbbbbbbaa.......",
+      "......aabbbbbbbbbbbbbbbaa.......",
+      "......aabbbbbbbbbbbbbbbaa.......",
+      "......aabbbbbdddddbbbbbaa.......",
+      "......aabbbbbdddddbbbbbaa.......",
+      "......aabbbbbdddddbbbbbaa.......",
+      "......aabbbbbdddddbbbbbaa.......",
+      "......aabbbbbbbbbbbbbbbaa.......",
+      "......aabbbbbbbbbbbbbbbaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aacccccccccccccccaa.......",
+      "......aaaaaaaaaaaaaaaaaaa.......",
+      "......aaaaaaaaaaaaaaaaaaa.......",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#534655",
+      "b": "#e889a3",
+      "c": "#fff5dc",
+      "d": "#fff"
+    }
+  },
+  "berry": {
+    "rows": [
+      "................................",
+      "................................",
+      "..............aaaaa.............",
+      "..............aaaaa.............",
+      "..............aaaaa.............",
+      "........aaaaaaaaaaa.............",
+      "........aaaaaaaaaaaaaaaaa.......",
+      "........aaaaaaaaaaaaaaaaa.......",
+      "........aaaaaaaaaaaaaaaaa.......",
+      "........aaaaaaaaaaaaaaaaa.......",
+      "................................",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbccbbbbbbbbccbbbbb.....",
+      ".....bbbbbccbbbbbbbbccbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".........bbbbbbccbbbbbbb........",
+      ".........bbbbbbccbbbbbbb........",
+      ".........bbbbbbbbbbbbbbb........",
+      ".........bbbbbbbbbbbbbbb........",
+      ".........bbbbbbbbbbbbbbb........",
+      ".............bbbbbbb............",
+      ".............bbbbbbb............",
+      ".............bbbbbbb............",
+      ".............bbbbbbb............",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#7ca78c",
+      "b": "#e57c90",
+      "c": "#fff5dc"
+    }
+  },
+  "ramen": {
+    "rows": [
+      "................................",
+      "....................aa...aa.....",
+      "....................aa...aa.....",
+      "....................aa...aa.....",
+      "....................aa...aa.....",
+      "....................aa...aa.....",
+      "....................aa...aa.....",
+      "...............bbb..aa...aa.....",
+      "...............bbb..aa...aa.....",
+      ".........bbb...bbb..aabb.aa.....",
+      ".........bbb...bbb..aabb.aa.....",
+      ".........bbb...bbb...bbb........",
+      ".........bbb...bbb...bbb........",
+      "....cccccbbbcccbbbcccbbbcccc....",
+      "....cccccccccccccccccccccccc....",
+      "...dccccccccccccccccccccccccd...",
+      "...dddddddddddddddddddddddddd...",
+      "...dddddddddddddddddddddddddd...",
+      "...dddddddddddddddddddddddddd...",
+      "...dddddddddddddddddddddddddd...",
+      "...dddddddddddddddddddddddddd...",
+      "...dddddddddddddddddddddddddd...",
+      ".......dddddddddddddddddd.......",
+      ".......dddddddddddddddddd.......",
+      ".......dddddddddddddddddd.......",
+      ".......dddddddddddddddddd.......",
+      ".......dddddddddddddddddd.......",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#534655",
+      "b": "#e4c075",
+      "c": "#fff5dc",
+      "d": "#e889a3"
+    }
+  },
+  "pudding": {
+    "rows": [
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "................................",
+      "..........aaaaaaaaaaaaa.........",
+      "..........aaaaaaaaaaaaa.........",
+      ".........baaaaaaaaaaaaab........",
+      ".........baaaaaaaaaaaaab........",
+      ".........baaaaaaaaaaaaab........",
+      "........bbbbbbbbbbbbbbbb........",
+      "........bbbbbbbbbbbbbbbb........",
+      "........bbbbbbbbbbbbbbbbb.......",
+      "........bbbbbbbbbbbbbbbbb.......",
+      ".......bbbbbbbbbbbbbbbbbb.......",
+      ".......bbbbbbbbbbbbbbbbbb.......",
+      ".......bbbbbbbbbbbbbbbbbbb......",
+      ".......bbbbbbbbbbbbbbbbbbb......",
+      "......bbbbbbbbbbbbbbbbbbbb......",
+      "......bbbbbbbbbbbbbbbbbbbb......",
+      "......bbbbbbbbbbbbbbbbbbbb......",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      ".....bbbbbbbbbbbbbbbbbbbbbb.....",
+      "................................",
+      "...ccccccccccccccccccccccccccc..",
+      "...ccccccccccccccccccccccccccc..",
+      "...ccccccccccccccccccccccccccc..",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#ad7658",
+      "b": "#eccb80",
+      "c": "#fff5dc"
+    }
+  },
+  "tea": {
+    "rows": [
+      "................................",
+      ".................aa.............",
+      ".................aa.............",
+      ".........aa......aa.............",
+      ".........aa......aa.............",
+      ".........aa......aa.............",
+      ".........aa......aa.............",
+      ".........aa.....................",
+      "................................",
+      "................................",
+      "................................",
+      ".....bbbbbbbbbbbbbbbbbbb........",
+      ".....bbcccccccccccccccbb........",
+      ".....bbcccccccccccccccbb........",
+      ".....bbcccccccccccccccbbbbbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbbbbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbbbbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbddbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbddbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbddbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbddbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbbbbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbbbbbb...",
+      ".....bbbbbbbbbbbbbbbbbbbbbbbb...",
+      ".....bbbbbbbbbbbbbbbbbbb........",
+      ".....bbbbbbbbbbbbbbbbbbb........",
+      ".....bbbbbbbbbbbbbbbbbbb........",
+      ".....bbbbbbbbbbbbbbbbbbb........",
+      "................................",
+      "................................",
+      "................................",
+      "................................"
+    ],
+    "palette": {
+      "a": "#534655",
+      "b": "#e889a3",
+      "c": "#7f664c",
+      "d": "#fff5dc"
+    }
+  }
+};
+  const FREE_FURN = ['window', 'curtain', 'frame', 'quote', 'clock', 'bed', 'chair', 'desk', 'shelf', 'plant', 'rug', 'cushion', 'bear', 'lamp', 'nightstand', 'roundtable', 'coffee', 'cake', 'sakura', 'tree', 'snowman'];
+  const GIFTS = [[100, 'sofa'], [300, 'lights'], [500, 'tv'], [1000, 'canopy'], [1500, 'wardrobe'], [2000, 'vanity']];
+  function mapSVG(def,c,flip){const cv=Canvas(def.rows[0].length,def.rows.length),pal={};const p=palette(c||'#c9a180');for(const[k,v]of Object.entries(def.palette))pal[k]=v[0]==='$'?p[v.slice(1)]:v;stamp(cv,flip?flipRows(def.rows):def.rows,0,0,pal);return toSVG(cv);}
+  function furnSVG(type,c,flip){const F=FURN[type];if(!F)return'';const def=F.maps?F.maps[type==='clock'?'hour'+new Date().getHours()%12:weatherCache.mood+(weatherCache.night?'Night':'')]||F:F;return mapSVG(def,color(c,F.c),flip);}
+
+  // 벽과 바닥도 역할 문자 타일 지도로 그려 펫과 같은 한 칸 격자를 써요.
+  const WALL_TILE=['aaaawwww','aaaawwww','aaaawwww','aaaawwww'];
+  const FLOOR_TILE=['ffffffffffffffffffff','ffffffffffhfffffffff','ffffffffffhfffffffff','ffffffffffhfffffffff','ffffffffffhfffffffff','dddddddddddddddddddd'];
+  function roomBG(R){const wall=color(R.wall,'#FFE3D3'),floor=color(R.floor,'#E8B896'),cv=Canvas(RW,RH),pal={w:wall,a:shade(wall,.975),b:shade(wall,.78),f:floor,h:shade(floor,.95),d:shade(floor,.93)};for(let y=0;y<RH;y++)for(let x=0;x<RW;x++){const ch=y<FLOOR_Y-2?WALL_TILE[y%4][x%8]:y<=FLOOR_Y?'b':FLOOR_TILE[(y-FLOOR_Y-1)%6][x%20];cv.set(x,y,pal[ch]);}return toSVG(cv);}
 
   /* ---------- 작은 효과 그림 ---------- */
   const PARTICLES = {
@@ -498,19 +2195,7 @@
   }
 
   /* ---------- 음식 아이콘 ---------- */
-  function foodIcon(type) {
-    const s = '#534655', p = '#fff5dc', g = '#7ca78c', a = '#e889a3';
-    let o = ''; const r = (x, y, w, h, f) => { o += `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${f}"/>`; }; const path = (d, f) => { o += `<path d="${d}" fill="${f}"/>`; };
-    if (type === 'rice') { path('M14 4H19V8H23V12H27V25H5V12H9V8H14Z', s); path('M14 7H19V11H23V15H24V22H8V15H11V11H14Z', p); r(12, 17, 8, 8, '#547b66'); }
-    else if (type === 'cake') { r(4, 13, 24, 14, a); r(4, 13, 24, 4, p); r(4, 21, 24, 3, p); r(13, 6, 6, 7, '#d96779'); r(14, 4, 4, 3, g); }
-    else if (type === 'cookie') { path('M9 4H23V7H27V24H23V28H9V24H5V7H9Z', '#ce995f'); for (const [x, y] of [[11, 10], [21, 10], [17, 18], [10, 22], [23, 22]]) r(x, y, 3, 3, '#76513f'); }
-    else if (type === 'milk') { path('M10 2H21L25 8V30H6V8Z', s); r(8, 10, 15, 18, p); r(8, 15, 15, 9, a); r(11, 5, 9, 3, a); r(13, 18, 5, 4, '#fff'); }
-    else if (type === 'berry') { path('M5 11H27V20H24V25H20V29H13V25H9V20H5Z', '#e57c90'); path('M8 5H14V2H19V6H25V10H8Z', g); for (const [x, y] of [[10, 14], [20, 14], [15, 20]]) r(x, y, 2, 2, p); }
-    else if (type === 'ramen') { path('M3 15H29V22H25V27H7V22H3Z', a); r(4, 13, 24, 3, p); r(9, 9, 3, 5, '#e4c075'); r(15, 7, 3, 7, '#e4c075'); r(21, 9, 3, 5, '#e4c075'); r(20, 1, 2, 10, s); r(25, 1, 2, 10, s); }
-    else if (type === 'pudding') { path('M10 7H23L27 25H5Z', '#eccb80'); r(10, 7, 13, 5, '#ad7658'); r(3, 26, 27, 3, p); }
-    else if (type === 'tea') { r(5, 11, 19, 17, a); r(24, 14, 5, 10, a); r(24, 17, 2, 4, p); r(7, 12, 15, 3, '#7f664c'); r(9, 3, 2, 5, s); r(17, 1, 2, 6, s); }
-    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">${o}</svg>`;
-  }
+  function foodIcon(type){return mapSVG(FOOD_MAPS[type]||FOOD_MAPS.rice);}
 
   /* =========================================================
    * 데이터
@@ -609,21 +2294,15 @@
       look: Object.assign({}, DEFAULT_LOOK), extra: copy(DEFAULT_EXTRA),
       profile: { type: 'sweet', user: '너', birthday: '', met: day(), symbol: '#EF8DA3', favorite: 'cake', dislike: '', lines: '' } };
   }
-  function defaultRoom() {
-    return { theme: 'peach', wall: THEMES.peach[1], floor: THEMES.peach[2], items: [
-      { id: uid(), type: 'window', x: 8, y: 8, c: null, flip: false },
-      { id: uid(), type: 'curtain', x: 4, y: 6, c: null, flip: false },
-      { id: uid(), type: 'bed', x: 86, y: 44, c: null, flip: false },
-      { id: uid(), type: 'nightstand', x: 74, y: 44, c: null, flip: false },
-      { id: uid(), type: 'plant', x: 3, y: 42, c: null, flip: false },
-      { id: uid(), type: 'rug', x: 38, y: 66, c: null, flip: false },
-    ] };
-  }
+  function defaultRoom(){return{theme:'peach',wall:THEMES.peach[1],floor:THEMES.peach[2],items:[
+    {id:uid(),type:'window',x:12,y:13,c:null,flip:false},{id:uid(),type:'curtain',x:8,y:11,c:null,flip:false},
+    {id:uid(),type:'bed',x:119,y:69,c:null,flip:false},{id:uid(),type:'nightstand',x:106,y:60,c:null,flip:false},
+    {id:uid(),type:'plant',x:9,y:68,c:null,flip:false},{id:uid(),type:'rug',x:53,y:94,c:null,flip:false}]};}
   const SETS = { front: FRONTS, back: BACKS, outfit: OUTFITS, wings: WINGS, tail: TAILS, mark: MARKS };
   function sanitizeAcc(list) {
     return (Array.isArray(list) ? list : []).slice(0, 16).filter((a) => a && ACC[a.type]).map((a) => ({
       id: /^[a-z0-9_-]{1,40}$/i.test(a.id) ? a.id : uid(), type: a.type,
-      x: Math.round(clamp(a.x, -6, 24)), y: Math.round(clamp(a.y, -6, 24)), c: color(a.c, ACC[a.type].c), flip: !!a.flip,
+      x: Math.round(clamp(a.x, -8, 31)), y: Math.round(clamp(a.y, -8, 31)), c: color(a.c, ACC[a.type].c), flip: !!a.flip,
     }));
   }
   function sanitizePet(v) {
@@ -635,7 +2314,10 @@
     p.stage = ['egg', 'baby', 'child', 'adult'].includes(v.stage) ? v.stage : 'egg';
     p.sleeping = !!v.sleeping;
     p.day = { d: day(), chats: v.day && v.day.d === day() ? clamp(v.day.chats, 0, 1e6) : 0 };
-    const look = v.look || {};
+    const look = Object.assign({}, v.look || {});
+    const shapeAliases={square:'round',teardrop:'drop',sdHead:'sd',human:'sd',bean:'bean'};
+    look.shape=shapeAliases[look.shape]||look.shape;
+    if(look.eyes==='shiny')look.eyes='shine'; if(look.eyes==='droopy')look.eyes='droop'; if(look.mouth==='open')look.mouth='smile';
     const enums = { shape: SHAPES, top: TOPS, eyes: EYES, nose: NOSES, mouth: MOUTHS, cheeks: CHEEKS };
     for (const [k, obj] of Object.entries(enums)) if (Object.prototype.hasOwnProperty.call(obj, look[k])) p.look[k] = look[k];
     p.look.body = color(look.body, DEFAULT_LOOK.body);
@@ -645,36 +2327,42 @@
     for (const [k, obj] of Object.entries(SETS)) if (Object.prototype.hasOwnProperty.call(obj, ex[k])) p.extra[k] = ex[k];
     if (look.top === 'bangs' && p.extra.front === 'none') p.extra.front = 'straight';
     p.extra.cloth = color(ex.cloth, DEFAULT_EXTRA.cloth); p.extra.eye2 = color(ex.eye2, DEFAULT_EXTRA.eye2); p.extra.hetero = !!ex.hetero;
-    // v3의 장식(48칸)은 24칸으로 옮겨요
-    let accs = Array.isArray(ex.accessories) ? ex.accessories : [];
-    if (ex.model !== undefined && accs.length && v.__v3) accs = accs.map((a) => Object.assign({}, a, { x: Math.round((a.x || 0) / 2), y: Math.round((a.y || 0) / 2) }));
-    p.extra.accessories = sanitizeAcc(accs);
-    if (look.acc && ACC[look.acc] && !p.extra.accessories.length) { const pos = defaultAccPos(look.acc, p); p.extra.accessories.push({ id: uid(), type: look.acc, x: pos.x, y: pos.y, c: ACC[look.acc].c, flip: false }); }
-    if (Array.isArray(ex.pixels) && ex.pixels.length === 576) p.extra.pixels = ex.pixels.map((c) => (isColor(c) ? c : null));
+    const is32=ex.pixelVersion===32||Array.isArray(ex.pixels)&&ex.pixels.length===1024;
+    let accs=Array.isArray(ex.accessories)?ex.accessories:[];
+    if(!is32)accs=accs.map(a=>Object.assign({},a,{x:Math.round((a.x||0)*(v.__v3&&ex.model!==undefined?2/3:4/3)),y:Math.round((a.y||0)*(v.__v3&&ex.model!==undefined?2/3:4/3))}));
+    p.extra.accessories=sanitizeAcc(accs);
+    if(look.acc&&ACC[look.acc]&&!p.extra.accessories.length){const pos=defaultAccPos(look.acc,p);p.extra.accessories.push({id:uid(),type:look.acc,...pos,c:ACC[look.acc].c,flip:false});}
+    p.extra.scars=(Array.isArray(ex.scars)?ex.scars:[]).slice(0,12).filter(a=>a&&SCARS[a.type]).map(a=>({id:/^[a-z0-9_-]{1,40}$/i.test(a.id)?a.id:uid(),type:a.type,side:a.side==='right'?'right':'left',color:a.color==='brown'?'brown':'pink'}));
+    if(ex.mark==='scar'&&!p.extra.scars.some(a=>a.type==='eye'))p.extra.scars.push({id:uid(),type:'eye',side:'left',color:'pink'});
+    if(Array.isArray(ex.pixels)&&ex.pixels.length===1024)p.extra.pixels=ex.pixels.map(c=>isColor(c)?c:null);
+    else if(Array.isArray(ex.pixels)&&ex.pixels.length===576){for(let y=0;y<32;y++)for(let x=0;x<32;x++){const c=ex.pixels[Math.floor(y*24/32)*24+Math.floor(x*24/32)];p.extra.pixels[y*32+x]=isColor(c)?c:null;}}
+    p.extra.pixelVersion=32;
     const pr = v.profile || {};
     p.profile = { type: TYPES[pr.type] ? pr.type : 'sweet', user: text(pr.user, '너', 20) || '너', birthday: /^\d{4}-\d\d-\d\d$/.test(pr.birthday) ? pr.birthday : '', met: /^\d{4}-\d\d-\d\d$/.test(pr.met) ? pr.met : day(), symbol: color(pr.symbol, '#EF8DA3'), favorite: FOODS[pr.favorite] ? pr.favorite : 'cake', dislike: FOODS[pr.dislike] ? pr.dislike : '', lines: text(pr.lines, '', 1200) };
     return p;
   }
-  function sanitizeRoom(r, fromV3) {
+  function sanitizeRoom(r, fromV3, from31 = false) {
     const d = defaultRoom(); if (!r || typeof r !== 'object') return d;
     d.theme = THEMES[r.theme] ? r.theme : 'peach';
     d.wall = color(r.wall, THEMES[d.theme][1]); d.floor = color(r.floor, THEMES[d.theme][2]);
     if (Array.isArray(r.items)) d.items = r.items.slice(0, 40).filter((a) => a && FURN[a.type]).map((a) => {
       const F = FURN[a.type];
       let x = a.x, y = a.y;
-      if (fromV3) { x = Math.round(a.x * 1.2 - F.w / 2); y = Math.round(a.y * 0.84 - F.h * 0.7); y = F.wall ? clamp(y, 2, FLOOR_Y - F.h) : clamp(y, FLOOR_Y - F.h + 6, RH - F.h); }
+      if (from31) { x = Math.round(x * 4/3); y = Math.round(y * 4/3); }
+      if (fromV3) { x = Math.round(a.x * 1.6 - F.w / 2); y = Math.round(a.y * 1.12 - F.h * 0.7); y = F.wall ? clamp(y, 2, FLOOR_Y - F.h) : clamp(y, FLOOR_Y - F.h + 6, RH - F.h); }
       return { id: /^[a-z0-9_-]{1,40}$/i.test(a.id) ? a.id : uid(), type: a.type, x: Math.round(clamp(x, -F.w + 4, RW - 4)), y: Math.round(clamp(y, -F.h + 4, RH - 4)), c: isColor(a.c) ? a.c : null, flip: !!a.flip };
     });
     return d;
   }
   function normalize(v) {
-    const d = { v: 3, ver: 31, active: 0, pets: [freshPet()], room: defaultRoom(), buddy: -1, mode: 'cozy', last: Date.now(), hidden: false, pos: { x: 0.9, y: 0.78 }, scale: 60, react: true, walk: true, bubbles: true, album: [], presets: [], quotes: [], hung: null, days: {}, unlocked: [], gifted: [] };
+    const d = { v: 3, ver: 32, active: 0, pets: [freshPet()], room: defaultRoom(), buddy: -1, mode: 'cozy', last: Date.now(), hidden: false, pos: { x: 0.9, y: 0.78 }, scale: 60, react: true, walk: true, bubbles: true, album: [], presets: [], quotes: [], hung: null, days: {}, unlocked: [], gifted: [] };
     if (!v || typeof v !== 'object') return d;
-    const fromV3 = v.v === 3 && v.ver !== 31;
+    const fromV3 = v.v === 3 && v.ver !== 31 && v.ver !== 32;
+    const from31 = v.ver === 31;
     const mark = (p) => (fromV3 && p ? Object.assign({}, p, { __v3: true }) : p);
     d.pets = Array.isArray(v.pets) && v.pets.length ? v.pets.slice(0, 8).map((p) => sanitizePet(mark(p))) : [sanitizePet(v)];
     d.active = Math.floor(clamp(v.active, 0, d.pets.length - 1));
-    d.room = sanitizeRoom(v.room, fromV3);
+    d.room = sanitizeRoom(v.room, fromV3, from31);
     d.buddy = Number.isInteger(v.buddy) && v.buddy >= 0 && v.buddy < d.pets.length && v.buddy !== d.active ? v.buddy : -1;
     d.mode = v.mode === 'care' ? 'care' : 'cozy';
     d.last = Number.isFinite(v.last) ? Math.min(v.last, Date.now()) : Date.now();
@@ -683,7 +2371,7 @@
     d.scale = clamp(v.scale != null ? v.scale : 60, 40, 100);
     d.react = v.react !== false; d.walk = v.walk !== false; d.bubbles = v.bubbles !== false;
     d.album = Array.isArray(v.album) ? v.album.slice(-150).filter((a) => a && typeof a.note === 'string').map((a) => ({ at: clamp(a.at, 0, Date.now()), note: text(a.note, '', 250) })) : [];
-    d.presets = Array.isArray(v.presets) ? v.presets.slice(0, 12).map((a) => ({ name: text(a.name, '내 컬렉션', 30), pet: sanitizePet(mark(a.pet)), room: sanitizeRoom(a.room, fromV3) })) : [];
+    d.presets = Array.isArray(v.presets) ? v.presets.slice(0, 12).map((a) => ({ name: text(a.name, '내 컬렉션', 30), pet: sanitizePet(mark(a.pet)), room: sanitizeRoom(a.room, fromV3, from31) })) : [];
     d.quotes = Array.isArray(v.quotes) ? v.quotes.slice(0, 60).filter((q) => q && typeof q.text === 'string').map((q) => ({ id: /^[a-z0-9]{1,20}$/i.test(q.id) ? q.id : uid(), text: text(q.text, '', 300), who: text(q.who, '', 30), at: clamp(q.at, 0, Date.now()) })) : [];
     d.hung = d.quotes.some((q) => q.id === v.hung) ? v.hung : null;
     if (v.days && typeof v.days === 'object') Object.entries(v.days).slice(-400).forEach(([k, r]) => { if (/^\d{4}-\d\d-\d\d$/.test(k) && r) d.days[k] = { c: clamp(r.c, 0, 1e6), love: clamp(r.love, 0, 1e6), bad: clamp(r.bad, 0, 1e6), sad: clamp(r.sad, 0, 1e6), shy: clamp(r.shy, 0, 1e6) }; });
@@ -720,7 +2408,7 @@
 
   function unlockSeasonal() {
     const m = new Date().getMonth() + 1, md = day().slice(5);
-    Object.entries(FURN).forEach(([t, F]) => { if (F.season && F.season.includes(m) && !state.unlocked.includes(t)) { state.unlocked.push(t); log(`계절 가구 '${F.name}'이(가) 생겼어요.`); } });
+    Object.entries(FURN).forEach(([t, F]) => { if (F.season && !state.unlocked.includes(t)) { state.unlocked.push(t); /* 계절 가구는 처음부터 제공 */ } });
     const special = state.pets.some((p) => (p.profile.birthday && p.profile.birthday.slice(5) === md) || (p.profile.met && p.profile.met.slice(5) === md && p.profile.met !== day()));
     if (special && !state.unlocked.includes('balloons')) { state.unlocked.push('balloons'); log('생일·기념일 선물로 풍선을 받았어요.'); }
   }
@@ -789,7 +2477,7 @@
   .edit .item{outline:1px dashed rgba(74,59,68,.25)}
   .item.sel{outline:2px dashed ${K};outline-offset:1px}
   .item.locked{opacity:.4}
-  .actor{position:absolute;width:${(24 / RW) * 100}%;height:${(24 / RH) * 100}%;padding:0;border:0;background:transparent;transition:left 2s steps(10),top 2s steps(10)}
+  .actor{position:absolute;width:${(32 / RW) * 100}%;height:${(32 / RH) * 100}%;padding:0;border:0;background:transparent;transition:left 2s steps(10),top 2s steps(10)}
   .actor svg{pointer-events:none;animation:bob 2.4s steps(2) infinite}
   .actor.left svg{transform:scaleX(-1);animation:none}
   .actor.hop svg{animation:hop .45s steps(3) 2}
@@ -799,7 +2487,7 @@
   .speech:after{content:"";position:absolute;left:50%;bottom:-6px;width:7px;height:7px;margin-left:-4px;background:#fff;border-right:2px solid ${K};border-bottom:2px solid ${K};transform:rotate(45deg)}
   .sfx{position:absolute;width:5%;aspect-ratio:1;pointer-events:none;z-index:310;animation:floatup 1.4s steps(7) forwards}
   .zz{position:absolute;width:3.5%;aspect-ratio:1;z-index:305;pointer-events:none;animation:floatup 2.4s steps(6) infinite}
-  .prop{position:absolute;width:10%;aspect-ratio:1;z-index:305;pointer-events:none;animation:hop .5s steps(3) 3}
+  .prop{position:absolute;width:${(32/RW)*100}%;height:${(32/RH)*100}%;z-index:305;pointer-events:none;animation:hop .5s steps(3) 3}
   .strip{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 10px;background:#fff;border:2px solid ${K};border-radius:8px;font-size:12px}
   .strip b{color:#E8618A}.strip span.r{margin-left:auto;font-size:11px;opacity:.7;white-space:nowrap}
   .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;margin-top:9px}
@@ -859,6 +2547,7 @@
   .pad{display:grid;grid-template-columns:repeat(3,36px);gap:4px;justify-content:center}
   .foot{text-align:center;font-size:11px;opacity:.6;margin-top:14px;line-height:1.6}
   .upload{display:none}
+  svg{image-rendering:pixelated}.scene{box-sizing:content-box;width:calc(100% - 6px)} .btn,.btn.sm,.ic,.nav button{min-height:44px}.ic{width:44px;height:44px}.sw{width:44px;height:44px}.sw.custom input{width:66px;height:66px}.tog{min-height:44px}.pad{grid-template-columns:repeat(3,44px)}.tile{min-height:76px}.item:after,.actor:after{content:'';position:absolute;left:50%;top:50%;width:max(100%,44px);height:max(100%,44px);transform:translate(-50%,-50%)}.item:after{pointer-events:auto}.preview{height:116px}.preview div{width:108px;height:108px}.paintwrap{width:320px;max-width:100%}.actor{transition:left 2s steps(24,end),top 2s steps(24,end)}.actor svg,.walker.walking .wk{animation:none}.sprite-a{animation:spriteA 1.2s steps(1,end) infinite}.sprite-b{visibility:visible!important;animation:spriteB 1.2s steps(1,end) infinite}.walking .sprite-a,.actor.walk .sprite-a{animation-duration:.4s}.walking .sprite-b,.actor.walk .sprite-b{animation-duration:.4s}@keyframes spriteA{0%,49.99%{opacity:1}50%,100%{opacity:0}}@keyframes spriteB{0%,49.99%{opacity:0}50%,100%{opacity:1}}
   @media(max-width:520px){.panel{left:6px;right:6px;bottom:6px;width:auto;max-height:calc(100dvh - 12px)}}
   @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
   `;
@@ -885,7 +2574,7 @@
 
   let view = 'home', tab = 'body', homeSheet = null, roomEdit = false, selected = null, selAcc = null;
   let expr = 'normal', exprUntil = 0, sayUntil = 0, photoExpr = 'happy', pose = 'stand';
-  let actor = { x: 50, y: 74, face: 1, mood: '' };
+  let actor = { x: 67, y: 98, face: 1, mood: '' };
   let paintColor = '#EF8DA3', erasing = false, paintUndo = [], deleteArmed = false, pendingImport = null, lastAction = 0;
 
   let toastTimer;
@@ -910,31 +2599,31 @@
       const z = F.wall ? 2 + R.items.indexOf(a) : 100 + a.y + F.h;
       return `<button class="item ${selected === a.id ? 'sel' : ''}" data-item="${a.id}" aria-label="${esc(F.name)}" style="left:${pctX(a.x)};top:${pctY(a.y)};width:${pctX(F.w)};height:${pctY(F.h)};z-index:${z}">${furnSVG(a.type, a.c, a.flip)}</button>`;
     }).join('');
-    const buddy = state.buddy >= 0 ? `<button class="actor buddy" data-do="pair" aria-label="함께 있는 친구" style="left:${pctX(actor.x + 8)};top:${pctY(actor.y - 23)};z-index:${100 + actor.y}">${drawPet(state.pets[state.buddy], 'happy')}</button>` : '';
+    const buddy = state.buddy >= 0 ? `<button class="actor buddy" data-do="pair" aria-label="함께 있는 친구" style="left:${pctX(actor.x + 8)};top:${pctY(actor.y - 31)};z-index:${100 + actor.y}">${drawPet(state.pets[state.buddy], 'happy')}</button>` : '';
     return `<div class="scene ${edit ? 'edit' : ''}"><div class="bg">${roomBG(R)}</div>${items}
-      <button class="actor main" data-do="petpet" aria-label="${esc(p.name)} 쓰다듬기" style="left:${pctX(actor.x - 12)};top:${pctY(actor.y - 23)};z-index:${101 + actor.y}">${drawPet(p, getExpr())}</button>${buddy}
+      <button class="actor main" data-do="petpet" aria-label="${esc(p.name)} 쓰다듬기" style="left:${pctX(actor.x - 16)};top:${pctY(actor.y - 31)};z-index:${101 + actor.y}">${drawPet(p, getExpr())}</button>${buddy}
       <div class="speech" hidden></div></div>`;
   }
   function refreshActors() {
     const p = pet(), e = getExpr();
     const a = $('.actor.main');
     if (a) {
-      a.innerHTML = drawPet(p, view === 'album' ? photoExpr : e);
-      a.style.left = pctX(actor.x - 12); a.style.top = pctY(actor.y - 23); a.style.zIndex = 101 + actor.y;
+      a.innerHTML = drawPet(p, view === 'album' ? photoExpr : e, actor.mood === 'walk' ? 'walk' : 'idle');
+      a.style.left = pctX(actor.x - 16); a.style.top = pctY(actor.y - 31); a.style.zIndex = 101 + actor.y;
       a.className = 'actor main' + (actor.face < 0 ? ' left' : '') + (p.sleeping ? ' sleep' : '') + (actor.mood ? ' ' + actor.mood : '');
       let zz = $('.scene .zz');
-      if (p.sleeping && !zz) { zz = document.createElement('div'); zz.className = 'zz'; zz.innerHTML = particleSVG('z'); a.parentElement.appendChild(zz); }
-      if (zz) { if (!p.sleeping) zz.remove(); else { zz.style.left = pctX(actor.x + 5); zz.style.top = pctY(actor.y - 26); } }
-      const b = $('.actor.buddy'); if (b) { b.style.left = pctX(actor.x + 8); b.style.top = pctY(actor.y - 23); }
+      if (p.sleeping && !zz) { zz = document.createElement('div'); zz.className = 'zz'; zz.innerHTML = particleSVG('z');zz.style.width=pctX(4);zz.style.height=pctY(4);a.parentElement.appendChild(zz); }
+      if (zz) { if (!p.sleeping) zz.remove(); else { zz.style.left = pctX(actor.x + 5); zz.style.top = pctY(actor.y - 34); } }
+      const b = $('.actor.buddy'); if (b) { b.style.left = pctX(actor.x + 8); b.style.top = pctY(actor.y - 31); }
     }
     const sp = $('.speech'); if (sp && Date.now() > sayUntil) sp.hidden = true;
-    walkerEl.querySelector('.wk').innerHTML = drawPet(p, e);
+    walkerEl.querySelector('.wk').innerHTML = drawPet(p, e, walker.mode === 'walk' ? 'walk' : 'idle');
     walkerEl.classList.toggle('sleeping', !!p.sleeping);
   }
   function sceneFx(type) {
     const s = $('.scene'); if (!s) return;
-    const el = document.createElement('div'); el.className = 'sfx'; el.innerHTML = particleSVG(type);
-    el.style.left = pctX(actor.x - 2 + Math.random() * 6); el.style.top = pctY(actor.y - 28);
+    const el = document.createElement('div'); el.className = 'sfx'; el.innerHTML = particleSVG(type);const rows=PARTICLES[type]||PARTICLES.heart;el.style.width=pctX(Math.max(...rows.map(r=>r.length)));el.style.height=pctY(rows.length);
+    el.style.left = pctX(actor.x - 2 + Math.random() * 6); el.style.top = pctY(actor.y - 36);
     s.appendChild(el); setTimeout(() => el.remove(), 1500);
   }
   function hop() { actor.mood = 'hop'; refreshActors(); setTimeout(() => { actor.mood = ''; refreshActors(); }, 950); }
@@ -942,7 +2631,7 @@
     if (ex) setExpr(ex);
     sayUntil = Date.now() + 4200;
     const sp = $('.speech');
-    if (sp && appOpen()) { sp.textContent = s; sp.hidden = false; sp.style.left = pctX(clamp(actor.x, 26, 94)); sp.style.top = pctY(actor.y - 25); }
+    if (sp && appOpen()) { sp.textContent = s; sp.hidden = false; sp.style.left = pctX(clamp(actor.x, 26, 94)); sp.style.top = pctY(actor.y - 33); }
     if (fx) sceneFx(fx);
     refreshActors();
   }
@@ -985,7 +2674,7 @@
   }
 
   /* ---------- 꾸미기 ---------- */
-  const WTABS = [['body', '몸'], ['ears', '귀'], ['hair', '머리'], ['eyes', '눈'], ['face', '코·입'], ['cheeks', '볼'], ['clothes', '옷'], ['fantasy', '인외'], ['color', '색'], ['acc', '장식'], ['pixel', '도트']];
+  const WTABS = [['body', '몸'], ['ears', '귀'], ['hair', '머리'], ['eyes', '눈'], ['face', '코·입'], ['cheeks', '볼'], ['clothes', '옷'], ['fantasy', '인외'], ['scars', '흉터'], ['color', '색'], ['acc', '장식'], ['pixel', '도트']];
   function setOn(obj, path, v) { const parts = path.split('.'); let o = obj; for (let i = 0; i < parts.length - 1; i++) o = o[parts[i]]; o[parts[parts.length - 1]] = v; }
   function tiles(path, options) {
     const p = pet(), cur = path.split('.').reduce((o, k) => o && o[k], p);
@@ -1002,6 +2691,7 @@
     if (tab === 'cheeks') inner = tiles('look.cheeks', names(CHEEKS));
     if (tab === 'clothes') inner = `${tiles('extra.outfit', OUTFITS)}<span class="lbl">옷 색</span>${swatches('pet.extra.cloth', CLOTH_COLORS, p.extra.cloth)}`;
     if (tab === 'fantasy') inner = `<span class="lbl">날개</span>${tiles('extra.wings', WINGS)}<span class="lbl">꼬리</span>${tiles('extra.tail', TAILS)}<span class="lbl">포인트</span>${tiles('extra.mark', MARKS)}`;
+    if(tab==='scars')inner=`<div class="muted">여러 흉터를 겹쳐 달 수 있어요. 좌우와 색을 각각 골라 주세요.</div><div class="row">${Object.entries(SCARS).map(([k,v])=>btn('+ '+v.name,'addscar',k)).join('')}</div>${p.extra.scars.map(a=>`<div class="card"><strong>${SCARS[a.type].name}</strong><div class="row" style="margin-top:8px">${btn('왼쪽','scarside',a.id+':left','btn'+(a.side==='left'?' on':''))}${btn('오른쪽','scarside',a.id+':right','btn'+(a.side==='right'?' on':''))}${btn('연분홍','scarcolor',a.id+':pink','btn'+(a.color==='pink'?' on':''))}${btn('진한 갈색','scarcolor',a.id+':brown','btn'+(a.color==='brown'?' on':''))}${btn('지우기','delscar',a.id)}</div></div>`).join('')}`;
     if (tab === 'color') inner = `<span class="lbl">몸 색</span>${swatches('pet.look.body', BODY_COLORS, p.look.body)}<span class="lbl">머리·귀 색</span>${swatches('pet.look.hair', HAIR_COLORS, p.look.hair, true)}<span class="lbl">눈 색</span>${swatches('pet.look.eye', EYE_COLORS, p.look.eye)}
       <label class="tog">오드아이 (오른쪽 눈 색 따로)<input type="checkbox" data-set="pet.extra.hetero" ${p.extra.hetero ? 'checked' : ''}></label>${p.extra.hetero ? `<span class="lbl">오른쪽 눈 색</span>${swatches('pet.extra.eye2', EYE_COLORS, p.extra.eye2)}` : ''}`;
     if (tab === 'acc') {
@@ -1012,8 +2702,8 @@
           <div style="flex:1"><div class="row">${btn('좌우 반전', 'accflip', null, 'btn sm')}${btn('떼기', 'accdel', null, 'btn sm')}</div><span class="lbl">장식 색</span>${swatches('acc.c', ['#FF6F91', '#FFD54A', '#FFFFFF', '#7DA7F0', '#9C7BE0', '#3A3A44', '#6CC46A'], a.c)}</div></div></div>` : ''}`;
     }
     if (tab === 'pixel') inner = `<div class="muted">펫 위에 직접 도트를 찍어요. 점, 상처, 액세서리 뭐든!</div><div class="row" style="margin-top:6px"><label class="sw custom" title="펜 색"><input type="color" data-paint-color value="${paintColor}"></label>${btn('펜', 'pen', null, 'btn sm' + (!erasing ? ' on' : ''))}${btn('지우개', 'eraser', null, 'btn sm' + (erasing ? ' on' : ''))}${btn('되돌리기', 'undo', null, 'btn sm')}${btn('전체 지우기', 'clearpaint', null, 'btn sm')}</div>
-      <div class="paintwrap"><div class="under">${drawPet(Object.assign(copy(p), { extra: Object.assign(copy(p.extra), { pixels: [] }) }), 'normal')}</div><canvas class="paint" width="240" height="240" aria-label="도트 그리기"></canvas></div>`;
-    return `<div class="preview"><div>${drawPet(p, 'normal')}</div></div>
+      <div class="paintwrap"><div class="under">${drawPet(Object.assign(copy(p), { extra: Object.assign(copy(p.extra), { pixels: [] }) }), 'normal')}</div><canvas class="paint" width="320" height="320" aria-label="32×32 도트 그리기"></canvas></div>`;
+    return `<div class="preview"><div>${drawPet({...p,stage:'adult'}, 'normal')}</div></div>
       <div class="chips" style="margin-top:8px">${WTABS.map(([k, n]) => `<button class="btn sm ${tab === k ? 'on' : ''}" data-do="tab" data-val="${k}">${n}</button>`).join('')}</div>${inner}`;
   }
 
@@ -1096,7 +2786,7 @@
         <div class="muted">펫을 끌어서 걸어다닐 높이를 정할 수 있어요. 숨긴 펫은 탬퍼몽키 메뉴 '말랑펫 열기 / 다시 보이기'로 꺼내요.</div></div>
       <div class="card"><div class="h">백업</div><div class="row">${btn('전체 백업', 'backup')}${btn('정실·방만 공유', 'share')}${btn('파일 불러오기', 'import')}</div><input class="upload" type="file" accept=".json,application/json">
         <div class="muted">전체 백업은 정실·방·기록·명대사를 모두 담아요. 공유 파일은 대화 통계와 추억 없이 정실 모습과 방만 담겨요.</div></div>
-      <p class="foot">내 대화는 크랙에서 읽기만 하고 다른 곳으로 보내지 않아요<br>대화 내용은 저장하지 않아요 (직접 넣은 명대사만 저장)<br>말랑펫 v3.1.0 · muz</p>`;
+      <p class="foot">내 대화는 크랙에서 읽기만 하고 다른 곳으로 보내지 않아요<br>대화 내용은 저장하지 않아요 (직접 넣은 명대사만 저장)<br>말랑펫 v3.2.0 · muz</p>`;
   }
 
   const VIEWS = { home, wardrobe, room: roomView, oshi, album, settings };
@@ -1157,7 +2847,7 @@
     if (a.type === 'quote') { const q = state.quotes.find((x) => x.id === state.hung); say(q ? `“${q.text.length > 70 ? q.text.slice(0, 70) + '…' : q.text}”\n— ${q.who || p.name}` : '정실 탭에서 명대사를 걸어 주세요.', q ? 'shy' : null, q ? 'heart' : null); return; }
     if (a.type === 'bed' || a.type === 'canopy') { acted('sleep'); return; }
     if (p.sleeping) { say('쿨쿨…', 'sleep'); return; }
-    const nx = clamp(a.x + F.w / 2, 12, RW - 12), ny = F.wall ? clamp(actor.y, 62, 80) : clamp(a.y + F.h, 60, RH - 2);
+    const nx = clamp(a.x + F.w / 2, 12, RW - 12), ny = F.wall ? clamp(actor.y, 84, 106) : clamp(a.y + F.h, FLOOR_Y+8, RH - 2);
     actor.face = nx < actor.x ? -1 : 1; actor.x = nx; actor.y = ny;
     const msg = { window: `오늘 날씨는 ${MOODS[weatherCache.mood].name}이야.`, sofa: '여기 앉아서 쉬자.', chair: '잠깐 앉아 있을래.', bear: '인형도 꼬옥 안아 줬어.', desk: '여기서 네 이야기를 적어 볼까?', tv: '같이 볼래?', coffee: '커피 한 잔 할까?', vanity: '오늘 나 어때?', tree: '반짝반짝 예쁘다!', snowman: '눈사람이다!', balloons: '오늘은 특별한 날!', clock: `지금 ${new Date().getHours()}시야.` }[a.type] || '한번 구경해 볼까?';
     if (a.type === 'bear') p.fun = clamp(p.fun + 2);
@@ -1192,18 +2882,21 @@
     if (k === 'photoexpr') { photoExpr = val; refreshActors(); render(); return; }
     if (k === 'pose') { pose = val; render(); return; }
     if (k === 'addacc') { if (p.extra.accessories.length >= 16) { toast('장식은 16개까지 달 수 있어요.'); return; } const pos = defaultAccPos(val, p); const a = { id: uid(), type: val, x: pos.x, y: pos.y, c: ACC[val].c, flip: false }; p.extra.accessories.push(a); selAcc = a.id; }
+    if(k==='addscar'){if(p.extra.scars.length>=12){toast('흉터는 12개까지 달 수 있어요.');return;}p.extra.scars.push({id:uid(),type:val,side:'left',color:'pink'});}
+    if(k==='scarside'||k==='scarcolor'){const[id,value]=val.split(':'),a=p.extra.scars.find(a=>a.id===id);if(a)a[k==='scarside'?'side':'color']=value;}
+    if(k==='delscar')p.extra.scars=p.extra.scars.filter(a=>a.id!==val);
     if (k === 'selacc') selAcc = val;
     const ac = p.extra.accessories.find((a) => a.id === selAcc);
-    if (k === 'accmove' && ac) { const [dx, dy] = val.split(',').map(Number); ac.x = clamp(ac.x + dx, -6, 23); ac.y = clamp(ac.y + dy, -6, 23); }
+    if (k === 'accmove' && ac) { const [dx, dy] = val.split(',').map(Number); ac.x = clamp(ac.x + dx, -8, 31); ac.y = clamp(ac.y + dy, -8, 31); }
     if (k === 'accflip' && ac) ac.flip = !ac.flip;
     if (k === 'accdel') { p.extra.accessories = p.extra.accessories.filter((a) => a.id !== selAcc); selAcc = null; }
     if (k === 'pen' || k === 'eraser') { erasing = k === 'eraser'; render(); return; }
     if (k === 'undo') { const u = paintUndo.pop(); if (u) p.extra.pixels = u; }
-    if (k === 'clearpaint') { paintUndo.push([...p.extra.pixels]); p.extra.pixels = Array(576).fill(null); }
+    if (k === 'clearpaint') { paintUndo.push([...p.extra.pixels]); p.extra.pixels = Array(1024).fill(null); }
     if (k === 'roomedit') { roomEdit = !roomEdit; if (!roomEdit) selected = null; }
     if (k === 'theme') { state.room.theme = val; state.room.wall = THEMES[val][1]; state.room.floor = THEMES[val][2]; }
     if (k === 'lockinfo') { toast(FURN[val].gift ? `대화 ${FURN[val].gift}번을 채우면 선물로 받아요` : FURN[val].season ? `${FURN[val].season.join('·')}월에 생기는 계절 가구예요` : '정실 생일이나 만난 날에 선물로 받아요'); return; }
-    if (k === 'additem') { if (state.room.items.length >= 40) { toast('가구는 40개까지 놓을 수 있어요.'); return; } const F = FURN[val]; const a = { id: uid(), type: val, x: Math.round(RW / 2 - F.w / 2), y: F.wall ? 8 : Math.round(66 - F.h), c: null, flip: false }; state.room.items.push(a); selected = a.id; roomEdit = true; toast(`${F.name}을(를) 놓았어요. 끌어서 옮겨 보세요.`); }
+    if (k === 'additem') { if (state.room.items.length >= 40) { toast('가구는 40개까지 놓을 수 있어요.'); return; } const F = FURN[val]; const a = { id: uid(), type: val, x: Math.round(RW / 2 - F.w / 2), y: F.wall ? 8 : Math.round(88 - F.h), c: null, flip: false }; state.room.items.push(a); selected = a.id; roomEdit = true; toast(`${F.name}을(를) 놓았어요. 끌어서 옮겨 보세요.`); }
     const it2 = state.room.items.find((a) => a.id === selected);
     if (k === 'itemmove' && it2) { const [dx, dy] = val.split(',').map(Number); const F = FURN[it2.type]; it2.x = clamp(it2.x + dx, -F.w + 4, RW - 4); it2.y = clamp(it2.y + dy, -F.h + 4, RH - 4); }
     if (k === 'itemflip' && it2) it2.flip = !it2.flip;
@@ -1231,7 +2924,7 @@
     if (k === 'resetpos') { state.pos = { x: 0.9, y: 0.78 }; walker.x = null; placeWalker(); }
     if (k === 'hide') { state.hidden = true; save(); close(); placeWalker(); return; }
     if (k === 'backup') { download('말랑펫_전체백업.json', JSON.stringify({ format: 'mallang-backup', version: 3, data: state }, null, 2), 'application/json'); toast('전체 백업을 내려받았어요.'); return; }
-    if (k === 'share') { const q = copy(p); q.chats = 0; q.xp = 0; q.bond = 0; q.born = Date.now(); download('말랑펫_정실과방.json', JSON.stringify({ format: 'mallang-share', version: 3, pet: q, room: state.room }, null, 2), 'application/json'); toast('공유 파일을 내려받았어요.'); return; }
+    if (k === 'share') { const q = copy(p); q.chats = 0; q.xp = 0; q.bond = 0; q.born = Date.now(); download('말랑펫_정실과방.json', JSON.stringify({ format: 'mallang-share', version: 3, ver:32, pet: q, room: state.room }, null, 2), 'application/json'); toast('공유 파일을 내려받았어요.'); return; }
     if (k === 'import') { $('.upload').click(); return; }
     if (k === 'cancelimport') { pendingImport = null; render(); return; }
     if (k === 'confirmimport' && pendingImport) { const backup = copy(state); state = pendingImport; pendingImport = null; if (!save()) { state = backup; toast('저장하지 못해 취소했어요.'); return; } navigate('home'); toast('백업을 불러왔어요.'); return; }
@@ -1265,7 +2958,7 @@
         if (v.format === 'mallang-share') {
           if (!v.pet || !v.room) throw Error('공유 파일이 올바르지 않아요.');
           if (state.pets.length >= 8) throw Error('정실 자리가 가득 찼어요.');
-          state.pets.push(sanitizePet(v.pet)); state.active = state.pets.length - 1; state.room = sanitizeRoom(v.room); save(); navigate('home'); toast('새 정실과 방을 불러왔어요.');
+          state.pets.push(sanitizePet(v.pet)); state.active = state.pets.length - 1; state.room = sanitizeRoom(v.room, v.ver!==32&&v.ver!==31&&v.pet?.extra?.model!==undefined, v.ver===31||v.ver==null&&v.pet?.extra?.model===undefined&&v.pet?.extra?.pixelVersion!==32); save(); navigate('home'); toast('새 정실과 방을 불러왔어요.');
         } else if (v.format === 'mallang-backup') {
           if (!v.data || !Array.isArray(v.data.pets) || !v.data.pets.length) throw Error('백업에 정실이 없어요.');
           pendingImport = normalize(v.data);
@@ -1284,20 +2977,8 @@
   $('.veil').addEventListener('click', close);
 
   /* ---------- 도트 그리기 ---------- */
-  function drawPaint() {
-    const c = $('.paint'); if (!c) return;
-    const ctx = c.getContext('2d'); ctx.clearRect(0, 0, 240, 240);
-    pet().extra.pixels.forEach((v, i) => { if (v) { ctx.fillStyle = v; ctx.fillRect((i % 24) * 10, Math.floor(i / 24) * 10, 10, 10); } });
-    ctx.strokeStyle = 'rgba(74,59,68,.15)'; ctx.lineWidth = 0.5;
-    for (let i = 0; i <= 24; i++) { ctx.beginPath(); ctx.moveTo(i * 10, 0); ctx.lineTo(i * 10, 240); ctx.moveTo(0, i * 10); ctx.lineTo(240, i * 10); ctx.stroke(); }
-  }
-  function paintAt(e) {
-    const c = $('.paint'); if (!c) return;
-    const r = c.getBoundingClientRect(), x = Math.floor(((e.clientX - r.left) / r.width) * 24), y = Math.floor(((e.clientY - r.top) / r.height) * 24);
-    if (x < 0 || x >= 24 || y < 0 || y >= 24) return;
-    pet().extra.pixels[y * 24 + x] = erasing ? null : paintColor; drawPaint();
-    const pv = $('.preview div'); if (pv) pv.innerHTML = drawPet(pet(), 'normal');
-  }
+  function drawPaint(){const c=$('.paint');if(!c)return;const ctx=c.getContext('2d');ctx.clearRect(0,0,320,320);pet().extra.pixels.forEach((v,i)=>{if(v){ctx.fillStyle=v;ctx.fillRect(i%32*10,Math.floor(i/32)*10,10,10);}});ctx.strokeStyle='rgba(74,59,68,.15)';ctx.lineWidth=.5;for(let i=0;i<=32;i++){ctx.beginPath();ctx.moveTo(i*10,0);ctx.lineTo(i*10,320);ctx.moveTo(0,i*10);ctx.lineTo(320,i*10);ctx.stroke();}}
+  function paintAt(e){const c=$('.paint');if(!c)return;const r=c.getBoundingClientRect(),x=Math.floor((e.clientX-r.left)/r.width*32),y=Math.floor((e.clientY-r.top)/r.height*32);if(x<0||x>=32||y<0||y>=32)return;pet().extra.pixels[y*32+x]=erasing?null:paintColor;drawPaint();const pv=$('.preview div');if(pv)pv.innerHTML=drawPet(pet(),'normal');}
 
   /* ---------- 끌기 (펫·가구·음식·도트) ---------- */
   let dragging = null, painting = false, dragSuppress = 0;
@@ -1339,29 +3020,29 @@
   function download(name, data, type) { const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data], { type })), a = document.createElement('a'); a.href = url; a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(url), 10000); }
   function poseWrap(svg) {
     const inner = svg.replace(/^<svg[^>]*>/, '').replace(/<\/svg>$/, '');
-    if (pose === 'sit') return `<g transform="translate(0 3) scale(1 .88)">${inner}</g>`;
-    if (pose === 'tilt') return `<g transform="rotate(-10 12 20)">${inner}</g>`;
+    if(pose==='sit'){const cv=Canvas();const src=petCanvas(pet(),photoExpr);for(let y=0;y<32;y++)for(let x=0;x<32;x++)if(src.g[y][x])cv.set(x,Math.min(31,y+(y<27?2:0)),src.g[y][x]);return svgRects(cv);}
+    if(pose==='tilt'){const cv=Canvas(),src=petCanvas(pet(),photoExpr);for(let y=0;y<32;y++)for(let x=0;x<32;x++)if(src.g[y][x])cv.set(x+(y<16?-1:0),y,src.g[y][x]);return svgRects(cv);}
     return inner;
   }
   async function snapshot(transparent) {
     toast('사진을 만들고 있어요…');
     const p = pet(), S = 8;
     let svg, w, h;
-    if (transparent) { w = h = 480; svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 24 24" shape-rendering="crispEdges">${poseWrap(drawPet(p, photoExpr))}</svg>`; }
+    if (transparent) { w = h = 480; svg = `<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 32 32" shape-rendering="crispEdges">${poseWrap(drawPet(p, photoExpr))}</svg>`; }
     else {
       w = RW * S; h = RH * S + 56;
       const R = state.room;
       const items = R.items.slice().sort((a, b) => (FURN[a.type].wall ? -1 : 0) - (FURN[b.type].wall ? -1 : 0) || (a.y + FURN[a.type].h) - (b.y + FURN[b.type].h));
       let body = roomBG(R).replace('<svg ', `<svg x="0" y="0" width="${RW}" height="${RH}" `);
-      const actorSVG = (q, ex, x, y) => `<svg x="${x}" y="${y}" width="24" height="24" viewBox="0 0 24 24">${poseWrap(drawPet(q, ex))}</svg>`;
+      const actorSVG = (q, ex, x, y) => `<svg x="${x}" y="${y}" width="32" height="32" viewBox="0 0 32 32">${poseWrap(drawPet(q, ex))}</svg>`;
       let petDrawn = false;
       for (const a of items) {
         const F = FURN[a.type];
-        if (!petDrawn && !F.wall && a.y + F.h > actor.y + 0.5) { body += actorSVG(p, photoExpr, actor.x - 12, actor.y - 23); petDrawn = true; }
+        if (!petDrawn && !F.wall && a.y + F.h > actor.y + 0.5) { body += actorSVG(p, photoExpr, actor.x - 16, actor.y - 31); petDrawn = true; }
         body += furnSVG(a.type, a.c, a.flip).replace('<svg ', `<svg x="${a.x}" y="${a.y}" width="${F.w}" height="${F.h}" `);
       }
-      if (!petDrawn) body += actorSVG(p, photoExpr, actor.x - 12, actor.y - 23);
-      if (state.buddy >= 0) body += actorSVG(state.pets[state.buddy], 'happy', actor.x - 4, actor.y - 23);
+      if (!petDrawn) body += actorSVG(p, photoExpr, actor.x - 16, actor.y - 31);
+      if (state.buddy >= 0) body += actorSVG(state.pets[state.buddy], 'happy', actor.x - 4, actor.y - 31);
       svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges"><g transform="scale(${S})">${body}</g><rect y="${RH * S}" width="${w}" height="56" fill="#FFF8EF"/><rect y="${RH * S}" width="${w}" height="4" fill="${K}"/><text x="28" y="${RH * S + 37}" fill="${K}" font-family="sans-serif" font-weight="700" font-size="24">${esc(p.name)}의 방 · ${day()} · 만난 지 D+${daysSince(p.profile.met)}</text></svg>`;
     }
     const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
@@ -1406,10 +3087,11 @@
       walker.face = d < 0 ? -1 : 1;
       if (Math.abs(d) <= step) { walker.x = walker.target; walker.mode = 'idle'; walker.until = Date.now() + 2500 + Math.random() * 7000; state.pos.x = clamp((walker.x - 8) / Math.max(1, innerWidth - s - 16), 0, 1); }
       else walker.x += Math.sign(d) * step;
-      walkerEl.style.left = walker.x + 'px';
+      walkerEl.style.left = Math.round(walker.x/(state.scale/32))*(state.scale/32) + 'px';
     }
     walkerEl.style.top = laneY() + 'px';
-    walkerEl.classList.toggle('walking', walker.mode === 'walk' && can);
+    const walkingNow=walker.mode==='walk'&&can;walkerEl.classList.toggle('walking',walkingNow);
+    if(walkerEl.dataset.motion!==(walkingNow?'walk':'idle')){walkerEl.dataset.motion=walkingNow?'walk':'idle';walkerEl.querySelector('.wk').innerHTML=drawPet(p,getExpr(),walkingNow?'walk':'idle');}
     walkerEl.classList.toggle('left', walker.face < 0);
     if (!wbub.hidden) { wbub.style.left = walker.x + s / 2 + 'px'; wbub.style.top = laneY() - 6 + 'px'; }
   }
@@ -1421,7 +3103,7 @@
     walkerEl.classList.remove('hop'); void walkerEl.offsetWidth; walkerEl.classList.add('hop');
     setTimeout(() => walkerEl.classList.remove('hop'), 950);
     if (fx) for (let i = 0; i < (fx === 'heart' ? 3 : 1); i++) setTimeout(() => {
-      const el = document.createElement('div'); el.className = 'wfx'; el.innerHTML = particleSVG(fx);
+      const el = document.createElement('div'); el.className = 'wfx'; el.innerHTML = particleSVG(fx);const rows=PARTICLES[fx]||PARTICLES.heart;el.style.width=Math.max(...rows.map(r=>r.length))*state.scale/32+'px';el.style.height=rows.length*state.scale/32+'px';
       el.style.left = walker.x + state.scale * (0.3 + Math.random() * 0.4) + 'px'; el.style.top = laneY() - 4 + 'px';
       root.appendChild(el); setTimeout(() => el.remove(), 1500);
     }, i * 220);
@@ -1439,6 +3121,7 @@
   const seen = new Set(), watching = new Map();
   let intent = 0, bootUntil = Date.now() + 3000, lastURL = location.href, lastMineAt = 0, lastNewAt = 0, missCount = 0, warned = false;
   const recentMine = [];
+  const messageHash=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return h>>>0;};
   document.querySelectorAll(SEL.message).forEach((m) => seen.add(m.getAttribute(SEL.messageId)));
   document.addEventListener('keydown', (e) => {
     if (e.composedPath && e.composedPath().includes(host)) return;
@@ -1448,12 +3131,12 @@
   document.addEventListener('click', (e) => {
     if (e.composedPath && e.composedPath().includes(host)) return;
     const b = e.target.closest && e.target.closest('button');
-    if (b && document.querySelector('textarea,[contenteditable="true"]')) intent = Date.now();
+    if(b&&document.querySelector(SEL.input)){const input=document.querySelector(SEL.input);intent=Date.now();if((input.value||input.textContent||'').trim()){const at=intent;setTimeout(()=>checkMiss(at),10000);}}
   }, true);
   function checkMiss(at) {
     if (lastMineAt >= at) { missCount = 0; return; }
-    if (lastNewAt >= at) missCount++;
-    if (missCount >= 3 && !warned) { warned = true; console.warn('[말랑펫] 내가 보낸 말을 찾지 못하고 있어요. 크랙 화면 구조가 바뀌었을 수 있어요. (SEL 설정 확인)'); toast('크랙 화면이 바뀌어서 대화를 못 알아듣고 있어요. 댓글로 알려 주세요!'); if (!appOpen()) walkerReact('dots', '…크랙 화면이 바뀐 것 같아.\n대화를 못 알아듣겠어.'); }
+    missCount++;
+    if (missCount >= 3 && !warned) { warned = true; console.warn('[말랑펫] 내가 보낸 말을 찾지 못하고 있어요. 크랙 화면 구조가 바뀌었을 수 있어요. (SEL 설정 확인)'); toast('크랙 대화를 찾지 못했어요. SEL 설정과 현재 채팅 화면을 확인해 주세요.'); if (!appOpen()) walkerReact('dots', '…크랙 화면이 바뀐 것 같아.\n대화를 못 알아듣겠어.'); }
   }
   function scanChat() {
     const now = Date.now(), all = [...document.querySelectorAll(SEL.message)];
@@ -1469,8 +3152,8 @@
         if (now - intent > 15000) continue;
         const str = (t.innerText || t.textContent || '').trim();
         while (recentMine.length && now - recentMine[0].at > 60000) recentMine.shift();
-        if (recentMine.some((r) => r.str === str)) continue;
-        recentMine.push({ str, at: now }); lastMineAt = now;
+        if (recentMine.some((r) => r.hash === messageHash(str))) continue;
+        recentMine.push({ hash:messageHash(str), at: now }); lastMineAt = now;
         try { onMine(str); } catch (err) { console.warn('[말랑펫]', err); }
       } else if (now - intent < 180000) {
         watching.set(id, { m, len: -1, stable: 0, start: now });
@@ -1549,9 +3232,9 @@
     if (ticks % 2 === 0 && Date.now() > sayUntil) {
       const spots = state.room.items.filter((a) => !FURN[a.type].wall && !['bed', 'canopy', 'rug'].includes(a.type));
       let nx, ny;
-      if (spots.length && Math.random() < 0.5) { const a = pick(spots), F = FURN[a.type]; nx = clamp(a.x + F.w / 2 + (Math.random() < 0.5 ? -1 : 1) * (F.w / 2 + 6), 14, RW - 14); ny = clamp(a.y + F.h + 2, 60, RH - 2); }
-      else { nx = 14 + Math.random() * (RW - 28); ny = 62 + Math.random() * 18; }
-      actor.face = nx < actor.x ? -1 : 1; actor.x = Math.round(nx); actor.y = Math.round(ny); refreshActors();
+      if (spots.length && Math.random() < 0.5) { const a = pick(spots), F = FURN[a.type]; nx = clamp(a.x + F.w / 2 + (Math.random() < 0.5 ? -1 : 1) * (F.w / 2 + 6), 14, RW - 14); ny = clamp(a.y + F.h + 2, FLOOR_Y+8, RH - 2); }
+      else { nx = 14 + Math.random() * (RW - 28); ny = 84 + Math.random() * 23; }
+      actor.face = nx < actor.x ? -1 : 1; actor.x = Math.round(nx); actor.y = Math.round(ny); actor.mood='walk';refreshActors();setTimeout(()=>{actor.mood='';refreshActors();},2100);
       if (Math.random() < 0.35) setTimeout(() => say(line('idle')), 2100);
     }
     updateStats();
