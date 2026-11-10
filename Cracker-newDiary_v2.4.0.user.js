@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         📔 뉴다이어리 v2.4.1 (누적·월별 통계)
+// @name         📔 다이어리 v2.4.2 (누적·월별 통계)
 // @namespace    cracker-diary-integrated
-// @version      2.4.1
+// @version      2.4.2
 // @description  크래커 사용량 달력, 월별 통계, 절약 목표, 일기장 꾸미기 기능
 // @author       muz
 // @match        https://crack.wrtn.ai/*
@@ -9,6 +9,7 @@
 // @grant        none
 // ==/UserScript==
 
+// v2.4.2 변경점: 새 테마 4개(라벤더 구름·소다 바다·민트초코·레몬에이드), 설정 화면 짧게 정리
 // v2.4.1 변경점: 달력 숫자를 k 대신 실제 숫자로, 통계 화면 짧게 정리, '오늘 한 줄'을 달력 아래로
 // v2.4.0 변경점: 딸기우유·밤하늘 별빛 테마 새로 디자인, 색 진하기 달력, '오늘 한 줄' 바로 쓰기, 일기 자동 저장, 하단 빈 공간 제거
 
@@ -56,7 +57,11 @@
    const ART={
      berry:'<path d="M12 7.5c3.9 0 6.8 1.9 6.8 5.2 0 4.1-3.9 8-6.8 9.3-2.9-1.3-6.8-5.2-6.8-9.3 0-3.3 2.9-5.2 6.8-5.2z" fill="#ef5470"/><path d="M12 8.6 8.2 6.4l2.5-.2L9.6 3.9l2.4 1.7 2.4-1.7-1.1 2.3 2.5.2z" fill="#5fae6e"/><g fill="#ffe7ad"><circle cx="9.2" cy="11.6" r=".65"/><circle cx="12" cy="10.9" r=".65"/><circle cx="14.8" cy="11.6" r=".65"/><circle cx="10.5" cy="14.4" r=".65"/><circle cx="13.5" cy="14.4" r=".65"/><circle cx="12" cy="17.3" r=".65"/></g>',
      moon:'<path d="M15.2 3.6a8.6 8.6 0 1 0 5.2 15.3A7.1 7.1 0 0 1 15.2 3.6z" fill="#f6d88f"/><path d="M19.2 3.5l.5 1.4 1.4.5-1.4.5-.5 1.4-.5-1.4-1.4-.5 1.4-.5z" fill="#fff6d6"/><circle cx="9.5" cy="12" r="1" fill="#e2c272"/><circle cx="12.5" cy="16" r=".7" fill="#e2c272"/>',
-     cookie:'<circle cx="12" cy="12" r="8.5" fill="#d9a66a"/><g fill="#7a4b2a"><circle cx="9" cy="9.5" r="1.2"/><circle cx="14.5" cy="8.5" r="1"/><circle cx="13" cy="13.5" r="1.3"/><circle cx="8.5" cy="14.5" r="1"/><circle cx="16" cy="15" r=".9"/></g>'
+     cookie:'<circle cx="12" cy="12" r="8.5" fill="#d9a66a"/><g fill="#7a4b2a"><circle cx="9" cy="9.5" r="1.2"/><circle cx="14.5" cy="8.5" r="1"/><circle cx="13" cy="13.5" r="1.3"/><circle cx="8.5" cy="14.5" r="1"/><circle cx="16" cy="15" r=".9"/></g>',
+     cloud:'<path d="M7 18.5h10.6a4.1 4.1 0 0 0 .5-8.15A5.6 5.6 0 0 0 7.5 9.3 4.6 4.6 0 0 0 7 18.5z" fill="#b9a4ec"/><path d="M18.6 3.6l.45 1.2 1.2.45-1.2.45-.45 1.2-.45-1.2-1.2-.45 1.2-.45z" fill="#f2b8de"/>',
+     soda:'<circle cx="9.5" cy="14" r="5.2" fill="#7ec3ea"/><circle cx="16.8" cy="8.6" r="3.3" fill="#a9dbf6"/><circle cx="16.4" cy="17.2" r="2.1" fill="#5aa9d6"/><circle cx="7.8" cy="12.3" r="1.4" fill="#fff" opacity=".85"/><circle cx="16" cy="7.7" r=".8" fill="#fff" opacity=".85"/>',
+     mint:'<path d="M7.2 12.5h9.6L12 21.5z" fill="#c98f5a"/><path d="M8.6 14.2l1.3 2.2M15.4 14.2l-1.3 2.2" stroke="#a8713f" stroke-width=".8"/><circle cx="12" cy="9.6" r="5.6" fill="#8fdcc2"/><g fill="#5a3825"><circle cx="9.8" cy="8.2" r="1"/><circle cx="13.8" cy="9.2" r="1"/><circle cx="11.4" cy="11.8" r=".9"/><circle cx="14.6" cy="12" r=".7"/></g>',
+     lemon:'<circle cx="12" cy="12" r="8.5" fill="#f5cf3a"/><circle cx="12" cy="12" r="6.8" fill="#fff3a6"/><g stroke="#f5cf3a" stroke-width="1.1" stroke-linecap="round"><path d="M12 6v12M6 12h12M7.8 7.8l8.4 8.4M16.2 7.8l-8.4 8.4"/></g><circle cx="12" cy="12" r="1.2" fill="#f5cf3a"/>'
    };
    const art=k=>`<svg viewBox="0 0 24 24" aria-hidden="true">${ART[k]}</svg>`;
    const LINE={
@@ -77,16 +82,26 @@
      berry:[svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="76" height="54" viewBox="0 0 76 54">${berryAt(4,3,-16)}${berryAt(44,24,14)}<circle cx="36" cy="10" r="1.7" fill="#f6a5b6" opacity=".55"/><circle cx="14" cy="42" r="1.7" fill="#f6a5b6" opacity=".55"/><circle cx="66" cy="8" r="1.2" fill="#9ccf9f" opacity=".6"/></svg>`),'76px 54px'],
      dots:[svgUrl('<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="3" cy="3" r="1.3" fill="#c9a77d" opacity=".38"/></svg>'),'16px 16px']
    };
+   // 그림 두 개를 엇갈려 까는 헤더 무늬
+   const tileOf=(k,op)=>[svgUrl(`<svg xmlns="http://www.w3.org/2000/svg" width="76" height="54" viewBox="0 0 76 54"><g transform="translate(4 3) rotate(-12 9 9) scale(.7)" opacity="${op}">${ART[k]}</g><g transform="translate(44 25) rotate(12 9 9) scale(.7)" opacity="${op}">${ART[k]}</g></svg>`),'76px 54px'];
+   PATTERNS.cloud=tileOf('cloud',.45);
+   PATTERNS.soda=tileOf('soda',.4);
+   PATTERNS.mint=tileOf('mint',.38);
+   PATTERNS.lemon=tileOf('lemon',.45);
 
    // ---- 테마 ----
    const THEMES={
      pink:{name:'딸기우유',bg:'#fff4f6',paper:'#ffffff',solid:'#ffffff',accent:'#ec5a76',ink:'#5d3a45',soft:'#a77d8a',line:'#f7dde4',cell:'#fff0f3',on:'#ffffff',over:'#c42f4e',leaf:'#5fae6e',font:UI_ROUND,icon:'berry',pattern:'berry',preview:'#fff4f6'},
-     night:{name:'밤하늘 별빛',bg:'#161936',paper:'rgba(48,52,104,.6)',solid:'#262a55',accent:'#f6d88f',ink:'#eef0ff',soft:'#a9aedb',line:'rgba(255,255,255,.1)',cell:'rgba(255,255,255,.07)',on:'#1d1f45',over:'#ff8da1',leaf:'#fff6d6',font:UI_ROUND,icon:'moon',preview:'linear-gradient(160deg,#121532,#2b2457)'},
-     cream:{name:'빈티지 크림',bg:'#f7efe2',paper:'#fffaf2',solid:'#fffaf2',accent:'#b9844f',ink:'#5b4532',soft:'#9c8770',line:'#ecdfc8',cell:'#f4eadb',on:'#ffffff',over:'#c4513f',leaf:'#7c9a5d',font:UI_ROUND,icon:'cookie',pattern:'dots',preview:'#f7efe2'},
+     night:{name:'밤하늘 별빛',short:'밤하늘',bg:'#161936',paper:'rgba(48,52,104,.6)',solid:'#262a55',accent:'#f6d88f',ink:'#eef0ff',soft:'#a9aedb',line:'rgba(255,255,255,.1)',cell:'rgba(255,255,255,.07)',on:'#1d1f45',over:'#ff8da1',leaf:'#fff6d6',font:UI_ROUND,icon:'moon',preview:'linear-gradient(160deg,#121532,#2b2457)'},
+     cream:{name:'빈티지 크림',short:'크림',bg:'#f7efe2',paper:'#fffaf2',solid:'#fffaf2',accent:'#b9844f',ink:'#5b4532',soft:'#9c8770',line:'#ecdfc8',cell:'#f4eadb',on:'#ffffff',over:'#c4513f',leaf:'#7c9a5d',font:UI_ROUND,icon:'cookie',pattern:'dots',preview:'#f7efe2'},
+     lavender:{name:'라벤더 구름',short:'라벤더',bg:'#f6f2ff',paper:'#ffffff',solid:'#ffffff',accent:'#9b7fe0',ink:'#4a3d6b',soft:'#9a8fbd',line:'#e7defc',cell:'#f1ebff',on:'#ffffff',over:'#d9467a',leaf:'#ef9fcb',font:UI_ROUND,icon:'cloud',pattern:'cloud',preview:'#f6f2ff'},
+     soda:{name:'소다 바다',short:'소다',bg:'#eef8ff',paper:'#ffffff',solid:'#ffffff',accent:'#3e9ad6',ink:'#23465f',soft:'#7c9cb3',line:'#d6ebf8',cell:'#e7f3fd',on:'#ffffff',over:'#e5536a',leaf:'#5fcfbd',font:UI_ROUND,icon:'soda',pattern:'soda',preview:'#eef8ff'},
+     mint:{name:'민트초코',short:'민트초코',bg:'#eefaf5',paper:'#ffffff',solid:'#ffffff',accent:'#38ad87',ink:'#4a3426',soft:'#8a7a6c',line:'#d3eee2',cell:'#e5f6ee',on:'#ffffff',over:'#d9534f',leaf:'#6b4430',font:UI_ROUND,icon:'mint',pattern:'mint',preview:'#eefaf5'},
+     lemon:{name:'레몬에이드',short:'레몬',bg:'#fffbea',paper:'#ffffff',solid:'#ffffff',accent:'#f2b51f',ink:'#59491a',soft:'#a39465',line:'#f5ebc2',cell:'#fdf5d6',on:'#4a3a00',over:'#e0594a',leaf:'#8cc152',font:UI_ROUND,icon:'lemon',pattern:'lemon',preview:'#fffbea'},
      simple:{name:'심플',bg:'#f2f2f7',paper:'#ffffff',solid:'#ffffff',accent:'#007aff',ink:'#1c1c1e',soft:'#8e8e93',line:'#e5e5ea',cell:'#f2f2f7',on:'#ffffff',over:'#ff3b30',leaf:'#34c759',font:UI_SYS,icon:'',preview:'#f2f2f7'}
    };
    // 예전 테마를 쓰던 사람은 가장 비슷한 새 테마로 옮김
-   const THEME_ALIAS={dark:'night',ios:'simple',purple:'pink',blue:'pink',green:'pink'};
+   const THEME_ALIAS={dark:'night',ios:'simple',purple:'lavender',blue:'soda',green:'mint'};
    if(!THEMES[db.theme])db.theme=THEME_ALIAS[db.theme]||'pink';
    const theme=()=>THEMES[db.theme]||THEMES.pink;
    const logo=()=>theme().icon?art(theme().icon):ic('pencil');
@@ -350,11 +365,16 @@
    #crd-root .photo-tile .x{position:absolute;right:0;top:0;border:0;
      background:#fff;color:#b35d7a;border-radius:0 0 0 6px;font-size:12px}
 
-   #crd-root .theme-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-   #crd-root .theme-choice{display:flex;align-items:center;gap:8px;border:2px solid transparent;border-radius:14px;
-     padding:12px;text-align:left;font-size:13px;font-weight:700;min-height:52px;
+   #crd-root .theme-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+   #crd-root .theme-choice{display:flex;flex-direction:column;align-items:center;gap:4px;border:2px solid transparent;
+     border-radius:14px;padding:8px 2px 6px;font-size:11px;font-weight:700;min-width:0;
      box-shadow:inset 0 0 0 1px rgba(0,0,0,.06)}
-   #crd-root .theme-choice svg{width:22px;height:22px;flex:none}
+   #crd-root .theme-choice span{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+   #crd-root .theme-choice svg{width:24px;height:24px;flex:none}
+   #crd-root .pair{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+   #crd-root .pair label span{display:block;font-size:11px;color:var(--soft);margin:0 0 3px 2px}
+   #crd-root .btn3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+   #crd-root .btn3 .btn{padding:8px 2px;white-space:nowrap}
    #crd-root .theme-choice.sel{border-color:var(--accent)}
    .crd-capture-hover{outline:2px solid #ec5a76!important;cursor:crosshair!important}
 
@@ -617,31 +637,37 @@
    }
 
    function settings(){
-     return card('테마',`<div class="theme-grid">${
+     return card(`테마 <span class="muted" style="font-weight:400">· ${theme().name}</span>`,`<div class="theme-grid">${
        Object.entries(THEMES).map(([id,t])=>`
-       <button data-theme="${id}" class="theme-choice ${db.theme===id?'sel':''}"
-         style="background:${t.preview};color:${t.ink}">${t.icon?art(t.icon):ic('pencil')}<span>${t.name}</span></button>`).join('')
-     }</div>`)+card('목표 설정',`
-       <p class="muted">일일 사용 한도 (이하로 사용하면 절약 성공)</p>
-       <input id="goal-daily" type="number" min="0" value="${db.goalDaily}">
-       <p class="muted" style="margin-top:6px">월간 사용 한도</p>
-       <input id="goal-monthly" type="number" min="0" value="${db.goalMonthly}">
-     `)+card('사용량 조회',`
-       <div class="row"><span class="muted">${esc(status)}</span>
-       <button class="btn" data-act="refresh">새로고침</button></div>
-     `)+card('데이터 백업',`
-       <div class="tools">
+       <button data-theme="${id}" class="theme-choice ${db.theme===id?'sel':''}" aria-label="${t.name}"
+         style="background:${t.preview};color:${t.ink}">${t.icon?art(t.icon):ic('pencil')}<span>${t.short||t.name}</span></button>`).join('')
+     }</div>`)+card('한도',`
+       <div class="pair">
+         <label><span>하루</span><input id="goal-daily" type="number" min="0" inputmode="numeric" value="${db.goalDaily}"></label>
+         <label><span>한 달</span><input id="goal-monthly" type="number" min="0" inputmode="numeric" value="${db.goalMonthly}"></label>
+       </div>
+       <p class="muted" style="margin-top:4px">하루 한도 이하로 쓰면 절약한 날로 세요.</p>
+     `)+card('데이터',`
+       <div class="row" style="margin-bottom:8px"><span class="muted">사용량 조회: ${esc(status)}</span>
+         <button class="btn" data-act="refresh">새로고침</button></div>
+       <div class="btn3">
          <button class="btn" data-act="backup">JSON 백업</button>
-         <button class="btn" data-act="csv">CSV 내보내기</button>
-         <button class="btn" data-act="restore">백업 복원</button>
+         <button class="btn" data-act="csv">CSV 저장</button>
+         <button class="btn" data-act="restore">복원</button>
        </div>
        <input type="file" id="restore-file" accept=".json" style="display:none">
-       <p class="muted">사진과 메모는 현재 브라우저에 저장돼요. 백업을 권장해요.</p>
-     `)+card('사용량 보정',`
-       <input type="date" id="adjust-day" value="${day}">
-       <input type="number" id="adjust-value" value="${Number(db.manual[day]||0)}"
-         style="margin-top:7px">
-       <button class="btn primary" data-act="adjust" style="margin-top:7px">보정 저장</button>
+       <p class="muted" style="margin-top:6px">일기와 사진은 이 브라우저에만 저장돼요. 가끔 백업해 주세요.</p>
+       <details class="diary-fold" style="margin-bottom:0">
+         <summary>사용량 직접 고치기</summary>
+         <div class="fold-body">
+           <div class="pair" style="margin-top:8px">
+             <input type="date" id="adjust-day" value="${day}">
+             <input type="number" id="adjust-value" inputmode="numeric" value="${Number(db.manual[day]||0)}">
+           </div>
+           <button class="btn primary" data-act="adjust" style="margin-top:7px;width:100%">보정 저장</button>
+           <p class="muted">사이트 기록에 더하거나 뺄 숫자예요 (빼려면 -를 붙여요).</p>
+         </div>
+       </details>
      `);
    }
 
