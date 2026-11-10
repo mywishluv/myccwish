@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.8.5 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.8.6 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.8.5
+// @version      3.8.6
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
@@ -1583,12 +1583,23 @@ try {
     return Array.from(document.querySelectorAll(SELECTORS.bubble))
       .filter(el => !el.parentElement || !el.parentElement.closest(SELECTORS.bubble))
       .filter(isVisible)
-      .sort((a, b) => {
-        const pos = a.compareDocumentPosition(b);
-        if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
-        if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
-        return 0;
-      });
+      .sort(visualOrder);
+  }
+  // 화면에 보이는 위→아래 순서. 크랙은 채팅 목록을 거꾸로(최신이 HTML 앞쪽) 쌓아서 HTML 순서를 믿으면 안 된다.
+  function domOrder(a, b) {
+    const pos = a.compareDocumentPosition(b);
+    if (pos & Node.DOCUMENT_POSITION_FOLLOWING) return -1;
+    if (pos & Node.DOCUMENT_POSITION_PRECEDING) return 1;
+    return 0;
+  }
+  function visualOrder(a, b) {
+    const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+    if (ra.height > 0 && rb.height > 0 && Math.abs(ra.top - rb.top) > 1) {
+      // 한쪽이 다른 쪽을 감싸면(같은 줄 범위) HTML 순서로
+      const overlap = Math.min(ra.bottom, rb.bottom) - Math.max(ra.top, rb.top);
+      if (overlap <= 0 || !(a.contains(b) || b.contains(a))) return ra.top - rb.top;
+    }
+    return domOrder(a, b);
   }
 
   function getRole(bubble) {
@@ -1720,7 +1731,7 @@ try {
     if (!units.length) units = [bubble];
     const extra = groupImages(bubble);
     if (extra.length) {
-      units = units.concat(extra).sort((a, b) => (a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+      units = units.concat(extra).sort(visualOrder);
     }
     return units;
   }
@@ -2538,7 +2549,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       const all = P.getAllUnits();
       const a0 = all.findIndex(x => x.el === start.el && x.part === start.part);
       const b0 = all.findIndex(x => x.el === u.el && x.part === u.part);
-      lastDiag = { v: '3.8.5', path: 'live', all: all.length, a0, b0, bubbles: P.getBubbles().length,
+      lastDiag = { v: '3.8.6', path: 'live', all: all.length, a0, b0, bubbles: P.getBubbles().length,
         units: all.slice(Math.max(0, Math.min(a0, b0) - 2), Math.max(a0, b0) + 3).map(x => ({ g: (x.bubble.closest(P.SELECTORS.group) || {}).getAttribute ? x.bubble.closest(P.SELECTORS.group).getAttribute('data-message-group-id') : null, role: P.getRole(x.bubble), tag: x.el.tagName, cls: String(x.el.className || '').slice(0, 40), t: (x.el.textContent || '').trim().slice(0, 14) })) };
       if (a0 !== -1 && b0 !== -1) {
         const live = all.slice(Math.min(a0, b0), Math.max(a0, b0) + 1);
