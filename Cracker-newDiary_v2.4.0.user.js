@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         📔 다이어리 v2.4.0 (누적·월별 통계)
+// @name         📔 뉴다이어리 v2.4.1 (누적·월별 통계)
 // @namespace    cracker-diary-integrated
-// @version      2.4.0
+// @version      2.4.1
 // @description  크래커 사용량 달력, 월별 통계, 절약 목표, 일기장 꾸미기 기능
 // @author       muz
 // @match        https://crack.wrtn.ai/*
@@ -9,6 +9,7 @@
 // @grant        none
 // ==/UserScript==
 
+// v2.4.1 변경점: 달력 숫자를 k 대신 실제 숫자로, 통계 화면 짧게 정리, '오늘 한 줄'을 달력 아래로
 // v2.4.0 변경점: 딸기우유·밤하늘 별빛 테마 새로 디자인, 색 진하기 달력, '오늘 한 줄' 바로 쓰기, 일기 자동 저장, 하단 빈 공간 제거
 
  (() => {
@@ -144,7 +145,7 @@
    const usageOverview=(usage,manual)=>{const months={};let total=0,days=0,first='';for(const d of [...new Set([...Object.keys(usage),...Object.keys(manual)])].sort()){const v=Math.max(0,(Number(usage[d])||0)+(Number(manual[d])||0));if(!v)continue;first||=d;total+=v;days++;const m=months[d.slice(0,7)]||={month:d.slice(0,7),total:0,days:0};m.total+=v;m.days++}return {total,days,first,months:Object.values(months)}};
    let usage=db.usage||{},apiOk=false,status='연결 전',busy=false;
    let tab='calendar',month=today().slice(0,7),day=today();
-   let diaryOpen=false,pack='큐티',selected=-1,noteTimer=null;
+   let diaryOpen=false,pack='큐티',selected=-1,noteTimer=null,showAllMonths=false;
    let selectedCapture=-1;
 
    const amount=d=>Math.max(0,(Number(usage[d])||0)+(Number(db.manual[d])||0));
@@ -223,8 +224,8 @@
    #crd-root .quick .qicon svg{width:20px;height:20px;color:var(--accent)}
    #crd-root .quick input{flex:1;min-width:0;border:0;background:transparent;padding:9px 4px;outline:0;color:var(--ink);font-size:14px}
    #crd-root .quick input::placeholder{color:var(--soft)}
-   #crd-root .note-peek{display:block;width:100%;text-align:left;border:0;background:var(--cell);color:var(--ink);
-     border-radius:14px;padding:9px 12px;font-size:13px;line-height:1.55;margin:-4px 0 10px;
+   #crd-root .note-peek{display:block;width:100%;text-align:left;border:0;background:var(--paper);color:var(--ink);
+     border-radius:14px;padding:9px 12px;font-size:13px;line-height:1.55;margin:-4px 0 4px;
      white-space:pre-wrap;max-height:70px;overflow:hidden;position:relative}
 
    #crd-root .cal-head{display:flex;align-items:center;justify-content:space-between;margin:-4px -4px 6px}
@@ -234,7 +235,8 @@
    #crd-root .cal button{position:relative;height:44px;min-width:0;border:0;border-radius:11px;
      background:var(--cell);color:var(--ink);padding:0;font-size:12px;display:flex;flex-direction:column;
      align-items:center;justify-content:center;gap:2px}
-   #crd-root .cal button small{font-size:9px;line-height:1;color:var(--soft)}
+   #crd-root .cal button small{font-size:9px;line-height:1;color:var(--soft);letter-spacing:-.4px;
+     max-width:100%;overflow:hidden;white-space:nowrap}
    #crd-root .l1{background:color-mix(in srgb,var(--accent) 20%,var(--cell))!important}
    #crd-root .l2{background:color-mix(in srgb,var(--accent) 42%,var(--cell))!important}
    #crd-root .l3{background:color-mix(in srgb,var(--accent) 68%,var(--cell))!important;color:var(--on)!important}
@@ -273,6 +275,21 @@
    #crd-root .metric strong{display:block;font-size:18px;margin-top:4px}
    #crd-root .progress{height:7px;background:var(--cell);border-radius:10px;overflow:hidden;margin:8px 0}
    #crd-root .progress span{display:block;height:100%;background:var(--accent);border-radius:10px}
+   #crd-root .mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+   #crd-root .mini>div{background:var(--cell);border-radius:11px;padding:7px 8px;min-width:0}
+   #crd-root .mini span{display:block;font-size:10px;color:var(--soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+   #crd-root .mini b{display:block;font-size:14px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+   #crd-root .mlist{margin-top:10px}
+   #crd-root .mrow{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;color:inherit;
+     padding:6px 4px;border-radius:9px;font-size:12px;text-align:left}
+   #crd-root .mrow.sel{background:var(--cell)}
+   #crd-root .mname{flex:none;width:44px}
+   #crd-root .mname small{font-size:9px;color:var(--soft)}
+   #crd-root .mbar{flex:1;height:6px;border-radius:6px;background:var(--cell);overflow:hidden}
+   #crd-root .mrow.sel .mbar{background:var(--paper)}
+   #crd-root .mbar span{display:block;height:100%;background:var(--accent);border-radius:6px}
+   #crd-root .mval{flex:none;min-width:62px;text-align:right;font-weight:700}
+   #crd-root .more{display:block;width:100%;margin-top:4px;border:0;background:transparent;color:var(--accent);font-size:12px;padding:6px}
    #crd-root .month-row{display:block;width:100%;text-align:left;background:var(--cell);color:inherit;
      border:1px solid transparent;border-radius:12px;padding:9px 10px;margin-top:6px}
    #crd-root .month-row.sel{border-color:var(--accent)}
@@ -458,7 +475,7 @@
        const used=amount(d);
        const cls=[level(used),d===t?'today':'',d>t?'future':''].filter(Boolean).join(' ');
        cells+=`<button data-day="${d}" class="${cls}" aria-label="${m}월 ${i+1}일 ${fmt(used)}">
-         ${hasDiary(d)?'<span class="dot"></span>':''}<span>${i+1}</span><small>${used?short(used):''}</small></button>`;
+         ${hasDiary(d)?'<span class="dot"></span>':''}<span>${i+1}</span><small>${used?fmt(used):''}</small></button>`;
      });
      return card('',`
        <div class="cal-head">
@@ -551,21 +568,23 @@
      const o=usageOverview(usage,db.manual),goal=Number(db.goalMonthly)||0;
      const peak=Math.max(0,...o.months.map(x=>x.total));
      const peakMonth=o.months.find(x=>x.total===peak);
-     return card('전체 통계',`
-       <div class="metrics">
-         <div class="metric"><span class="muted">총 누적 사용</span><strong>${fmt(o.total)}</strong></div>
-         <div class="metric"><span class="muted">사용한 날</span><strong>${fmt(o.days)}일</strong></div>
-         <div class="metric"><span class="muted">사용일 평균</span><strong>${fmt(o.days?o.total/o.days:0)}</strong></div>
-         <div class="metric"><span class="muted">최다 사용 달${peakMonth?` (${peakMonth.month})`:''}</span><strong>${fmt(peak)}</strong></div>
+     const list=[...o.months].reverse();
+     const shown=showAllMonths?list:list.slice(0,4);
+     return card(`전체 통계${o.first?` <span class="muted" style="font-weight:400">${o.first.replaceAll('-','.')}부터</span>`:''}`,`
+       <div class="mini">
+         <div><span>총 누적</span><b>${fmt(o.total)}</b></div>
+         <div><span>사용한 날</span><b>${fmt(o.days)}일</b></div>
+         <div><span>사용일 평균</span><b>${fmt(o.days?o.total/o.days:0)}</b></div>
        </div>
-       <p class="muted" style="margin-top:10px">${o.first?`${o.first}부터의 기록이에요 (사이트에서 조회되는 범위 + 보정값).`:'아직 기록이 없어요.'}</p>`)
-     +card('월별 사용량',[...o.months].reverse().map(x=>{
-       const over=goal&&x.total>goal;
-       return `<button class="month-row ${x.month===month?'sel':''}" data-stat-month="${x.month}" aria-pressed="${x.month===month}">
-         <span class="row"><b>${x.month}</b><span>${fmt(x.total)}</span></span>
-         <span class="progress"><span style="width:${peak?x.total/peak*100:0}%${over?';background:var(--over)':''}"></span></span>
-         <span class="muted">사용 ${x.days}일 · 사용일 평균 ${fmt(x.total/x.days)}${over?' · 한도 초과':''}</span>
-       </button>`}).join('')||'<p class="muted">아직 기록이 없어요.</p>');
+       <div class="mlist">${shown.map(x=>{
+         const over=goal&&x.total>goal;
+         return `<button class="mrow ${x.month===month?'sel':''}" data-stat-month="${x.month}" aria-pressed="${x.month===month}">
+           <span class="mname">${Number(x.month.slice(5))}월${x.month.slice(0,4)!==today().slice(0,4)?` <small>${x.month.slice(2,4)}</small>`:''}</span>
+           <span class="mbar"><span style="width:${peak?x.total/peak*100:0}%${over?';background:var(--over)':''}"></span></span>
+           <span class="mval">${fmt(x.total)}</span>
+         </button>`}).join('')||'<p class="muted">아직 기록이 없어요.</p>'}</div>
+       ${list.length>4?`<button class="more" data-act="toggle-months">${showAllMonths?'접기':`지난 달 ${list.length-4}개 더 보기`}</button>`:''}
+       ${peakMonth?`<p class="muted" style="margin-top:6px">가장 많이 쓴 달: ${peakMonth.month.replace('-','.')} · ${fmt(peak)}</p>`:''}`);
    }
 
    function stats(){
@@ -586,16 +605,15 @@
          <b>${y}년 ${m}월 통계</b>
          <button class="iconbtn" data-act="next-month" aria-label="다음 달">${ic('right')}</button>
        </div>
-       <div class="metrics">
-         <div class="metric"><span class="muted">총 사용</span><strong>${fmt(vals.reduce((a,b)=>a+b,0))}</strong></div>
-         <div class="metric"><span class="muted">사용한 날</span><strong>${active}일</strong></div>
-         <div class="metric"><span class="muted">사용일 평균</span><strong>${fmt(active?total(month)/active:0)}</strong></div>
-         <div class="metric"><span class="muted">최대 사용</span><strong>${fmt(Math.max(0,...vals))}</strong></div>
-         <div class="metric"><span class="muted">🌿 절약 성공한 날</span><strong>${savedDays.length}일</strong></div>
-         <div class="metric"><span class="muted">사용일 중 절약률</span><strong>${limit&&active?Math.round(savedDays.length/active*100):0}%</strong></div>
+       <div class="mini">
+         <div><span>총 사용</span><b>${fmt(vals.reduce((a,b)=>a+b,0))}</b></div>
+         <div><span>사용한 날</span><b>${active}일</b></div>
+         <div><span>사용일 평균</span><b>${fmt(active?total(month)/active:0)}</b></div>
+         <div><span>최대 사용</span><b>${fmt(Math.max(0,...vals))}</b></div>
+         <div><span>🌿 절약한 날</span><b>${limit?savedDays.length+'일':'-'}</b></div>
+         <div><span>절약률</span><b>${limit&&active?Math.round(savedDays.length/active*100)+'%':'-'}</b></div>
        </div>
-       <p class="muted" style="margin-top:10px">${limit?`일일 한도 ${fmt(limit)}개 이하 사용한 날 (사용 기록이 있는 날 기준)`:'설정에서 일일 사용 한도를 지정해 주세요.'}</p>
-       ${savedDays.length?`<div class="muted">🌿 ${savedDays.map(x=>x.d.slice(8)+'일').join(' · ')}</div>`:''}`);
+       ${limit?'':'<p class="muted" style="margin-top:6px">설정에서 일일 한도를 정하면 절약한 날이 나와요.</p>'}`);
    }
 
    function settings(){
@@ -634,8 +652,8 @@
        ['calendar','cal','달력'],['stats','chart','통계'],['settings','set','설정']
      ].map(([id,i,t])=>`<button data-tab="${id}" class="${tab===id?'active':''}">${ic(i)}<span>${t}</span></button>`).join('');
      content.innerHTML=tab==='calendar'
-       ?diaryOpen?diary():summary()+quick()+calendar()
-       :tab==='stats'?summary()+stats()+overview():settings();
+       ?diaryOpen?diary():summary()+calendar()+quick()
+       :tab==='stats'?stats()+overview():settings();
      if(tab==='calendar'&&diaryOpen)initDiary();
    }
    // 입력 중에는 화면을 다시 그리지 않음 (자동 새로고침 때문에 키보드가 닫히지 않게)
@@ -1476,6 +1494,7 @@
        month=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
        render();return;
      }
+     if(action==='toggle-months'){showAllMonths=!showAllMonths;render();return}
      if(action==='quick-save'){quickSave();return}
      if(action==='quick-capture'){
        day=today();month=day.slice(0,7);tab='calendar';diaryOpen=true;
