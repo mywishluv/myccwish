@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.7.7 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.8.3 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.7.7
+// @version      3.8.3
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
@@ -688,11 +688,13 @@ try {
     const size = Number(o.fontSize) || 16;
     const lh = LINE_HEIGHTS[o.lineHeight] || Number(o.lineHeight) || LINE_HEIGHTS.normal;
     const margin = Math.round(Math.max(28, Math.min(64, width * 0.075)));
+    const padY = o.padY === undefined || o.padY === null || o.padY === '' ? NaN : Number(o.padY);
     return {
       width,
       size,
       lineH: Math.round(size * lh * 100) / 100,
       margin,
+      marginY: Number.isFinite(padY) ? Math.max(0, Math.min(120, Math.round(padY))) : margin,
       family: o.font || 'serif',
       pageHeight: Number(o.pageHeight) || 0,
       dialogueStyle: o.dialogueStyle || 'bar',
@@ -834,7 +836,7 @@ try {
     const { flow } = flowData;
     const ratio = RATIOS[opt.pageMode];
     const pageH = ratio ? (opt.pageHeight || Math.round(opt.width * ratio)) : 0;
-    const contentH = ratio ? pageH - opt.margin * 2 : opt.maxLongHeight - opt.margin * 2;
+    const contentH = ratio ? pageH - opt.marginY * 2 : opt.maxLongHeight - opt.marginY * 2;
 
     // 고정 비율이면 너무 큰 그림은 줄인다
     flow.forEach(it => {
@@ -880,7 +882,7 @@ try {
     return pages.map((p, idx) => ({
       index: idx,
       w: opt.width,
-      h: ratio ? pageH : Math.round(p.used + opt.margin * 2),
+      h: ratio ? pageH : Math.round(p.used + opt.marginY * 2),
       items: p.items
     }));
   }
@@ -948,7 +950,7 @@ try {
 
   // 미리보기에서 누른 곳 찾기 (쪽 기준 좌표)
   function hitTest(page, opt, x, y) {
-    const cy = y - opt.margin;
+    const cy = y - opt.marginY;
     const cx = x - opt.margin;
     let best = null;
     for (const it of page.items) {
@@ -1464,9 +1466,9 @@ try {
   }
 
   function renderContent(ctx, page, opt, look, images, totalPages, theme) {
-    const M = opt.margin;
+    const M = opt.margin, MY = opt.marginY;
     ctx.save();
-    ctx.translate(M, M);
+    ctx.translate(M, MY);
     ctx.textBaseline = 'alphabetic';
 
     // 줄 노트
@@ -1540,7 +1542,7 @@ try {
       ctx.fillStyle = theme.page;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(`${page.index + 1} / ${totalPages}`, page.w / 2, page.h - M / 2);
+      ctx.fillText(`${page.index + 1} / ${totalPages}`, page.w / 2, page.h - Math.max(MY, size * 1.6) / 2);
       ctx.restore();
     }
   }
@@ -1616,10 +1618,20 @@ try {
     }
     return src;
   }
+  // 화면에 그려진 크기나 원본 크기 중 하나라도 크면 본문 이미지 (폰은 화면이 좁아 작게 그려지고, 지연 로딩이면 아직 0일 수 있다)
+  function bigImage(el) {
+    const r = el.getBoundingClientRect();
+    const nw = el.naturalWidth || 0, nh = el.naturalHeight || 0;
+    if (r.width >= 64 && r.height >= 48) return true;
+    if (nw >= 160 && nh >= 120) return true;
+    const aw = Number(el.getAttribute('width')) || 0;
+    if (!nw && !r.width && (!aw || aw >= 160)) return true; // 아직 안 불러온 이미지
+    return false;
+  }
   function imgBlock(el) {
     const r = el.getBoundingClientRect();
     const w = el.naturalWidth || el.width || Math.round(r.width), h = el.naturalHeight || el.height || Math.round(r.height);
-    if ((w && h && (w < 40 || h < 40)) || (r.width && r.width < 40)) return null;
+    if ((w && h && (w < 40 || h < 40)) || (r.width && r.width < 32 && !(el.naturalWidth >= 160))) return null;
     const src = imgSrc(el);
     return src ? { type: 'img', src, w: w || 0, h: h || 0 } : null;
   }
@@ -1702,7 +1714,7 @@ try {
   // 말풍선 안에서 서로 겹치지 않는 문단들
   function getUnits(bubble) {
     const cands = Array.from(bubble.querySelectorAll(UNIT_SEL))
-      .filter(el => el.closest(SELECTORS.bubble) === bubble && isVisible(el));
+      .filter(el => el.closest(SELECTORS.bubble) === bubble && (isVisible(el) || (el.tagName === 'IMG' && imgSrc(el) && bigImage(el))));
     let units = cands.filter(el => !cands.some(p => p !== el && p.contains(el)));
     if (!units.length) units = [bubble];
     const extra = groupImages(bubble);
@@ -1720,21 +1732,98 @@ try {
     if (first !== bubble) return [];
     return Array.from(group.querySelectorAll('img')).filter(img => {
       if (img.closest(SELECTORS.bubble)) return false;
-      if (!isVisible(img)) return false;
-      const r = img.getBoundingClientRect();
-      return r.width >= 80 && r.height >= 60; // 프로필 사진·아이콘 제외
+      if (!imgSrc(img)) return false;
+      const cs = getComputedStyle(img);
+      if (cs.display === 'none' || cs.visibility === 'hidden') return false;
+      return bigImage(img); // 프로필 사진·아이콘 제외
     });
+  }
+
+  /* 코드 블록(``` 로 감싼 글)은 통째로 한 덩어리라 빈 줄 기준으로 문단을 나눠 고를 수 있게 한다 */
+  function isCodeUnit(el) {
+    return el && el.tagName !== 'TABLE' && (el.tagName === 'PRE' || el.matches('.wrtn-codeblock')) && !!codeText(el);
+  }
+  function codeEl(el) { return el.querySelector('pre code') || el.querySelector('code') || el.querySelector('pre') || el; }
+  function codeText(el) { return (codeEl(el).textContent || '').replace(/\r/g, ''); }
+  // [{ s, e, text }] — 빈 줄로 나눈 문단들의 글자 위치
+  function codeParts(el) {
+    const text = codeText(el);
+    const out = [];
+    const SEP = /\n[ \t]*(?:\n[ \t]*)+/g;
+    let last = 0, m;
+    const push = (a, b) => {
+      const chunk = text.slice(a, b);
+      const body = chunk.replace(/^(?:[ \t]*\n)+/, '').replace(/\s+$/, ''); // 첫 줄 들여쓰기는 살린다
+      const lead = chunk.length - chunk.replace(/^(?:[ \t]*\n)+/, '').length;
+      if (body.trim()) out.push({ s: a + lead, e: a + lead + body.length, text: body });
+    };
+    while ((m = SEP.exec(text))) { push(last, m.index); last = m.index + m[0].length; }
+    push(last, text.length);
+    return out;
+  }
+  // 글자 위치 → DOM Range
+  function rangeAt(el, s, e) {
+    const base = codeEl(el);
+    const w = document.createTreeWalker(base, NodeFilter.SHOW_TEXT);
+    const r = document.createRange();
+    let pos = 0, n, startSet = false;
+    while ((n = w.nextNode())) {
+      const len = n.nodeValue.length;
+      if (!startSet && s <= pos + len) { r.setStart(n, Math.max(0, s - pos)); startSet = true; }
+      if (startSet && e <= pos + len) { r.setEnd(n, Math.max(0, e - pos)); return r; }
+      pos += len;
+    }
+    return startSet ? r : null;
+  }
+  function partRects(el) {
+    return codeParts(el).map(p => { const r = rangeAt(el, p.s, p.e); const b = r && r.getBoundingClientRect(); return b && b.height ? b : null; });
+  }
+  // 누른 곳(y)이 코드 블록의 몇 번째 문단인지
+  function partAt(el, x, y) {
+    const rects = partRects(el);
+    let best = 0, bd = Infinity;
+    rects.forEach((b, i) => {
+      if (!b) return;
+      const d = y < b.top ? b.top - y : y > b.bottom ? y - b.bottom : 0;
+      if (d < bd) { bd = d; best = i; }
+    });
+    return best;
+  }
+
+  // 화면에서 사라졌다 다시 그려져도 같은 문단이면 같은 열쇠 (크랙은 스크롤하면 지나간 메시지를 지웠다 다시 그린다)
+  function hashStr(t) { let h = 0; for (let i = 0; i < t.length; i++) h = (h * 31 + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+  function bubbleKey(bubble) {
+    const group = bubble.closest(SELECTORS.group);
+    const gid = group && group.getAttribute('data-message-group-id');
+    if (gid) {
+      const list = Array.from(group.querySelectorAll(SELECTORS.bubble)).filter(b => !b.parentElement || !b.parentElement.closest(SELECTORS.bubble));
+      return 'g' + gid + ':' + list.indexOf(bubble);
+    }
+    const t = (bubble.textContent || '').replace(/\s+/g, ' ').trim();
+    return 'h' + hashStr(t) + ':' + t.length;
+  }
+  function unitKey(u) {
+    const bk = bubbleKey(u.bubble);
+    const i = getUnits(u.bubble).indexOf(u.el);
+    return bk + '/' + i + (u.part !== undefined && u.part !== null ? '.' + u.part : '');
   }
 
   function getAllUnits() {
     const out = [];
-    for (const b of getBubbles()) for (const u of getUnits(b)) out.push({ el: u, bubble: b });
+    for (const b of getBubbles()) for (const u of getUnits(b)) {
+      if (isCodeUnit(u)) codeParts(u).forEach((p, i) => out.push({ el: u, bubble: b, part: i }));
+      else out.push({ el: u, bubble: b });
+    }
     return out;
   }
 
   // 문단 하나 → 블록들
-  function parseUnit(el) {
+  function parseUnit(el, part) {
     const tag = el.tagName;
+    if (part !== undefined && part !== null && isCodeUnit(el)) {
+      const p = codeParts(el)[part];
+      return p ? [{ type: 'status', runs: [{ t: p.text }] }] : [];
+    }
     if (tag === 'IMG') {
       const ib = imgBlock(el);
       return ib ? [ib] : [];
@@ -1750,10 +1839,17 @@ try {
   // 고른 문단들 → 메시지 묶음 (같은 말풍선끼리 모은다)
   function collectUnits(list) {
     const msgs = [];
-    let cur = null;
+    let cur = null, lastCode = null;
     for (const u of list) {
-      const blocks = u.blocks || parseUnit(u.el);
+      const blocks = u.blocks || parseUnit(u.el, u.part);
       if (!blocks.length) continue;
+      // 같은 코드 블록에서 이어진 문단들은 한 상자로 합친다
+      const isPart = u.part !== undefined && u.part !== null;
+      if (isPart && lastCode === u.el && cur && cur.bubble === u.bubble) {
+        const prev = cur.blocks[cur.blocks.length - 1];
+        if (prev && prev.type === 'status' && blocks[0].type === 'status') { prev.runs[0].t += '\n\n' + blocks[0].runs[0].t; continue; }
+      }
+      lastCode = isPart ? u.el : null;
       if (!cur || cur.bubble !== u.bubble) {
         cur = { bubble: u.bubble, role: u.role || getRole(u.bubble), blocks: [] };
         msgs.push(cur);
@@ -1767,7 +1863,7 @@ try {
     return bubbles.map(b => ({ role: getRole(b), blocks: parseBubble(b) })).filter(m => m.blocks.length);
   }
 
-  root.CCParse = { SELECTORS, getBubbles, getRole, parseBubble, parseMessages, isVisible, getUnits, getAllUnits, parseUnit, collectUnits };
+  root.CCParse = { SELECTORS, getBubbles, getRole, parseBubble, parseMessages, isVisible, getUnits, getAllUnits, parseUnit, collectUnits, isCodeUnit, codeParts, partAt, partRects, bubbleKey, unitKey };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 /* ======== 화면 스타일 ======== */
@@ -1826,7 +1922,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
 
   /* ---------- 설정 ---------- */
   const DEFAULTS = {
-    rules: [{ from: '', to: '', star: false }], starScope: 'dialogue', theme: 'paper', dialogueStyle: 'bar', dlgColor: '', narrAlpha: 0.72, font: 'noto', enFont: 'auto', fontSize: 16, pageMode: 'long',
+    rules: [{ from: '', to: '', star: false }], starScope: 'dialogue', theme: 'paper', dialogueStyle: 'bar', dlgColor: '', narrAlpha: 0.72, padY: 41, font: 'noto', enFont: 'auto', fontSize: 16, pageMode: 'long',
     pattern: 'none', frame: 'none', decor: 'deco', format: 'webp', tool: 'hl', color: '#FFD60A', customColor: '#FF7EB6', hlAlpha: 0.35, ulAlpha: 0.85, ulStyle: 'line', stStyle: 'hand'
   };
   let settings = Object.assign(clone(DEFAULTS), store.get('settings', {}));
@@ -1852,6 +1948,8 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     'CCK Hahmlet': { src: G('Hahmlet:wght@400;700'), fam: 'Hahmlet' },
     'CCK RIDIBatang': { file: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/RIDIBatang.woff', fam: 'RIDIBatang' },
     'CCK MaruBuri': { src: 'https://hangeul.pstatic.net/hangeul_static/css/maru-buri.css', fam: 'MaruBuri', famBold: 'MaruBuriBold' },
+    'CCK NanumBarunGothic': { src: 'https://hangeul.pstatic.net/hangeul_static/css/nanum-barun-gothic.css', fam: 'NanumBarunGothic', famBold: 'NanumBarunGothicBold',
+      alt: { file: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunGothic.woff', fam: 'NanumBarunGothic' } },
     'CCK Pretendard': { src: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css', fam: 'Pretendard' },
     'CCK IBM Plex': { src: G('IBM+Plex+Sans+KR:wght@400;700'), fam: 'IBM Plex Sans KR' },
     'CCK Nanum Gothic': { src: G('Nanum+Gothic:wght@400;700'), fam: 'Nanum Gothic' },
@@ -1901,6 +1999,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     songmyung: { group: '명조 · 소설책', label: '송명', kr: 'CCK Song Myung', en: 'CCE Garamond', generic: 'serif' },
     diphylleia: { group: '명조 · 소설책', label: '산하엽', kr: 'CCK Diphylleia', en: 'CCE Garamond', generic: 'serif' },
     notosans: { group: '고딕 · 깔끔', label: '본고딕', kr: 'CC Sans', en: 'CCE Inter', generic: 'sans-serif' },
+    nanumbarun: { group: '고딕 · 깔끔', label: '나눔바른고딕', kr: 'CCK NanumBarunGothic', en: null, generic: 'sans-serif' },
     pretendard: { group: '고딕 · 깔끔', label: '프리텐다드', kr: 'CCK Pretendard', en: null, generic: 'sans-serif' },
     ibmplex: { group: '고딕 · 깔끔', label: 'IBM 플렉스', kr: 'CCK IBM Plex', en: null, generic: 'sans-serif' },
     nanumg: { group: '고딕 · 깔끔', label: '나눔고딕', kr: 'CCK Nanum Gothic', en: 'CCE Lato', generic: 'sans-serif' },
@@ -1988,13 +2087,19 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     const jobs = [];
     for (const need of needs) {
       if (!need.text || !FONT_SRC[need.alias]) continue;
-      const def = FONT_SRC[need.alias];
-      const list = await faceList(def.src, def);
+      let def = FONT_SRC[need.alias];
+      let list = await faceList(def.src, def);
+      // 첫 주소에서 못 받으면 예비 주소로
+      if (def.alt && (!list || !list.some(f => f.fam === def.fam))) { def = def.alt; list = await faceList(def.src || def.file, def); }
       if (!list) { if (need.core) fontFailed = true; continue; }
       const cps = new Set();
       for (const ch of need.text + '0123456789/ ') cps.add(ch.codePointAt(0));
       let faces;
-      if (def.famBold) faces = list.filter(f => f.fam === (need.weight === '700' ? def.famBold : def.fam));
+      if (def.famBold) {
+        faces = list.filter(f => f.fam === (need.weight === '700' ? def.famBold : def.fam));
+        if (!faces.length) faces = list.filter(f => f.fam === def.fam && f.weight === need.weight);
+        if (!faces.length && need.weight === '700') continue;
+      }
       else {
         faces = list.filter(f => f.fam === def.fam && f.weight === need.weight);
         if (!faces.length && need.weight === '700') continue; // 굵은 글꼴이 없으면 흉내 낸 굵게로
@@ -2101,7 +2206,9 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     <div class="grabber"></div>
     <div class="sheet-nav"><span></span><b>모양</b><button class="btn-text bold" data-close>완료</button></div>
     <div class="sheet-body">
-      <div class="group themes" id="themes"></div>
+      <div class="group-title" style="margin-top:6px">내 스타일 <small id="preset-hint">눌러서 불러오기 · ✕로 지우기</small></div>
+      <div class="group"><div class="presets" id="presets"></div></div>
+      <div class="group themes mt12" id="themes"></div>
       <div class="group mt12">
         <div class="row col"><span class="label">테마 꾸밈</span>
           <div class="seg" data-seg="decor"><button data-v="simple">심플</button><button data-v="deco">꾸밈</button></div></div>
@@ -2117,6 +2224,8 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
         <button class="row link" id="open-enfont"><span class="label">영어 글꼴</span><span class="value" id="enfont-v"></span><span class="chev">›</span></button>
         <div class="row"><span class="label">글자 크기 <b id="fs-v" style="color:var(--label2);font-weight:500"></b></span>
           <div class="stepper"><button id="fs-minus">−</button><button id="fs-plus">＋</button></div></div>
+        <div class="row col"><span class="label">위아래 여백 <b id="pady-v" style="color:var(--label2);font-weight:500"></b><small id="pady-hint">여러 장 이어 붙일 때 틈을 줄여요</small></span>
+          <div class="alpha-row" style="padding:0"><span>좁게</span><input type="range" id="pad-y" min="0" max="80" step="2"><span>넓게</span></div></div>
         <div class="row col"><span class="label">나누기</span>
           <div class="seg" data-seg="pageMode"><button data-v="long">길게 한 장</button><button data-v="4:5">4:5</button><button data-v="9:16">9:16</button></div></div>
       </div>
@@ -2205,6 +2314,15 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .dlg-colors { padding: 2px 0 0; }
     .dot.auto { background: var(--fill); color: var(--label2); font-size: 10.5px; font-weight: 700; letter-spacing: -0.3px; }
     .dot.auto.on { color: var(--blue); }
+    #pady-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
+    .presets { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px; }
+    .preset { display: inline-flex; align-items: center; gap: 2px; border: none; border-radius: 999px; background: var(--fill); padding: 0 4px 0 12px; height: 34px; font-size: 14px; font-weight: 600; color: var(--label); max-width: 100%; }
+    .preset .pn { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
+    .preset .px { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: var(--label2); }
+    .preset .px:hover { background: var(--fill2); }
+    .preset.on { background: color-mix(in srgb, var(--blue) 15%, var(--cell)); color: var(--blue); box-shadow: 0 0 0 1.5px var(--blue); }
+    .preset.add { background: transparent; box-shadow: inset 0 0 0 1.5px var(--blue); color: var(--blue); padding: 0 14px; }
+    #preset-hint { margin-left: 6px; font-size: 12px; color: var(--label3); }
     #narr-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
     #dlg-hint { display: inline; margin-left: 6px; font-size: 12px; color: var(--label2); font-weight: 400; }
     .cc-run:active { opacity: .7; }
@@ -2263,7 +2381,63 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
 
   /* ======================= 1. 크랙 화면: 문단 고르기 ======================= */
   let stage = 'idle';
-  let start = null; // { el, bubble, role, blocks }
+  let start = null; // { el, bubble, role, blocks, key }
+  /* 고르는 동안 화면에 나타난 문단을 순서대로 모아 둔다.
+     크랙은 스크롤로 지나간 메시지를 화면(DOM)에서 지워 버려서, 끝 문단을 누를 때 중간이 사라져 있을 수 있다. */
+  let seen = [];            // [{ key, bkey, role, blocks, el }]
+  let seenKeys = new Map(); // key → 기록
+  let lastScrollDir = 1, seenTimer = 0;
+  function recordUnits() {
+    let snap;
+    try { snap = P.getAllUnits(); } catch (e) { return; }
+    const cache = new Map(); // 말풍선마다 한 번만 계산
+    const items = snap.map(u => {
+      let c = cache.get(u.bubble);
+      if (!c) { c = { bk: P.bubbleKey(u.bubble), units: P.getUnits(u.bubble) }; cache.set(u.bubble, c); }
+      const key = c.bk + '/' + c.units.indexOf(u.el) + (u.part !== undefined && u.part !== null ? '.' + u.part : '');
+      return { key, u, bk: c.bk };
+    });
+    // 이미 아는 첫 문단을 기준으로 끼워 넣는다
+    const firstKnown = items.findIndex(x => seenKeys.has(x.key));
+    let pos;
+    if (firstKnown === -1) pos = lastScrollDir < 0 ? 0 : seen.length;
+    else {
+      pos = seen.indexOf(seenKeys.get(items[firstKnown].key));
+      // 그 앞의 새 문단들은 기준 문단 바로 앞에
+      for (let i = firstKnown - 1; i >= 0; i--) {
+        if (seenKeys.has(items[i].key)) continue;
+        const rec = makeRec(items[i]);
+        seen.splice(pos, 0, rec); seenKeys.set(rec.key, rec);
+      }
+      pos = seen.indexOf(seenKeys.get(items[firstKnown].key));
+    }
+    let i0 = firstKnown === -1 ? 0 : firstKnown;
+    for (let i = i0; i < items.length; i++) {
+      const x = items[i];
+      if (seenKeys.has(x.key)) { const r = seenKeys.get(x.key); r.el = x.u.el; pos = seen.indexOf(r) + 1; continue; }
+      const rec = makeRec(x);
+      seen.splice(pos, 0, rec); seenKeys.set(rec.key, rec); pos++;
+    }
+  }
+  function makeRec(x) {
+    const u = x.u;
+    let blocks = [];
+    try { blocks = P.parseUnit(u.el, u.part); } catch (e) { /* 건너뜀 */ }
+    return { key: x.key, bkey: x.bk, role: P.getRole(u.bubble), blocks, el: u.el, part: u.part, bubble: u.bubble };
+  }
+  const onPickScroll = e => {
+    if (stage !== 'end') return;
+    const t = e.target === document ? document.scrollingElement : e.target;
+    if (t && typeof t.scrollTop === 'number') {
+      const prev = t.__ccTop === undefined ? t.scrollTop : t.__ccTop;
+      if (t.scrollTop !== prev) lastScrollDir = t.scrollTop > prev ? 1 : -1;
+      t.__ccTop = t.scrollTop;
+    }
+    clearTimeout(seenTimer);
+    seenTimer = setTimeout(recordUnits, 60);
+  };
+  document.addEventListener('scroll', onPickScroll, true);
+  const seenObserver = new MutationObserver(() => { if (stage === 'end') { clearTimeout(seenTimer); seenTimer = setTimeout(recordUnits, 60); } });
   let editorOpen = false;
 
   const pageStyle = document.createElement('style');
@@ -2296,9 +2470,11 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   }
   function stopPicking(silent) {
     stage = 'idle';
+    try { seenObserver.disconnect(); } catch (e) { /* 무시 */ }
     if (start && start.el) start.el.classList.remove('cc-start');
     start = null;
     document.querySelectorAll('.cc-picked, .cc-start').forEach(el => el.classList.remove('cc-picked', 'cc-start'));
+    document.querySelectorAll('.cc-part-mark').forEach(el => el.remove());
     document.body.classList.remove('cc-picking');
     $('pickbar').classList.add('hidden');
     if (!silent) updateLauncher();
@@ -2317,7 +2493,20 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     const units = P.getUnits(bubble);
     const el = units.find(u => u === e.target || u.contains(e.target)) || (units.length === 1 ? units[0] : null);
     if (!el) return null;
+    if (P.isCodeUnit(el)) return { el, bubble, part: P.partAt(el, e.clientX, e.clientY) };
     return { el, bubble };
+  }
+  // 코드 블록 안 문단 하나에 표시 (페이지 위에 얇은 상자를 얹는다)
+  function markPart(u, cls) {
+    if (u.part === undefined) { u.el.classList.add(cls); return; }
+    const b = P.partRects(u.el)[u.part];
+    if (!b) { u.el.classList.add(cls); return; }
+    const d = document.createElement('div');
+    d.className = 'cc-part-mark';
+    const orange = cls === 'cc-start';
+    d.style.cssText = `position:absolute;left:${b.left + scrollX - 6}px;top:${b.top + scrollY - 4}px;width:${b.width + 12}px;height:${b.height + 8}px;` +
+      `border-radius:8px;pointer-events:none;z-index:2147483000;background:${orange ? 'rgba(255,149,0,.16)' : 'rgba(0,122,255,.12)'};box-shadow:0 0 0 2px ${orange ? '#FF9500' : '#007AFF'};`;
+    document.body.appendChild(d);
   }
 
   document.addEventListener('click', e => {
@@ -2327,21 +2516,29 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     if (!u) return;
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
     if (stage === 'start') {
-      start = { el: u.el, bubble: u.bubble, role: P.getRole(u.bubble), blocks: P.parseUnit(u.el) };
-      u.el.classList.add('cc-start');
+      start = { el: u.el, part: u.part, bubble: u.bubble, role: P.getRole(u.bubble), blocks: P.parseUnit(u.el, u.part), key: P.unitKey(u) };
+      markPart(u, 'cc-start');
+      seen = []; seenKeys = new Map();
+      recordUnits();
+      try { seenObserver.observe(document.body, { childList: true, subtree: true }); } catch (e) { /* 무시 */ }
       stage = 'end';
       showBar('2', '끝 문단을 눌러 주세요', '스크롤해서 찾아도 돼요 · 같은 문단을 또 누르면 그 문단만', { orange: true });
       return;
     }
     // 끝 문단
-    const all = P.getAllUnits();
-    let a = all.findIndex(x => x.el === start.el);
-    const b = all.findIndex(x => x.el === u.el);
+    recordUnits();
+    seenObserver.disconnect();
+    const endKey = P.unitKey(u);
+    let a = seen.findIndex(x => x.key === start.key);
+    const b = seen.findIndex(x => x.key === endKey);
     if (b === -1) return;
-    let list;
-    if (a === -1) list = [start].concat(all.slice(0, b + 1)); // 시작 문단이 화면에서 사라졌을 때
-    else list = all.slice(Math.min(a, b), Math.max(a, b) + 1);
-    list.forEach(x => x.el && x.el.classList && x.el.classList.add('cc-picked'));
+    if (a === -1) { // 혹시 시작 문단 기록이 없으면 맨 앞에
+      const rec = { key: start.key, bkey: P.bubbleKey(start.bubble), role: start.role, blocks: start.blocks, el: start.el, part: start.part };
+      seen.unshift(rec); a = 0;
+    }
+    const picked = seen.slice(Math.min(a, b), Math.max(a, b) + 1);
+    picked.forEach(x => { if (x.el && x.el.isConnected) markPart(x, 'cc-picked'); });
+    const list = picked.map(x => ({ el: x.key.replace(/\.\d+$/, ''), part: x.part, bubble: x.bkey, role: x.role, blocks: clone(x.blocks) }));
     const messages = P.collectUnits(list);
     setTimeout(() => {
       stopPicking(true);
@@ -2500,24 +2697,51 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     toast('되돌렸어요', 1100);
   });
 
+  // 받은 그림 데이터 → 그릴 수 있는 그림 (폰 사파리는 createImageBitmap(blob)이 자주 실패해서 <img>로 한 번 더)
+  async function decodeBlob(blob) {
+    if (!blob || !blob.size) throw new Error('empty');
+    try { if (typeof createImageBitmap === 'function') return await createImageBitmap(blob); } catch (e) { /* 아래로 */ }
+    const url = URL.createObjectURL(blob);
+    try {
+      const im = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+      const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+      c.getContext('2d').drawImage(im, 0, 0);
+      return c;
+    } finally { setTimeout(() => URL.revokeObjectURL(url), 1000); }
+  }
+  function dataToBlob(data, src) {
+    if (data instanceof Blob) return data;
+    if (data instanceof ArrayBuffer || ArrayBuffer.isView(data)) return new Blob([data]);
+    if (typeof data === 'string' && data.length) { // 일부 폰 확장 앱은 글자로 돌려준다
+      const u = new Uint8Array(data.length); for (let i = 0; i < data.length; i++) u[i] = data.charCodeAt(i) & 255;
+      return new Blob([u]);
+    }
+    throw new Error('no data ' + src);
+  }
+  async function loadOneImage(src) {
+    if (src.startsWith('data:') || src.startsWith('blob:')) return decodeBlob(await (await fetch(src)).blob());
+    const tries = [
+      async () => decodeBlob(dataToBlob(await netGet(src, 'arraybuffer'), src)),
+      async () => decodeBlob(dataToBlob(await netGet(src, 'blob'), src)),
+      async () => { const r = await fetch(src, { mode: 'cors', credentials: 'omit' }); if (!r.ok) throw new Error('HTTP ' + r.status); return decodeBlob(await r.blob()); },
+      async () => { // CORS 허용 이미지면 바로
+        const im = await new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src + (src.includes('?') ? '&' : '?') + 'cc=' + Date.now(); });
+        const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+        c.getContext('2d').drawImage(im, 0, 0); c.toDataURL(); // 막힌 이미지면 여기서 오류
+        return c;
+      }
+    ];
+    let last;
+    for (const t of tries) { try { return await t(); } catch (e) { last = e; } }
+    throw last || new Error('fail');
+  }
   async function loadImages() {
     const srcs = new Set();
     doc.messages.forEach(m => m.blocks.forEach(b => { if (b.type === 'img' && b.src) srcs.add(b.src); }));
     let failed = 0;
     await Promise.all(Array.from(srcs).map(async src => {
       if (images.has(src)) return;
-      try {
-        const blob = src.startsWith('data:') ? await (await fetch(src)).blob() : await netGet(src, 'blob');
-        images.set(src, await createImageBitmap(blob));
-      } catch (e) {
-        // 확장 앱이 외부 접속을 막으면 CORS 허용 이미지로 한 번 더
-        try {
-          const im = await new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src; });
-          const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
-          c.getContext('2d').drawImage(im, 0, 0); c.toDataURL(); // 막힌 이미지면 여기서 오류
-          images.set(src, await createImageBitmap(c));
-        } catch (e2) { failed++; }
-      }
+      try { images.set(src, await loadOneImage(src)); } catch (e) { failed++; }
     }));
     if (failed) toast(`이미지 ${failed}개를 못 불러와서 빼고 만들어요`, 3000);
   }
@@ -2591,7 +2815,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     return {
       width: PAGE_W - 2 * F, pageHeight: ratio ? Math.round(PAGE_W * ratio) - 2 * F : 0,
       fontSize: settings.fontSize, lineHeight: 'normal', font: 'body', dialogueStyle: settings.dialogueStyle,
-      indent: false, showLabels: false, pageMode: settings.pageMode, maxLongHeight: maxH, title: '', pageNumbers: true
+      indent: false, showLabels: false, pageMode: settings.pageMode, maxLongHeight: maxH, title: '', pageNumbers: true, padY: settings.padY
     };
   }
   const look = () => ({ theme: settings.theme, dialogueStyle: settings.dialogueStyle, muteNarration: true, pageNumbers: true, pattern: 'none', decor: settings.decor, dlgColor: settings.dlgColor || '', narrAlpha: Number(settings.narrAlpha) || 0.72 });
@@ -2623,7 +2847,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   function anchorY(page, pid) {
     let y = Infinity;
     for (const it of page.items) if (it.pid === pid && it.y < y) y = it.y;
-    return y === Infinity ? null : y + current.opt.margin;
+    return y === Infinity ? null : y + current.opt.marginY;
   }
   function placeStickers() {
     current.pages.forEach(p => { p.stickers = []; });
@@ -2637,7 +2861,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     }
   }
   function nearestPid(page, y) {
-    const cy = y - current.opt.margin;
+    const cy = y - current.opt.marginY;
     let best = null, bd = Infinity;
     for (const it of page.items) {
       if (!it.pid) continue;
@@ -2799,6 +3023,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     if (!h) return;
     const blk = blockOf(h.it.pid);
     if (blk && blk.type === 'p') showKindPop(h.it.pid, wrap, pc);
+    else if (blk) showKindPop(h.it.pid, wrap, pc, true); // 이미지·상태창·구분선은 삭제만
   }
 
   function blockOf(pid) {
@@ -2809,12 +3034,13 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   /* 대사 구분 */
   let kindPop = null;
   function hideKindPop() { if (kindPop) { kindPop.remove(); kindPop = null; } }
-  function showKindPop(pid, wrap, pc) {
+  function showKindPop(pid, wrap, pc, delOnly) {
     hideKindPop();
     const pop = document.createElement('div');
     pop.className = 'kind-pop';
     const cur = edits.kind[pid] || 'auto';
-    [['auto', '자동'], ['d', '대사'], ['n', '서술'], ['t', '속마음'], ['del', '삭제']].forEach(([k, label]) => {
+    const what = delOnly ? (blockOf(pid).type === 'img' ? '이미지' : '이 부분') : '문단';
+    (delOnly ? [['del', what + ' 삭제']] : [['auto', '자동'], ['d', '대사'], ['n', '서술'], ['t', '속마음'], ['del', '삭제']]).forEach(([k, label]) => {
       const b = document.createElement('button');
       b.textContent = label;
       b.classList.toggle('on', k === cur);
@@ -2823,7 +3049,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
         hideKindPop();
         if (k === 'del') {
           change(ed => { ed.hidden[pid] = true; });
-          toast('문단을 지웠어요 · 위 ↶ 버튼으로 되돌릴 수 있어요', 2200);
+          toast(`${what === '문단' ? '문단을' : what === '이미지' ? '이미지를' : '지정한 부분을'} 지웠어요 · 위 ↶ 버튼으로 되돌릴 수 있어요`, 2200);
           return;
         }
         if (k === cur) return;
@@ -2987,7 +3213,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           d.className = 'pending';
           const M = current.opt.margin + F;
           d.style.left = (wrap.offsetLeft + (M + it.x + x0 - 2) * z) + 'px';
-          d.style.top = (wrap.offsetTop + canvas.offsetTop + (M + it.y + 2) * z) + 'px';
+          d.style.top = (wrap.offsetTop + canvas.offsetTop + (current.opt.marginY + F + it.y + 2) * z) + 'px';
           d.style.width = ((x1 - x0 + 4) * z) + 'px';
           d.style.height = ((it.h - 4) * z) + 'px';
           box.appendChild(d);
@@ -3270,15 +3496,76 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     const na = Math.round((Number(settings.narrAlpha) || 0.72) * 100);
     $('narr-alpha').value = na;
     $('narr-v').textContent = na + '%';
+    syncPadY();
   }
+  function syncPadY() {
+    const v = Number.isFinite(Number(settings.padY)) ? Number(settings.padY) : 41;
+    $('pad-y').value = v;
+    $('pady-v').textContent = v === 0 ? '없음' : v + 'px';
+  }
+  $('pad-y').addEventListener('input', () => {
+    settings.padY = Number($('pad-y').value);
+    syncPadY();
+    saveSettings();
+    scheduleRefresh(60);
+  });
   $('narr-alpha').addEventListener('input', () => {
     settings.narrAlpha = Number($('narr-alpha').value) / 100;
     $('narr-v').textContent = $('narr-alpha').value + '%';
     saveSettings();
     scheduleRefresh(60);
   });
+  /* 내 스타일: 글꼴·테마·꾸밈 방식을 이름 붙여 저장 (이름 바꾸기 규칙은 캐릭터마다 달라서 빼고) */
+  const STYLE_KEYS = ['theme', 'decor', 'dialogueStyle', 'dlgColor', 'narrAlpha', 'padY', 'font', 'enFont', 'fontSize', 'pageMode', 'pattern', 'frame', 'format', 'color', 'customColor', 'hlAlpha', 'ulAlpha', 'ulStyle', 'stStyle', 'starScope'];
+  const pickStyle = () => { const o = {}; STYLE_KEYS.forEach(k => { if (settings[k] !== undefined) o[k] = settings[k]; }); return o; };
+  const sameStyle = (a, b) => STYLE_KEYS.every(k => a[k] === undefined || String(a[k]) === String(b[k]));
+  let presets = (() => { const v = store.get('presets', []); return Array.isArray(v) ? v.filter(x => x && x.name && x.s) : []; })();
+  const savePresets = () => store.set('presets', presets);
+  function renderPresets() {
+    const box = $('presets');
+    box.innerHTML = '';
+    const now = pickStyle();
+    presets.forEach((pr, i) => {
+      const b = document.createElement('button');
+      b.className = 'preset' + (sameStyle(pr.s, now) ? ' on' : '');
+      const n = document.createElement('span'); n.className = 'pn'; n.textContent = pr.name;
+      const x = document.createElement('span'); x.className = 'px'; x.textContent = '✕'; x.setAttribute('aria-label', '지우기');
+      b.append(n, x);
+      b.addEventListener('click', e => {
+        if (e.target === x) {
+          const gone = presets.splice(i, 1)[0];
+          savePresets(); renderPresets();
+          toast(`‘${gone.name}’ 스타일을 지웠어요`, 1500);
+          return;
+        }
+        Object.assign(settings, DEFAULTS_STYLE(), pr.s);
+        saveSettings(); syncLook(); scheduleRefresh(0);
+        toast(`‘${pr.name}’ 스타일을 불러왔어요`, 1300);
+      });
+      box.appendChild(b);
+    });
+    const add = document.createElement('button');
+    add.className = 'preset add';
+    add.textContent = presets.length ? '＋ 지금 모양 저장' : '＋ 지금 모양을 내 스타일로 저장';
+    add.addEventListener('click', () => {
+      let name = null;
+      try { name = window.prompt('스타일 이름', '내 스타일 ' + (presets.length + 1)); } catch (e) { name = '내 스타일 ' + (presets.length + 1); }
+      if (name === null) return;
+      name = String(name).trim().slice(0, 20) || ('내 스타일 ' + (presets.length + 1));
+      const same = presets.findIndex(p => p.name === name);
+      const item = { name, s: pickStyle() };
+      if (same >= 0) presets[same] = item; else presets.push(item);
+      if (presets.length > 20) presets.shift();
+      savePresets(); renderPresets();
+      toast(same >= 0 ? `‘${name}’을(를) 지금 모양으로 바꿨어요` : `‘${name}’ 저장했어요`, 1500);
+    });
+    box.appendChild(add);
+  }
+  const DEFAULTS_STYLE = () => { const o = {}; STYLE_KEYS.forEach(k => { if (DEFAULTS[k] !== undefined) o[k] = clone(DEFAULTS[k]); }); return o; };
+
   function syncLook() {
     syncDlgColors();
+    renderPresets();
     const box = $('themes');
     if (!box.children.length) {
       Object.entries(R.THEMES).forEach(([key, th]) => {
