@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name         📔 다이어리 v2.4.2 (누적·월별 통계)
+// @name         📔 뉴다이어리 v2.4.2 (누적·월별 통계)
 // @namespace    cracker-diary-integrated
 // @version      2.4.2
 // @description  크래커 사용량 달력, 월별 통계, 절약 목표, 일기장 꾸미기 기능
