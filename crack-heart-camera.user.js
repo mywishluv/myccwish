@@ -1,10 +1,10 @@
 // ==UserScript==
-// @name         크랙 하트카메라 캡처 v3.8.4 (소설 원고형)
+// @name         크랙 하트카메라 캡처 v3.8.5 (소설 원고형)
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      3.8.4
+// @version      3.8.5
 // @description  모바일 미리보기/설정 분리·접기, 대사 속 이름 ★강조, 글꼴 31종, 끌어서 옮기는 하트카메라 버튼, 문단 선택 및 소설 원고 이미지(WebP/PNG) 저장
 // @match        https://crack.wrtn.ai/*
 // @match        https://*.crack.wrtn.ai/*
@@ -1924,7 +1924,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
 
   /* ---------- 설정 ---------- */
   const DEFAULTS = {
-    rules: [{ from: '', to: '', star: false }], starScope: 'dialogue', theme: 'paper', dialogueStyle: 'bar', dlgColor: '', narrAlpha: 0.72, padY: 41, font: 'noto', enFont: 'auto', fontSize: 16, pageMode: 'long',
+    rules: [{ from: '', to: '', star: false }], starScope: 'dialogue', theme: 'paper', dialogueStyle: 'bar', dlgColor: '', narrAlpha: 0.72, padY: 41, italic: 'thought', font: 'noto', enFont: 'auto', fontSize: 16, pageMode: 'long',
     pattern: 'none', frame: 'none', decor: 'deco', format: 'webp', tool: 'hl', color: '#FFD60A', customColor: '#FF7EB6', hlAlpha: 0.35, ulAlpha: 0.85, ulStyle: 'line', stStyle: 'hand'
   };
   let settings = Object.assign(clone(DEFAULTS), store.get('settings', {}));
@@ -2222,6 +2222,8 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           <div class="colors dlg-colors" id="dlg-colors"></div></div>
         <div class="row col"><span class="label">‘서술’ 지정 문단 진하기 <b id="narr-v" style="color:var(--label2);font-weight:500"></b><small id="narr-hint">문단을 눌러 ‘서술’로 고른 곳에만 적용돼요</small></span>
           <div class="alpha-row" style="padding:0"><span>연하게</span><input type="range" id="narr-alpha" min="30" max="100" step="5"><span>진하게</span></div></div>
+        <div class="row col"><span class="label">*기울임* 글씨 <small id="ital-hint">크랙에서 *별표*로 감싼 글</small></span>
+          <div class="seg" data-seg="italic"><button data-v="thought">기울임 · 속마음</button><button data-v="narr">바로 세워 지문으로</button></div></div>
         <button class="row link" id="open-font"><span class="label">글꼴</span><span class="value" id="font-v"></span><span class="chev">›</span></button>
         <button class="row link" id="open-enfont"><span class="label">영어 글꼴</span><span class="value" id="enfont-v"></span><span class="chev">›</span></button>
         <div class="row"><span class="label">글자 크기 <b id="fs-v" style="color:var(--label2);font-weight:500"></b></span>
@@ -2325,6 +2327,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .preset.on { background: color-mix(in srgb, var(--blue) 15%, var(--cell)); color: var(--blue); box-shadow: 0 0 0 1.5px var(--blue); }
     .preset.add { background: transparent; box-shadow: inset 0 0 0 1.5px var(--blue); color: var(--blue); padding: 0 14px; }
     #preset-hint { margin-left: 6px; font-size: 12px; color: var(--label3); }
+    #ital-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
     #narr-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
     #dlg-hint { display: inline; margin-left: 6px; font-size: 12px; color: var(--label2); font-weight: 400; }
     .cc-run:active { opacity: .7; }
@@ -2535,7 +2538,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       const all = P.getAllUnits();
       const a0 = all.findIndex(x => x.el === start.el && x.part === start.part);
       const b0 = all.findIndex(x => x.el === u.el && x.part === u.part);
-      lastDiag = { v: '3.8.4', path: 'live', all: all.length, a0, b0, bubbles: P.getBubbles().length,
+      lastDiag = { v: '3.8.5', path: 'live', all: all.length, a0, b0, bubbles: P.getBubbles().length,
         units: all.slice(Math.max(0, Math.min(a0, b0) - 2), Math.max(a0, b0) + 3).map(x => ({ g: (x.bubble.closest(P.SELECTORS.group) || {}).getAttribute ? x.bubble.closest(P.SELECTORS.group).getAttribute('data-message-group-id') : null, role: P.getRole(x.bubble), tag: x.el.tagName, cls: String(x.el.className || '').slice(0, 40), t: (x.el.textContent || '').trim().slice(0, 14) })) };
       if (a0 !== -1 && b0 !== -1) {
         const live = all.slice(Math.min(a0, b0), Math.max(a0, b0) + 1);
@@ -2813,7 +2816,9 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           if (b.type === 'status') { turn.blocks.push({ pid, mi, type: 'status', runs }); return; }
           const force = edits.kind[pid];
           // 대사 여부를 먼저 판별해야 ★가 서술 부분까지 퍼지지 않는다.
-          runs = T.classifyRuns(runs, { italicThought: true, force });
+          const uprightItalic = settings.italic === 'narr';
+          runs = T.classifyRuns(runs, { italicThought: !uprightItalic, force });
+          if (uprightItalic) runs = runs.map(r => (r.i ? Object.assign({}, r, { i: false }) : r)); // 기울임 풀기
           if (force === 'n') runs = runs.map(r => Object.assign({}, r, { nf: true })); // 내가 '서술'로 지정한 문단
           runs = T.applyEmphasis(runs, names, { dialogueOnly: settings.starScope !== 'all' });
           const pieces = force ? [runs] : T.splitDialogue(runs);
@@ -3548,7 +3553,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     scheduleRefresh(60);
   });
   /* 내 스타일: 글꼴·테마·꾸밈 방식을 이름 붙여 저장 (이름 바꾸기 규칙은 캐릭터마다 달라서 빼고) */
-  const STYLE_KEYS = ['theme', 'decor', 'dialogueStyle', 'dlgColor', 'narrAlpha', 'padY', 'font', 'enFont', 'fontSize', 'pageMode', 'pattern', 'frame', 'format', 'color', 'customColor', 'hlAlpha', 'ulAlpha', 'ulStyle', 'stStyle', 'starScope'];
+  const STYLE_KEYS = ['theme', 'decor', 'dialogueStyle', 'dlgColor', 'narrAlpha', 'padY', 'italic', 'font', 'enFont', 'fontSize', 'pageMode', 'pattern', 'frame', 'format', 'color', 'customColor', 'hlAlpha', 'ulAlpha', 'ulStyle', 'stStyle', 'starScope'];
   const pickStyle = () => { const o = {}; STYLE_KEYS.forEach(k => { if (settings[k] !== undefined) o[k] = settings[k]; }); return o; };
   const sameStyle = (a, b) => STYLE_KEYS.every(k => a[k] === undefined || String(a[k]) === String(b[k]));
   let presets = (() => { const v = store.get('presets', []); return Array.isArray(v) ? v.filter(x => x && x.name && x.s) : []; })();
