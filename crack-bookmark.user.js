@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         크랙 명장면 북마크
+// @name         크랙 대화 북마크
 // @namespace    https://github.com/mywishluv/wishlite
-// @version      1.0.0
-// @description  크랙 채팅에서 마음에 드는 메시지에 ☆를 눌러 저장하고, 목록에서 눌러 그 턴으로 바로 이동해요.
+// @version      1.1.0
+// @description  크랙 채팅에서 마음에 드는 메시지에 ☆를 눌러 저장하고, 메모를 달고, 목록에서 눌러 그 턴으로 바로 이동해요.
 // @author       muz
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_getValue
@@ -11,6 +11,7 @@
 // @downloadURL  https://github.com/mywishluv/wishlite/raw/main/crack-bookmark.user.js
 // @updateURL    https://github.com/mywishluv/wishlite/raw/main/crack-bookmark.user.js
 // ==/UserScript==
+// v1.1.0 - 떠 있던 ★ 버튼 없애고 채팅방 설정 '전체 설정' 밑에 '대화 북마크' 메뉴로 이동, 북마크마다 메모 추가
 // v1.0.0 - 첫 버전: 메시지마다 ☆ 저장, ★ 목록, 그 턴으로 이동(예전 대화 자동 불러오기)
 // 내 대화는 크랙에서 읽기만 하고 다른 곳으로 보내지 않아요. (저장은 이 브라우저 안에만)
 
@@ -25,10 +26,18 @@
     optionsWrap: '.dropdown-button',             // ⋯ 버튼 감싸는 칸
     text: '.wrtn-markdown',                      // 메시지 본문
     userMark: '.border-outline_tertiary',        // 내 메시지에만 있는 테두리
+    menuLabel: 'span.typo-text-sm_leading-none_medium', // 설정 창 메뉴 글자
+    menuBtn: '[role="button"]',                  // 설정 창 메뉴 한 줄의 버튼
+  };
+  const TXT = {
+    sidebarTitle: '채팅방 설정',   // 설정 창이 열렸는지 확인용
+    anchor: '글꼴',               // 이 메뉴 바로 위에 넣어요 ('전체 설정' 밑 첫 줄)
   };
 
-  const NAME = '크랙 명장면 북마크';
+  const NAME = '크랙 대화 북마크';
+  const MENU = '대화 북마크';
   const GOLD = '#F5B301';
+  const Z = 2147483000;
 
   /* ───────── 저장 (채팅방마다 따로, 이 브라우저에만) ───────── */
   let path = location.pathname;
@@ -60,6 +69,7 @@
     return [...m.querySelectorAll(SEL.text)].map(e => (e.innerText || '').trim()).filter(Boolean).join('\n\n');
   }
   function roleOf(m) { return m.querySelector(SEL.userMark) ? 'me' : 'char'; }
+  function textIs(el, t) { return (el.textContent || '').replace(/\s/g, '') === t.replace(/\s/g, ''); }
 
   function isDark() {
     for (const el of [document.body, document.documentElement]) {
@@ -72,8 +82,8 @@
   }
   function theme() {
     return isDark()
-      ? { bg: '#1C1C1E', card: '#2C2C2E', text: '#F2F2F7', sub: '#98989F', line: '#3A3A3C', btn: '#3A3A3C', fab: 'rgba(44,44,46,.95)' }
-      : { bg: '#F2F2F7', card: '#FFFFFF', text: '#1C1C1E', sub: '#8E8E93', line: '#E5E5EA', btn: '#F2F2F7', fab: 'rgba(255,255,255,.95)' };
+      ? { bg: '#1C1C1E', card: '#2C2C2E', text: '#F2F2F7', sub: '#98989F', line: '#3A3A3C', btn: '#3A3A3C', input: '#1C1C1E' }
+      : { bg: '#F2F2F7', card: '#FFFFFF', text: '#1C1C1E', sub: '#8E8E93', line: '#E5E5EA', btn: '#F2F2F7', input: '#F2F2F7' };
   }
   const FONT = '-apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Malgun Gothic", sans-serif';
 
@@ -84,7 +94,7 @@
     const t = theme();
     toastEl = h('div', {
       position: 'fixed', left: '50%', transform: 'translateX(-50%)',
-      bottom: 'calc(90px + env(safe-area-inset-bottom))', zIndex: '100001',
+      bottom: 'calc(90px + env(safe-area-inset-bottom))', zIndex: String(Z + 2),
       maxWidth: 'calc(100vw - 32px)', boxSizing: 'border-box',
       display: 'flex', alignItems: 'center', gap: '12px',
       padding: '12px 16px', borderRadius: '14px',
@@ -125,14 +135,14 @@
     });
     b.type = 'button';
     b.className = 'cbm-star';
-    b.setAttribute('aria-label', '북마크');
+    b.setAttribute('aria-label', '대화 북마크');
     b.dataset.cbmId = id;
     b.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); toggle(id); });
     return b;
   }
 
-  let warned = false, problemSince = 0;
-  function inject() {
+  let warnedMsg = false, problemSince = 0;
+  function injectStars() {
     const msgs = allMsgs();
     let placed = 0;
     msgs.forEach(m => {
@@ -154,23 +164,87 @@
       placed++;
       paintStar(star, has(id));
     });
-    checkStructure(msgs.length, placed);
-  }
 
-  // 크랙 화면이 바뀌어서 못 찾으면 조용히 넘어가지 않고 한 번 알려줘요
-  function checkStructure(msgCount, placed) {
-    if (warned) return;
+    // 크랙 화면이 바뀌어서 못 찾으면 조용히 넘어가지 않고 한 번 알려줘요
+    if (warnedMsg) return;
     const hasChatText = !!document.querySelector(SEL.text);
-    const broken = (hasChatText && msgCount === 0) || (msgCount > 0 && placed === 0);
+    const broken = (hasChatText && msgs.length === 0) || (msgs.length > 0 && placed === 0);
     if (!broken) { problemSince = 0; return; }
     if (!problemSince) { problemSince = Date.now(); return; }
     if (Date.now() - problemSince > 6000) {
-      warned = true;
+      warnedMsg = true;
       toast(`크랙 화면이 바뀌어서 ☆ 버튼을 못 달았어요. 디시 댓글로 알려주세요 (${NAME})`, null, 6000);
     }
   }
 
-  /* ───────── 저장 / 삭제 ───────── */
+  /* ───────── 채팅방 설정 창에 '대화 북마크' 메뉴 ───────── */
+  const STAR_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="var(--icon_secondary)"><path d="M12 2.6l2.82 5.72 6.31.92-4.57 4.45 1.08 6.29L12 17l-5.64 2.98 1.08-6.29L2.87 9.24l6.31-.92z" fill="none" stroke="var(--icon_secondary)" stroke-width="1.6" stroke-linejoin="round"/></svg>';
+
+  let warnedMenu = false, menuMissSince = 0;
+  function ensureMenu() {
+    if (document.querySelector('[data-cbm-entry]')) { updateMenuCount(); return; }
+
+    const labels = [...document.querySelectorAll(SEL.menuLabel)];
+    const anchorLabel = labels.find(el => textIs(el, TXT.anchor));
+    const sidebarOpen = labels.some(el => textIs(el, TXT.sidebarTitle)) ||
+      [...document.querySelectorAll('span,p')].some(el => el.children.length === 0 && textIs(el, TXT.sidebarTitle));
+
+    if (!anchorLabel) {
+      // 설정 창은 열렸는데 '글꼴'을 못 찾으면 한 번 안내
+      if (sidebarOpen && !warnedMenu) {
+        if (!menuMissSince) menuMissSince = Date.now();
+        else if (Date.now() - menuMissSince > 3000) {
+          warnedMenu = true;
+          toast(`설정 창 모양이 바뀌어서 '${MENU}' 메뉴를 못 넣었어요. 디시 댓글로 알려주세요`, null, 6000);
+        }
+      }
+      return;
+    }
+    menuMissSince = 0;
+
+    const btn = anchorLabel.closest(SEL.menuBtn);
+    const row = btn && btn.parentElement;
+    if (!row || !row.parentElement) return;
+
+    // '글꼴' 줄을 그대로 본떠서 같은 모양으로 만들어요
+    const entry = row.cloneNode(true);
+    entry.setAttribute('data-cbm-entry', '1');
+    entry.querySelectorAll('[id]').forEach(e => e.removeAttribute('id'));
+    entry.querySelectorAll('[role="switch"]').forEach(e => (e.closest('span') || e).remove());
+    const eBtn = entry.querySelector(SEL.menuBtn) || entry;
+    eBtn.removeAttribute('id');
+    eBtn.setAttribute('aria-label', MENU);
+    const oldSvg = entry.querySelector('svg');
+    if (oldSvg) {
+      const tmp = document.createElement('div');
+      tmp.innerHTML = STAR_SVG;
+      oldSvg.replaceWith(tmp.firstChild);
+    }
+    const label = entry.querySelector(SEL.menuLabel) || entry.querySelector('span span') || eBtn;
+    label.textContent = MENU;
+    label.classList.add('cbm-label');
+
+    const count = h('span', {
+      fontSize: '12px', fontWeight: '600', color: GOLD, marginLeft: 'auto', paddingLeft: '8px',
+    });
+    count.className = 'cbm-count';
+    eBtn.appendChild(count);
+
+    const open = e => { e.preventDefault(); e.stopPropagation(); openPanel(); };
+    eBtn.addEventListener('click', open);
+    eBtn.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') open(e); });
+
+    row.parentElement.insertBefore(entry, row);
+    updateMenuCount();
+  }
+  function updateMenuCount() {
+    const c = document.querySelector('[data-cbm-entry] .cbm-count');
+    if (!c) return;
+    const want = cache.length ? String(cache.length) : '';
+    if (c.textContent !== want) c.textContent = want;
+  }
+
+  /* ───────── 저장 / 삭제 / 메모 ───────── */
   function toggle(id) {
     const i = cache.findIndex(x => x.id === id);
     if (i >= 0) {
@@ -183,65 +257,36 @@
     if (!m) return;
     const text = getText(m);
     if (!text) { toast('메시지 내용을 읽지 못했어요'); return; }
-    cache.push({ id, role: roleOf(m), text: text.slice(0, 20000), at: Date.now() });
+    cache.push({ id, role: roleOf(m), text: text.slice(0, 20000), memo: '', at: Date.now() });
     sortCache(); persist(); refresh();
-    toast('★ 북마크에 저장했어요');
+    toast(`★ ${MENU}에 저장했어요`);
   }
   function restore(item) {
     if (has(item.id)) return;
     cache.push(item); sortCache(); persist(); refresh();
   }
+  function setMemo(id, memo) {
+    const it = cache.find(x => x.id === id);
+    if (!it) return;
+    it.memo = memo.trim().slice(0, 200);
+    persist(); renderList();
+  }
   // 대화 순서대로 (메시지 번호가 시간순이라 그대로 정렬)
   function sortCache() { cache.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)); }
 
-  /* ───────── 오른쪽 아래 ★ 목록 버튼 ───────── */
-  let fab = null, badge = null;
-  function ensureFab() {
-    const show = allMsgs().length > 0 || cache.length > 0;
-    if (!show) { if (fab) fab.style.display = 'none'; return; }
-    const t = theme();
-    if (!fab) {
-      fab = h('button', {
-        position: 'fixed', right: '12px', bottom: 'calc(150px + env(safe-area-inset-bottom))',
-        zIndex: '9998', width: '46px', height: '46px', borderRadius: '50%',
-        border: '1px solid rgba(127,127,127,.2)', cursor: 'pointer', padding: '0',
-        fontSize: '21px', color: GOLD, fontFamily: FONT,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 4px 16px rgba(0,0,0,.18)', WebkitTapHighlightColor: 'transparent',
-        backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)',
-      }, '★');
-      fab.type = 'button';
-      fab.setAttribute('aria-label', '북마크 목록');
-      badge = h('span', {
-        position: 'absolute', top: '-4px', right: '-4px', minWidth: '19px', height: '19px',
-        padding: '0 5px', boxSizing: 'border-box', borderRadius: '10px',
-        background: GOLD, color: '#fff', fontSize: '11px', fontWeight: '700',
-        lineHeight: '19px', textAlign: 'center',
-      });
-      fab.appendChild(badge);
-      fab.onclick = openPanel;
-      document.body.appendChild(fab);
-    }
-    fab.style.display = 'flex';
-    fab.style.background = t.fab;
-    badge.textContent = String(cache.length);
-    badge.style.display = cache.length ? 'block' : 'none';
-  }
-
-  /* ───────── 북마크 목록 (아래에서 올라오는 창) ───────── */
+  /* ───────── 대화 북마크 목록 (아래에서 올라오는 창) ───────── */
   let overlay = null, listBox = null, titleEl = null, prevOverflow = '';
   function openPanel() {
     if (overlay) return;
     const t = theme();
     overlay = h('div', {
-      position: 'fixed', inset: '0', zIndex: '100000', background: 'rgba(0,0,0,.35)',
-      fontFamily: FONT,
+      position: 'fixed', inset: '0', zIndex: String(Z), background: 'rgba(0,0,0,.35)', fontFamily: FONT,
     });
     overlay.addEventListener('click', e => { if (e.target === overlay) closePanel(); });
 
     const sheet = h('div', {
       position: 'absolute', left: '0', right: '0', bottom: '0', margin: '0 auto',
-      maxWidth: '560px', maxHeight: '78vh', display: 'flex', flexDirection: 'column',
+      maxWidth: '560px', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
       background: t.bg, color: t.text, borderRadius: '18px 18px 0 0',
       paddingBottom: 'env(safe-area-inset-bottom)', boxShadow: '0 -8px 30px rgba(0,0,0,.2)',
       transform: 'translateY(100%)', transition: 'transform .25s ease',
@@ -288,68 +333,109 @@
   function renderList() {
     if (!listBox) return;
     const t = theme();
-    titleEl.textContent = `★ 북마크 ${cache.length}`;
+    titleEl.textContent = `★ ${MENU} ${cache.length}`;
     listBox.textContent = '';
     if (!cache.length) {
-      const empty = h('div', {
+      listBox.appendChild(h('div', {
         textAlign: 'center', color: t.sub, fontSize: '14px', lineHeight: '1.6', padding: '36px 0 28px',
         whiteSpace: 'pre-line',
-      }, '아직 북마크가 없어요\n마음에 드는 메시지 옆 ☆를 눌러보세요');
-      listBox.appendChild(empty);
+      }, '아직 저장한 장면이 없어요\n마음에 드는 메시지 옆 ☆를 눌러보세요'));
       return;
     }
-    cache.forEach(item => {
-      const card = h('div', {
-        background: t.card, borderRadius: '14px', padding: '12px 14px',
-        display: 'flex', flexDirection: 'column', gap: '8px',
-      });
+    cache.forEach(item => listBox.appendChild(makeCard(item, t)));
+  }
 
-      const meta = h('div', { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: t.sub });
-      const chip = h('span', {
+  function makeCard(item, t) {
+    const card = h('div', {
+      background: t.card, borderRadius: '14px', padding: '12px 14px',
+      display: 'flex', flexDirection: 'column', gap: '8px',
+    });
+
+    // 위쪽: 누가 쓴 메시지인지 + 저장한 날
+    const meta = h('div', { display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: t.sub });
+    meta.append(
+      h('span', {
         padding: '2px 8px', borderRadius: '8px', fontWeight: '600',
         background: item.role === 'me' ? 'rgba(10,132,255,.14)' : 'rgba(245,179,1,.16)',
         color: item.role === 'me' ? '#0A84FF' : '#C78F00',
-      }, item.role === 'me' ? '내 메시지' : '캐릭터');
-      meta.append(chip, h('span', null, fmtDate(item.at)));
+      }, item.role === 'me' ? '내 메시지' : '캐릭터'),
+      h('span', null, fmtDate(item.at)),
+    );
 
-      const body = h('div', {
-        fontSize: '14px', lineHeight: '1.55', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
-        display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: '3', overflow: 'hidden',
-        cursor: 'pointer',
-      }, item.text);
-      body.onclick = () => jump(item.id);
+    // 메모 (있을 때만)
+    const memoLine = h('div', {
+      fontSize: '13px', lineHeight: '1.45', color: t.sub, whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+      display: item.memo ? 'block' : 'none',
+    }, item.memo ? '📝 ' + item.memo : '');
 
-      const btns = h('div', { display: 'flex', gap: '8px' });
-      const mk = (label, primary) => {
-        const b = h('button', {
-          flex: primary ? '1.4' : '1', height: '36px', borderRadius: '10px', border: 'none',
-          background: primary ? GOLD : t.btn, color: primary ? '#fff' : t.text,
-          fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: FONT,
-        }, label);
-        b.type = 'button';
-        return b;
-      };
-      const go = mk('이 장면으로 가기', true);
-      go.onclick = () => jump(item.id);
-      const more = mk('전체 보기');
-      let open = false;
-      more.onclick = () => {
-        open = !open;
-        body.style.webkitLineClamp = open ? 'unset' : '3';
-        body.style.display = open ? 'block' : '-webkit-box';
-        body.style.userSelect = open ? 'text' : '';
-        body.style.cursor = open ? 'text' : 'pointer';
-        body.onclick = open ? null : () => jump(item.id);
-        more.textContent = open ? '접기' : '전체 보기';
-      };
-      const del = mk('삭제');
-      del.style.color = '#FF453A';
-      del.onclick = () => toggle(item.id);
-      btns.append(go, more, del);
+    // 본문 미리보기 (3줄)
+    const body = h('div', {
+      fontSize: '14px', lineHeight: '1.55', whiteSpace: 'pre-wrap', wordBreak: 'break-all',
+      display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: '3', overflow: 'hidden',
+      cursor: 'pointer',
+    }, item.text);
+    body.onclick = () => jump(item.id);
 
-      card.append(meta, body, btns);
-      listBox.appendChild(card);
+    // 메모 쓰는 칸 (메모 버튼 누르면 열림)
+    const memoBox = h('div', { display: 'none', flexDirection: 'column', gap: '6px' });
+    const ta = h('textarea', {
+      width: '100%', boxSizing: 'border-box', minHeight: '64px', resize: 'vertical',
+      border: `1px solid ${t.line}`, borderRadius: '10px', padding: '10px 12px',
+      background: t.input, color: t.text, fontFamily: FONT, fontSize: '16px', lineHeight: '1.4',
+      outline: 'none',
     });
+    ta.maxLength = 200;
+    ta.placeholder = '이 장면에 대한 짧은 메모 (200자까지)';
+    const memoBtns = h('div', { display: 'flex', gap: '8px', justifyContent: 'flex-end' });
+
+    const mk = (label, kind) => {
+      const b = h('button', {
+        flex: '1', height: '36px', borderRadius: '10px', border: 'none',
+        background: kind === 'primary' ? GOLD : t.btn, color: kind === 'primary' ? '#fff' : kind === 'danger' ? '#FF453A' : t.text,
+        fontSize: '13px', fontWeight: '600', cursor: 'pointer', fontFamily: FONT, padding: '0 6px',
+      }, label);
+      b.type = 'button';
+      return b;
+    };
+
+    const cancel = mk('취소');
+    const save = mk('메모 저장', 'primary');
+    cancel.style.flex = save.style.flex = '0 0 auto';
+    cancel.style.padding = save.style.padding = '0 16px';
+    memoBtns.append(cancel, save);
+    memoBox.append(ta, memoBtns);
+
+    // 아래 버튼 줄
+    const btns = h('div', { display: 'flex', gap: '6px' });
+    const go = mk('가기', 'primary');
+    const more = mk('전체');
+    const memoBtn = mk(item.memo ? '메모 ✓' : '메모');
+    const del = mk('삭제', 'danger');
+    btns.append(go, more, memoBtn, del);
+
+    go.onclick = () => jump(item.id);
+    let open = false;
+    more.onclick = () => {
+      open = !open;
+      body.style.webkitLineClamp = open ? 'unset' : '3';
+      body.style.display = open ? 'block' : '-webkit-box';
+      body.style.userSelect = open ? 'text' : '';
+      body.style.cursor = open ? 'text' : 'pointer';
+      body.onclick = open ? null : () => jump(item.id);
+      more.textContent = open ? '접기' : '전체';
+    };
+    const showMemoEditor = on => {
+      memoBox.style.display = on ? 'flex' : 'none';
+      btns.style.display = on ? 'none' : 'flex';
+      if (on) { ta.value = item.memo || ''; setTimeout(() => ta.focus(), 30); }
+    };
+    memoBtn.onclick = () => showMemoEditor(true);
+    cancel.onclick = () => showMemoEditor(false);
+    save.onclick = () => { setMemo(item.id, ta.value); toast(ta.value.trim() ? '메모를 저장했어요' : '메모를 지웠어요'); };
+    del.onclick = () => toggle(item.id);
+
+    card.append(meta, memoLine, body, memoBox, btns);
+    return card;
   }
 
   /* ───────── 그 턴으로 이동 ───────── */
@@ -382,13 +468,13 @@
     if (!el) {
       const oldest = oldestMsg();
       if (oldest && id > idOf(oldest)) {
-        toast('이 메시지는 지워졌거나 다시 생성된 것 같아요. 내용은 목록의 "전체 보기"로 볼 수 있어요.', null, 4000);
+        toast('이 메시지는 지워졌거나 다시 생성된 것 같아요. 내용은 목록의 "전체"로 볼 수 있어요.', null, 4000);
         return;
       }
       el = await loadOlderUntil(id);
       if (el === 'cancel') return;
       if (!el) {
-        toast('찾지 못했어요. 내용은 목록의 "전체 보기"로 볼 수 있어요.', null, 4000);
+        toast('찾지 못했어요. 내용은 목록의 "전체"로 볼 수 있어요.', null, 4000);
         return;
       }
     }
@@ -425,8 +511,9 @@
 
   /* ───────── 화면 변화 감시 ───────── */
   function refresh() {
-    inject();
-    ensureFab();
+    injectStars();
+    ensureMenu();
+    updateMenuCount();
     renderList();
   }
   let scheduled = false;
@@ -439,10 +526,10 @@
         path = location.pathname;
         cache = load();
         closePanel();
-        warned = false; problemSince = 0;
+        warnedMsg = false; problemSince = 0;
       }
-      inject();
-      ensureFab();
+      injectStars();
+      ensureMenu();
     });
   }
   new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
