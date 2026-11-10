@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         크랙 대화 다운로드
 // @namespace    https://github.com/mywishluv
-// @version      1.0.0
-// @description  크랙 채팅방 설정(⋯)의 '플레이 가이드' 위에 대화 다운로드 버튼을 추가합니다 · 전체 다운 / 지난번 이후 새 대화만 이어서 다운 (txt)
+// @version      1.1.0
+// @description  크랙 채팅방 설정(⋯)의 '플레이 가이드' 위에 대화 다운로드 버튼을 추가합니다 · 전체 / 이어서 / 턴 골라서 다운 (txt)
 // @author       muz
 // @match        https://crack.wrtn.ai/*
 // @connect      crack-api.wrtn.ai
@@ -13,6 +13,7 @@
 // @grant        GM_registerMenuCommand
 // ==/UserScript==
 
+// 변경점 v1.1.0: 턴 골라서 다운로드 추가 · 번호를 메시지 단위에서 턴 단위(나+AI)로 변경
 // 변경점 v1.0.0: 첫 버전 · 전체 다운로드 + 이어서 다운로드(지난번 이후 새 대화만), txt 저장
 
 (function () {
@@ -169,25 +170,31 @@
     return { messages: got.reverse(), found: true, complete: true };
   }
 
-  /* ===================== txt 만들기 ===================== */
-  function buildText(title, list, startNo, mode) {
-    const blocks = list.map((m, i) => `【#${startNo + i} · ${isUser(m) ? '나' : 'AI'}】\n${msgText(m)}`);
-    const range = mode === 'full'
-      ? `전체 대화 · 메시지 ${list.length}개`
-      : `이어서 받은 대화 · #${startNo} ~ #${startNo + list.length - 1} (${list.length}개)`;
-    const head = `${title}\n${range}\n저장 시각: ${new Date().toLocaleString('ko-KR')}\n`;
+  /* ===================== 턴 번호 붙이기 · txt 만들기 ===================== */
+  // 내 메시지가 나올 때마다 한 턴. 첫 내 메시지 전의 AI 메시지(시작 인사)는 0턴 = '시작'
+  function numberTurns(list, lastTurn) {
+    let t = lastTurn;
+    return list.map(m => { if (isUser(m)) t++; return { m, turn: t }; });
+  }
+
+  function buildText(title, rows, rangeText) {
+    const blocks = rows.map(({ m, turn }) =>
+      `【${turn === 0 ? '시작' : turn + '턴'} · ${isUser(m) ? '나' : 'AI'}】\n${msgText(m)}`);
+    const head = `${title}\n${rangeText}\n저장 시각: ${new Date().toLocaleString('ko-KR')}\n`;
     return `${head}\n━━━━━━━━━━━━━━━━━━━━\n\n${blocks.join('\n\n────────────\n\n')}\n`;
   }
 
   /* ===================== 다운로드 실행 ===================== */
   let busy = false, cancelled = false;
 
-  async function run(mode, ui) {
+  // mode: 'full' | 'resume' | 'range'  (range는 opt.from, opt.to)
+  async function run(mode, ui, opt = {}) {
     if (busy) return;
     const chatId = currentChatId();
     if (!chatId) { ui.status('채팅방 안에서만 쓸 수 있어요.', 'err'); return; }
     const saved = GM_getValue(STORE_KEY(chatId), null);
     if (mode === 'resume' && !saved) { ui.status('아직 받은 기록이 없어요. 전체 다운로드를 먼저 해 주세요.', 'err'); return; }
+    if (mode === 'resume' && saved.unit !== 'turn') { ui.status('버전이 바뀌었어요. 전체 다운로드를 한 번만 다시 해 주세요.', 'err'); return; }
 
     busy = true; cancelled = false; ui.lock(true);
     ui.status('대화 읽는 중…');
@@ -206,15 +213,38 @@
         ui.status(mode === 'resume' ? '지난번 이후 새 대화가 없어요.' : '받을 대화가 없어요.', 'ok');
         return;
       }
-      const startNo = mode === 'resume' ? (saved.total || 0) + 1 : 1;
+      const all = numberTurns(list, mode === 'resume' ? saved.total : 0);
+      const lastTurn = all[all.length - 1].turn;
       const title = roomTitle();
-      const label = mode === 'full' ? '전체' : '이어서';
-      downloadText(buildText(title, list, startNo, mode), `${safeName(title)}_${label}_${stamp()}.txt`);
+      let rows = all, rangeText, fileLabel;
 
-      const newestIds = list.slice(-5).reverse().map(msgId).filter(Boolean);
-      const record = { ids: newestIds, at: Date.now(), total: startNo + list.length - 1 };
-      GM_setValue(STORE_KEY(chatId), record);
-      ui.status(`메시지 ${list.length.toLocaleString('ko-KR')}개를 저장했어요.`, 'ok');
+      if (mode === 'full') {
+        rangeText = `전체 대화 · ${lastTurn}턴 (메시지 ${all.length}개)`;
+        fileLabel = '전체';
+      } else if (mode === 'resume') {
+        const first = all[0].turn || 1;
+        rangeText = `이어서 받은 대화 · ${first}턴 ~ ${lastTurn}턴 (메시지 ${all.length}개)`;
+        fileLabel = '이어서';
+      } else {
+        let from = opt.from || 1, to = opt.to || lastTurn;
+        if (from > to) [from, to] = [to, from];
+        if (from > lastTurn) { ui.status(`이 방은 ${lastTurn}턴까지 있어요.`, 'err'); return; }
+        to = Math.min(to, lastTurn);
+        rows = all.filter(r => (r.turn >= from && r.turn <= to) || (from <= 1 && r.turn === 0));
+        rangeText = `${from}턴 ~ ${to}턴 (전체 ${lastTurn}턴 중)`;
+        fileLabel = `${from}-${to}턴`;
+      }
+
+      downloadText(buildText(title, rows, rangeText), `${safeName(title)}_${fileLabel}_${stamp()}.txt`);
+
+      // 턴 골라서 받기는 '이어서' 기준점을 바꾸지 않음
+      if (mode !== 'range') {
+        const newestIds = list.slice(-5).reverse().map(msgId).filter(Boolean);
+        GM_setValue(STORE_KEY(chatId), { unit: 'turn', ids: newestIds, at: Date.now(), total: lastTurn });
+      }
+      ui.status(mode === 'range'
+        ? `${rangeText.split(' (')[0]}을 저장했어요.`
+        : `${lastTurn}턴까지 저장했어요. (메시지 ${rows.length}개)`, 'ok');
       ui.refresh();
     } catch (e) {
       ui.status(e.message || String(e), 'err');
@@ -245,6 +275,15 @@
       color:#fff;font-size:16px}
     #ccd-sheet .ccd-txt b{display:block;font-size:15px;font-weight:600}
     #ccd-sheet .ccd-txt small{display:block;margin-top:2px;font-size:12px;color:#8e8e93;line-height:1.35}
+    #ccd-sheet .ccd-range{display:none;align-items:center;gap:8px;margin-top:10px;padding:10px 12px;background:#fff;border-radius:12px}
+    #ccd-sheet .ccd-range.on{display:flex}
+    #ccd-sheet .ccd-range input{width:0;flex:1;height:38px;border:0;border-radius:9px;background:#f2f2f7;padding:0 8px;
+      font:inherit;font-size:16px;text-align:center;color:#1c1c1e;outline:none;-webkit-appearance:none;-moz-appearance:textfield}
+    #ccd-sheet .ccd-range input::-webkit-inner-spin-button{-webkit-appearance:none}
+    #ccd-sheet .ccd-range span{font-size:14px;color:#8e8e93}
+    #ccd-sheet .ccd-range button{flex:0 0 auto;height:38px;padding:0 16px;border:0;border-radius:9px;background:#ff9500;color:#fff;
+      font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+    #ccd-sheet .ccd-range button:disabled{opacity:.4}
     #ccd-sheet .ccd-status{min-height:20px;margin:12px 4px 0;font-size:13px;text-align:center;color:#3a3a3c;line-height:1.45}
     #ccd-sheet .ccd-status.ok{color:#248a3d}
     #ccd-sheet .ccd-status.err{color:#d70015}
@@ -291,6 +330,17 @@
             <span class="ccd-ico" style="background:#34c759">↻</span>
             <span class="ccd-txt"><b>이어서 다운로드</b><small class="ccd-resume-sub"></small></span>
           </button>
+          <button type="button" class="ccd-btn" data-mode="range">
+            <span class="ccd-ico" style="background:#ff9500">#</span>
+            <span class="ccd-txt"><b>턴 골라서 다운로드</b><small>원하는 턴만 골라서 받기</small></span>
+          </button>
+        </div>
+        <div class="ccd-range">
+          <input type="number" inputmode="numeric" min="1" placeholder="1" aria-label="시작 턴" class="ccd-from">
+          <span>~</span>
+          <input type="number" inputmode="numeric" min="1" placeholder="끝" aria-label="끝 턴" class="ccd-to">
+          <span>턴</span>
+          <button type="button" class="ccd-go">받기</button>
         </div>
         <div class="ccd-status" aria-live="polite"></div>
         <button type="button" class="ccd-close">닫기</button>
@@ -305,12 +355,14 @@
       status(text, kind = '') { statusEl.textContent = text; statusEl.className = 'ccd-status' + (kind ? ' ' + kind : ''); },
       lock(on) {
         dim.querySelectorAll('.ccd-btn').forEach(b => { b.disabled = on || (b.dataset.mode === 'resume' && !GM_getValue(STORE_KEY(chatId), null)); });
+        $('.ccd-go').disabled = on;
         $('.ccd-close').textContent = on ? '취소' : '닫기';
       },
       refresh() {
         const saved = GM_getValue(STORE_KEY(chatId), null);
+        if (saved?.unit === 'turn') $('.ccd-to').placeholder = `끝(${saved.total})`;
         $('.ccd-resume-sub').textContent = saved
-          ? `지난번(${niceTime(saved.at)}, #${saved.total}까지) 이후 새 대화만`
+          ? `지난번(${niceTime(saved.at)}, ${saved.total}턴까지) 이후 새 대화만`
           : '전체 다운로드를 한 번 하면 쓸 수 있어요';
         ui.lock(busy);
       },
@@ -325,7 +377,21 @@
     document.addEventListener('keydown', onKey);
     dim.addEventListener('click', e => { if (e.target === dim) close(); });
     $('.ccd-close').onclick = close;
-    dim.querySelectorAll('.ccd-btn').forEach(b => { b.onclick = () => run(b.dataset.mode, ui); });
+    dim.querySelectorAll('.ccd-btn').forEach(b => {
+      b.onclick = () => {
+        if (b.dataset.mode !== 'range') { run(b.dataset.mode, ui); return; }
+        const panel = $('.ccd-range');
+        panel.classList.toggle('on');
+        if (panel.classList.contains('on')) {
+          ui.status('비워두면 처음부터 / 끝까지예요.');
+          $('.ccd-from').focus();
+        } else ui.status('');
+      };
+    });
+    const num = el => { const n = parseInt(el.value, 10); return n > 0 ? n : 0; };
+    const go = () => run('range', ui, { from: num($('.ccd-from')), to: num($('.ccd-to')) });
+    $('.ccd-go').onclick = go;
+    dim.querySelectorAll('.ccd-range input').forEach(i => i.addEventListener('keydown', e => { if (e.key === 'Enter') go(); }));
   }
 
   /* ===================== 채팅방 설정 메뉴에 버튼 넣기 ===================== */
