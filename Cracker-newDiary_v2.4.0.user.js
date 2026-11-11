@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         📔 뉴다이어리 v2.4.2
+// @name         📔 뉴다이어리 v2.4.3
 // @namespace    cracker-diary-integrated
-// @version      2.4.2
+// @version      2.4.3
 // @description  크래커 사용량 달력, 월별 통계, 절약 목표, 일기장 꾸미기 기능
 // @author       muz
 // @match        https://crack.wrtn.ai/*
@@ -9,6 +9,7 @@
 // @grant        none
 // ==/UserScript==
 
+// v2.4.3 변경점: 저장소를 IndexedDB로 옮겨 '저장 공간 부족' 팝업 해결 (기존 데이터 자동 이사), 사진 스티커 용량 줄임
 // v2.4.2 변경점: 새 테마 4개(라벤더 구름·소다 바다·민트초코·레몬에이드), 설정 화면 짧게 정리
 // v2.4.1 변경점: 달력 숫자를 k 대신 실제 숫자로, 통계 화면 짧게 정리, '오늘 한 줄'을 달력 아래로
 // v2.4.0 변경점: 딸기우유·밤하늘 별빛 테마 새로 디자인, 색 진하기 달력, '오늘 한 줄' 바로 쓰기, 일기 자동 저장, 하단 빈 공간 제거
@@ -27,20 +28,59 @@
      notes:{},stickers:{},custom:[],manual:{},events:{},
      captures:{},paper:'lined',paperColor:'cream',diaryFont:'basic'
    };
-   let db={...defaults,...read(KEY)};
-   for(const k of ['notes','stickers','manual','events','captures'])
-     db[k] ||= {};
-   db.custom ||= [];
+   const OLD_KEYS=['cracker-diary-paper-v1','cracker-paper-diary-v1'];
+   // 빈 칸 채우기 + 아주 예전 버전 스티커·사진 합치기 + 예전 테마 이름 바꾸기
+   const normalize=raw=>{
+     const d={...defaults,...(raw||{})};
+     for(const k of ['notes','stickers','manual','events','captures'])
+       d[k] ||= {};
+     d.custom ||= [];
+     for(const source of OLD_KEYS.map(read)){
+       for(const [day,p] of Object.entries(source.pages||{}))
+         if(!d.stickers[day]?.length && p.stickers?.length)
+           d.stickers[day]=p.stickers;
+       for(const p of [...(source.custom||[]),...(source.photos||[])])
+         if(p.data&&!d.custom.some(x=>x.data===p.data))
+           d.custom.push({id:p.id||crypto.randomUUID(),name:p.name||'사진',data:p.data});
+     }
+     if(!THEMES[d.theme])d.theme=THEME_ALIAS[d.theme]||'pink';
+     return d;
+   };
+   let db={...defaults,notes:{},stickers:{},custom:[],manual:{},events:{},captures:{}};
 
-   const old1=read('cracker-diary-paper-v1');
-   const old2=read('cracker-paper-diary-v1');
-   for(const source of [old1,old2]){
-     for(const [day,p] of Object.entries(source.pages||{}))
-       if(!db.stickers[day]?.length && p.stickers?.length)
-         db.stickers[day]=p.stickers;
-     for(const p of [...(source.custom||[]),...(source.photos||[])])
-       if(p.data&&!db.custom.some(x=>x.data===p.data))
-         db.custom.push({id:p.id||crypto.randomUUID(),name:p.name||'사진',data:p.data});
+   // ---- 저장소 ----
+   // 폰 브라우저의 localStorage는 5MB 정도라 사진·캡처가 쌓이면 금방 가득 찬다.
+   // 그래서 훨씬 큰 IndexedDB(브라우저 안의 저장소)에 저장한다. 데이터는 이 브라우저 안에만 있다.
+   const IDB_NAME='cracker-diary',IDB_STORE='kv';
+   let idbConn=null,storageMode='idb',saveTimer=null,warnedFull=false;
+   const idbOpen=()=>idbConn||(idbConn=new Promise((res,rej)=>{
+     const r=indexedDB.open(IDB_NAME,1);
+     r.onupgradeneeded=()=>r.result.createObjectStore(IDB_STORE);
+     r.onsuccess=()=>res(r.result);
+     r.onerror=()=>rej(r.error);
+   }));
+   const idbGet=async k=>{const c=await idbOpen();return new Promise((res,rej)=>{
+     const q=c.transaction(IDB_STORE).objectStore(IDB_STORE).get(k);
+     q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})};
+   const idbSet=async(k,v)=>{const c=await idbOpen();return new Promise((res,rej)=>{
+     const tx=c.transaction(IDB_STORE,'readwrite');
+     tx.objectStore(IDB_STORE).put(v,k);
+     tx.oncomplete=()=>res();tx.onerror=()=>rej(tx.error);tx.onabort=()=>rej(tx.error)})};
+   async function loadDb(){
+     try{
+       const saved=await idbGet(KEY);
+       if(saved)return saved;
+       // 처음 한 번: 예전 localStorage 데이터를 옮기고, 옮긴 뒤 비워서 공간을 돌려준다
+       const old=read(KEY);
+       const merged=normalize(old);
+       await idbSet(KEY,merged);
+       try{localStorage.removeItem(KEY);OLD_KEYS.forEach(k=>localStorage.removeItem(k))}catch{}
+       return merged;
+     }catch(err){
+       console.warn('[Cracker Diary] IndexedDB 사용 불가, localStorage로 저장',err);
+       storageMode='local';
+       return read(KEY);
+     }
    }
 
    // 글꼴: 폰에 없는 글꼴은 구글 폰트에서 글꼴 파일만 받아온다 (내 데이터는 보내지 않음)
@@ -102,7 +142,6 @@
    };
    // 예전 테마를 쓰던 사람은 가장 비슷한 새 테마로 옮김
    const THEME_ALIAS={dark:'night',ios:'simple',purple:'lavender',blue:'soda',green:'mint'};
-   if(!THEMES[db.theme])db.theme=THEME_ALIAS[db.theme]||'pink';
    const theme=()=>THEMES[db.theme]||THEMES.pink;
    const logo=()=>theme().icon?art(theme().icon):ic('pencil');
 
@@ -145,8 +184,23 @@
      return `${v('year')}-${v('month')}-${v('day')}`;
    };
    const today=()=>dateKey(Date.now());
-   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(db));return true}
-     catch{alert('저장 공간이 부족해요. JSON 백업 후 사진을 정리해 주세요.');return false}};
+   // 저장은 0.3초 모아서 한 번에. 실패해도 팝업은 한 번만 띄운다.
+   const setSaveState=t=>{const s=document.querySelector('#crd-root #save-state');if(s)s.textContent=t};
+   async function flush(){
+     clearTimeout(saveTimer);saveTimer=null;
+     try{
+       if(storageMode==='idb')await idbSet(KEY,db);
+       else localStorage.setItem(KEY,JSON.stringify(db));
+       setSaveState('저장됨 ✓');
+     }catch(err){
+       console.warn('[Cracker Diary] 저장 실패',err);
+       setSaveState('저장 실패');
+       if(!warnedFull){warnedFull=true;
+         alert('다이어리 저장 공간이 부족해요.\n설정 → 데이터에서 JSON 백업을 받은 뒤, 안 쓰는 사진 스티커나 캡처를 지워 주세요.');}
+     }
+   }
+   let ready=false; // 저장된 일기를 다 불러오기 전에는 저장하지 않음 (빈 데이터로 덮어쓰기 방지)
+   const save=()=>{if(!ready)return false;clearTimeout(saveTimer);saveTimer=setTimeout(flush,300);return true};
    const download=(name,data,type)=>{
      const blob=data instanceof Blob?data:new Blob([data],{type});
      const url=URL.createObjectURL(blob),a=document.createElement('a');
@@ -785,7 +839,7 @@
          canvas.getContext('2d').drawImage(bmp,0,0,canvas.width,canvas.height);
          bmp.close();
          const item={id:crypto.randomUUID(),name:file.name,
-           data:canvas.toDataURL('image/png')};
+           data:canvas.toDataURL('image/webp',.9)};
          db.custom.push(item);
          if(!save())db.custom.pop();
        }catch(err){alert('사진 처리 실패: '+err.message)}
@@ -1373,7 +1427,7 @@
      }
    };
    async function refresh(){
-     if(busy)return;busy=true;status='조회 중';
+     if(busy||!ready)return;busy=true;status='조회 중';
      try{
        const out={},seen=new Set(),start=today();
        // 저장된 기록이 없으면 끝까지 전체 수집, 있으면 마지막 조회일까지만.
@@ -1600,8 +1654,7 @@
          const x=JSON.parse(await file.text());
          if(!x.diary)throw Error('백업 형식이 아니에요.');
          if(!confirm('현재 데이터를 백업 내용으로 교체할까요?'))return;
-         db={...defaults,...x.diary};
-         if(!THEMES[db.theme])db.theme=THEME_ALIAS[db.theme]||'pink';
+         db=normalize(x.diary);
          usage=db.usage||{};save();render();
        }catch(err){alert('복원 실패: '+err.message)}
      }
@@ -1614,11 +1667,7 @@
        const st=root.querySelector('#save-state');
        if(st)st.textContent='저장 중…';
        clearTimeout(noteTimer);
-       noteTimer=setTimeout(()=>{
-         const ok=save();
-         const s=root.querySelector('#save-state');
-         if(s)s.textContent=ok?'저장됨 ✓':'저장 실패';
-       },500);
+       noteTimer=setTimeout(save,500);
      }
      if(e.target.id==='goal-daily'){
        db.goalDaily=Math.max(0,Number(e.target.value)||0);save();
@@ -1628,9 +1677,16 @@
      }
    });
 
-   applyTheme();render();refresh();
-   setInterval(()=>{if(!document.hidden)refresh()},60000);
-   document.addEventListener('visibilitychange',()=>{
-     if(!document.hidden)refresh();
-   });
+   (async()=>{
+     db=normalize(await loadDb());
+     usage=db.usage||{};ready=true;
+     applyTheme();render();refresh();
+     setInterval(()=>{if(!document.hidden)refresh()},60000);
+     document.addEventListener('visibilitychange',()=>{
+       if(document.hidden){if(saveTimer)flush()}
+       else refresh();
+     });
+     window.addEventListener('pagehide',()=>{if(saveTimer)flush()});
+   })();
+   applyTheme();render();
  })();
