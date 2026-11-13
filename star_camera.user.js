@@ -2,9 +2,9 @@
 // @name         반짝카메라 로그 캡처
 // @namespace    https://crack.wrtn.ai/
 // @author       muz
-// @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      5.0.1
+// @updateURL    https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
+// @downloadURL  https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
+// @version      5.0.4
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -58,6 +58,9 @@
  *  v4.9.0 미리보기 두 손가락 확대·축소(PC는 Ctrl+휠), '글 고치기' 없앰
  *  v5.0.0 칠하기를 아래 막대로(모양 옆), 설정 판을 '빼기'로 떠 있는 창으로(옮기기·크기 조절, 작게), '붙이기'로 원래대로
  *  v5.0.1 폰에서 키보드가 올라오면 판이 보이는 화면에 맞춰 줄고 막대는 잠깐 숨김(회색 화면 밀림 고침), 판 버튼 글자 '⧉ 빼기'로 바로잡음
+ *  v5.0.2 예전 하트카메라와 따로 쓰도록 별도 파일로 분리
+ *  v5.0.3 배포 위치를 mywishluv/myccwish 의 star_camera.user.js 로 변경
+ *  v5.0.4 폰에서 이미지 '불러오는 중'으로 멈추던 것 고침: 여러 방법 동시 시도, 최대 12초면 포기, 저장은 이미지를 2초만 기다리고 빼고 저장
  */
 try {
 
@@ -2379,7 +2382,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   function netGet(url, type) {
     return new Promise((resolve, reject) => {
       const opts = {
-        method: 'GET', url, responseType: type, timeout: 25000,
+        method: 'GET', url, responseType: type, timeout: 8000,
         onload: r => (r.status >= 200 && r.status < 300 ? resolve(r.response) : reject(new Error('HTTP ' + r.status))),
         onerror: () => reject(new Error('network')), ontimeout: () => reject(new Error('timeout'))
       };
@@ -3415,22 +3418,43 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     }
     throw new Error('no data ' + src);
   }
+  // 정해진 시간 안에 안 끝나면 실패로 친다 (폰 확장 앱은 응답을 아예 안 주고 멈추는 일이 있음)
+  function withTimeout(p, ms) {
+    return new Promise((res, rej) => {
+      const t = setTimeout(() => rej(new Error('timeout')), ms);
+      p.then(v => { clearTimeout(t); res(v); }, e => { clearTimeout(t); rej(e); });
+    });
+  }
+  // 여러 방법을 동시에 시도해 가장 먼저 성공한 것을 쓴다
+  function firstOk(fns, ms) {
+    return new Promise((res, rej) => {
+      let left = fns.length, last;
+      fns.forEach(fn => withTimeout(Promise.resolve().then(fn), ms).then(res, e => { last = e; if (--left === 0) rej(last); }));
+    });
+  }
   async function loadOneImage(src) {
-    if (src.startsWith('data:') || src.startsWith('blob:')) return decodeBlob(await (await fetch(src)).blob());
-    const tries = [
-      async () => decodeBlob(dataToBlob(await netGet(src, 'arraybuffer'), src)),
-      async () => decodeBlob(dataToBlob(await netGet(src, 'blob'), src)),
-      async () => { const r = await fetch(src, { mode: 'cors', credentials: 'omit' }); if (!r.ok) throw new Error('HTTP ' + r.status); return decodeBlob(await r.blob()); },
-      async () => { // CORS 허용 이미지면 바로
-        const im = await new Promise((res, rej) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(i); i.onerror = rej; i.src = src + (src.includes('?') ? '&' : '?') + 'cc=' + Date.now(); });
-        const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
-        c.getContext('2d').drawImage(im, 0, 0); c.toDataURL(); // 막힌 이미지면 여기서 오류
-        return c;
-      }
-    ];
-    let last;
-    for (const t of tries) { try { return await t(); } catch (e) { last = e; } }
-    throw last || new Error('fail');
+    if (src.startsWith('data:') || src.startsWith('blob:')) return withTimeout(fetch(src).then(r => r.blob()).then(decodeBlob), 10000);
+    const viaImg = () => new Promise((res, rej) => { // CORS 허용 이미지면 바로
+      const i = new Image(); i.crossOrigin = 'anonymous';
+      i.onload = () => {
+        try {
+          const c = document.createElement('canvas'); c.width = i.naturalWidth; c.height = i.naturalHeight;
+          c.getContext('2d').drawImage(i, 0, 0); c.toDataURL('image/png', 0); // 막힌 이미지면 여기서 오류
+          res(c);
+        } catch (e) { rej(e); }
+      };
+      i.onerror = rej; i.src = src + (src.includes('?') ? '&' : '?') + 'cc=' + Date.now();
+    });
+    try {
+      return await firstOk([
+        async () => decodeBlob(dataToBlob(await netGet(src, 'arraybuffer'), src)),
+        async () => { const r = await fetch(src, { mode: 'cors', credentials: 'omit' }); if (!r.ok) throw new Error('HTTP ' + r.status); return decodeBlob(await r.blob()); },
+        viaImg
+      ], 7000);
+    } catch (e) {
+      // 마지막으로 한 번 더: 그림 덩어리(blob)로 받기
+      return withTimeout((async () => decodeBlob(dataToBlob(await netGet(src, 'blob'), src)))(), 5000);
+    }
   }
   const imgPending = new Map(); // src → Promise
   const imgFailed = new Set();
@@ -4857,7 +4881,11 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   }
   let saved = null; // { files: File[], urls: [] }
   async function exportImages() {
-    if (imgPending.size) { hud('이미지 불러오는 중…'); await Promise.all(Array.from(imgPending.values())); }
+    if (imgPending.size) { // 저장은 이미지 때문에 오래 기다리지 않는다: 최대 2초만 보고, 안 오면 빼고 저장
+      hud('이미지 확인 중…');
+      await Promise.race([Promise.all(Array.from(imgPending.values())), new Promise(r => setTimeout(r, 2000))]);
+      if (imgPending.size) toast(`아직 안 온 이미지 ${imgPending.size}개는 빼고 저장해요`, 2600);
+    }
     clearTimeout(refreshTimer);
     await refresh();
     if (!current || !current.model.turns.length) return;
