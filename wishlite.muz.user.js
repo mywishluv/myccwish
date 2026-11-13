@@ -1,8 +1,7 @@
-
 // ==UserScript==
 // @name         위시라이트3_통합홈
 // @namespace    local.rp.context.manager
-// @version      0.17.73-smooth-chat
+// @version      0.17.74-smooth-chat
 // @description  모바일 통합 화면 · 현재상태/날짜로그/타임라인 한곳에 · 자동 기억주입 유지.
 // @author       User
 // @license      All Rights Reserved
@@ -32,6 +31,7 @@
 // @noframes
 // @run-at       document-end
 // ==/UserScript==
+// v0.17.74: 로고를 하트로(주입 중 빨간 하트·용량만큼 차오름) · 창을 닫아도 작은 "정리 중" 표시 · AI 정리 확인 창 아이폰 스타일(바뀐 날짜만 표시) · 과거 기억 자동 사용 회색 배경 제거
 // v0.17.73: 날짜로그 지침 v6.3(섹스 장면 짧게·체위/횟수/절정만 남김·같은 날짜 재압축 방지) · 현재상태 지침 v8.6(분량 기준·완료 항목 정리·연속성 잠금 정의)
 // v0.17.72: 자동정리 확인 대기 30초→8초 · 옛 버전 지침 원문을 압축해 파일 용량 축소(기능 변화 없음)
 
@@ -105,7 +105,7 @@
         const style=document.createElement('style');
         style.textContent=':host{all:initial}section{box-sizing:border-box;width:280px;border:1px solid #d898ba;border-radius:12px;background:#fff4f9;color:#442d3b;padding:12px;font:13px/1.5 system-ui;box-shadow:0 4px 20px #0003}strong,span{display:block}span{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:5px}button{font:inherit;margin-top:8px;padding:5px 9px;border:1px solid #b982a2;border-radius:6px;background:white;color:#442d3b;cursor:pointer}';
         const card=document.createElement('section');
-        card.innerHTML='<strong>WISH 0.17.71-smooth-chat · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
+        card.innerHTML='<strong>WISH 0.17.74-smooth-chat · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
         card.querySelector('button').onclick=()=>{dismissed=true;host?.remove();host=null;};
         root.append(style,card);document.documentElement.appendChild(host);
         for(const [key,value] of Object.entries({position:'fixed',right:'16px',top:'112px','z-index':'2147483647',display:'block',visibility:'visible',opacity:'1',width:'280px',height:'auto'}))host.style.setProperty(key,value,'important');
@@ -129,13 +129,13 @@
     wishBoot.status('duplicate', '다른 RP Manager 실행이 감지됐습니다. 버전: '+String(window.__WISH_RP_MANAGER_LOADED__.version||'알 수 없음'));
     return;
   }
-  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.71-smooth-chat', loadedAt: Date.now() };
+  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.74-smooth-chat', loadedAt: Date.now() };
   // 같은 페이지에 남아 있는 v0.8.10 복사본이 뒤늦게 시작되는 경우도 차단합니다.
   window.__RP_MANAGER_0810_LOADED__ = true;
 
   const APP = {
     name: '🪽위시 RP Manager',
-    version: '0.17.71-smooth-chat',
+    version: '0.17.74-smooth-chat',
     dbName: 'RPContextManagerDB',
     dbVersion: 2,
     storeName: 'rooms',
@@ -11861,7 +11861,7 @@ ${dialogueText}`;
     trigger.setAttribute('aria-expanded',String(!!state.quickPanel));
     trigger.setAttribute('aria-label',`W.lite · ${monitor.armed?'주입 켜짐':'주입 꺼짐'}${monitor.busy?' · 반영 중':''} · 짧게 누르면 빠른 관리, 길게 누르면 전체 RP Manager`);
     trigger.title=`W.lite · ${monitor.armed?'주입 켜짐':'주입 꺼짐'}${monitor.warning?' · 확인할 일 있음':''} · 짧게 누르면 빠른 관리, 길게 누르면 전체 RP Manager`;
-    trigger.querySelector('.rpcm-header-monitor-label').textContent='✦';
+    wishV0174Style();wishHeartPaint(trigger,monitor);if(monitor.armed)trigger.title+=` · 기억 용량 ${monitor.percent}%`;wishBusyChipUpdate();
     let countBadge=trigger.querySelector('.wish-mobile-count-badge');if(!countBadge){countBadge=document.createElement('span');countBadge.className='wish-mobile-count-badge';countBadge.setAttribute('aria-hidden','true');trigger.append(countBadge);}countBadge.textContent=String(monitor.items.length);countBadge.hidden=!monitor.armed;
     if (state.modal) trigger.rpcmCancelHold?.();
     trigger.disabled = !!state.modal;
@@ -17113,14 +17113,140 @@ html.rpcm-mobile-layout #rpcm-modal #rpcm-section-overview .rpcm-maintenance-act
     `;document.head.append(style);
   }
 
+  // v0.17.74: 하트 로고 · 정리 중 표시 · 아이폰 스타일 확인 창
+  function wishV0174Style() {
+    const head = document.head || document.documentElement;
+    if (!head) return;
+    let style = document.getElementById('wish-v0174-style');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'wish-v0174-style';
+      style.textContent = `
+      html body #rpcm-fab.rpcm-header-monitor.rpcm-header-monitor{background:transparent!important;color:#ff2d55!important}
+      html body #rpcm-fab.rpcm-header-monitor.rpcm-header-monitor:hover{background:#fff0f3!important;color:#ff2d55!important}
+      html body #rpcm-fab.rpcm-header-monitor.rpcm-header-monitor::before{background:radial-gradient(circle,#ffd6df,#fff0f3)!important}
+      html body #rpcm-fab.rpcm-header-monitor .rpcm-header-monitor-label{display:flex!important;align-items:center!important;justify-content:center!important;width:22px!important;height:22px!important;font-size:0!important}
+      html body #rpcm-fab svg.wish-heart{display:block;width:21px;height:21px;overflow:visible;transform-origin:50% 60%}
+      html body #rpcm-fab.rpcm-composer-launcher svg.wish-heart{width:19px;height:19px}
+      html body #rpcm-fab svg.wish-heart .wish-heart-line{fill:none;stroke:#c7c7cc;stroke-width:1.8;stroke-linejoin:round}
+      html body #rpcm-fab svg.wish-heart .wish-heart-fill{fill:#ff2d55}
+      html body #rpcm-fab.wish-heart-on svg.wish-heart .wish-heart-line{stroke:#ff2d55}
+      html body #rpcm-fab.wish-heart-cleaning svg.wish-heart{animation:wish-heart-beat 1.2s ease-in-out infinite}
+      @keyframes wish-heart-beat{0%,100%{transform:scale(1)}15%{transform:scale(1.15)}30%{transform:scale(1)}45%{transform:scale(1.08)}60%{transform:scale(1)}}
+      #wish-cleaning-chip{position:fixed!important;top:calc(env(safe-area-inset-top,0px) + 62px)!important;left:50%!important;transform:translateX(-50%);z-index:2147483646!important;display:inline-flex!important;align-items:center!important;gap:7px!important;margin:0!important;padding:6px 12px 6px 10px!important;border-radius:999px!important;background:rgba(255,255,255,.95)!important;color:#3a3a3c!important;font:600 12px/1.2 -apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo",sans-serif!important;box-shadow:0 4px 16px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.08)!important;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);pointer-events:none!important;animation:wish-chip-in .2s ease-out both}
+      #wish-cleaning-chip .wish-chip-dot{flex:none;width:7px;height:7px;border-radius:50%;background:#ff2d55;animation:wish-chip-pulse 1s ease-in-out infinite}
+      @keyframes wish-chip-pulse{0%,100%{opacity:.3}50%{opacity:1}}
+      @keyframes wish-chip-in{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
+      @media(prefers-reduced-motion:reduce){html body #rpcm-fab svg.wish-heart,#wish-cleaning-chip,#wish-cleaning-chip .wish-chip-dot{animation:none!important}}
+      html body #rpcm-overlay #rpcm-modal.wish-three .wish-three-recall.wish-mobile-auto-recall{background:transparent!important;padding:10px 2px!important;border:0!important;box-shadow:none!important}
+      html body #rpcm-ai-memory-backdrop{background:rgba(0,0,0,.32)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo",sans-serif!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-dialog.rpcm-update-result-dialog{width:min(680px,calc(100vw - 32px))!important;height:min(860px,calc(100vh - 32px))!important;border:0!important;border-radius:22px!important;background:#f2f2f7!important;color:#1c1c1e!important;box-shadow:0 24px 60px rgba(0,0,0,.25)!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header{position:relative!important;padding:18px 20px 12px!important;border:0!important;background:#f2f2f7!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-eyebrow{margin:0 0 4px!important;color:#8e8e93!important;font-size:12px!important;font-weight:600!important;letter-spacing:0!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header h2{margin:0!important;color:#1c1c1e!important;font-size:22px!important;font-weight:700!important;letter-spacing:-.02em!important;line-height:1.25!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header p{margin:5px 0 0!important;color:#8e8e93!important;font-size:13px!important;line-height:1.45!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-update-dialog-close{display:grid!important;place-items:center!important;flex:none!important;width:30px!important;height:30px!important;min-width:30px!important;padding:0!important;border:0!important;border-radius:50%!important;background:#e5e5ea!important;color:#3c3c43!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-update-dialog-close svg{width:14px!important;height:14px!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-update-result-body{padding:4px 16px 18px!important;background:#f2f2f7!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-update-result-status{margin:0 4px 10px!important;padding:0!important;border:0!important;background:transparent!important;color:#8e8e93!important;font-size:13px!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog :is(.wish-rv-summary,.rpcm-ai-review-note){margin:0 4px 12px!important;color:#6c6c70!important;font-size:13px!important;line-height:1.5!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change{margin:0 0 12px!important;overflow:hidden!important;border:0!important;border-radius:16px!important;background:#fff!important;box-shadow:0 1px 2px rgba(0,0,0,.04)!important;opacity:1!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change.is-excluded{opacity:.45!important;background:#fff!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change>header{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;padding:14px 16px 8px!important;border:0!important;background:#fff!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change>header label{display:flex!important;align-items:center!important;gap:10px!important;flex:1!important;min-width:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;cursor:pointer}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change>header strong{color:#1c1c1e!important;font-size:15px!important;font-weight:600!important;line-height:1.4!important;word-break:keep-all!important;overflow-wrap:anywhere!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change input[type=checkbox]{-webkit-appearance:none!important;appearance:none!important;flex:none!important;width:22px!important;height:22px!important;margin:0!important;border:1.5px solid #c7c7cc!important;border-radius:50%!important;background:#fff!important;cursor:pointer}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-change input[type=checkbox]:checked{border-color:#ff2d55!important;background:#ff2d55 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 12.5l4 4 8-9' fill='none' stroke='white' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center/16px no-repeat!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-kind{flex:none!important;padding:3px 9px!important;border:0!important;border-radius:999px!important;background:#e8f0fe!important;color:#007aff!important;font-size:12px!important;font-weight:600!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-kind.is-add{background:#e3f8e8!important;color:#1f9d3a!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-kind.is-remove{background:#ffe5e5!important;color:#ff3b30!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-body{padding:0 16px 14px}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-text{margin:0;color:#1c1c1e;font:15px/1.75 -apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo",sans-serif;white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-old>summary{list-style:none!important;display:inline-block!important;margin:10px 0 0!important;padding:0!important;color:#007aff!important;font-size:13px!important;font-weight:500!important;cursor:pointer}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-old>summary::-webkit-details-marker{display:none}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-old>summary::after{content:' ›'}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-old[open]>summary::after{content:' ⌄'}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .wish-rv-text.is-old{margin-top:8px;padding:12px 14px;border-radius:12px;background:#f2f2f7;color:#6c6c70;font-size:14px}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog :is(.rpcm-ai-review-raw,.rpcm-ai-review-diff){margin:12px 0 0!important;padding:14px 16px!important;border:0!important;border-radius:16px!important;background:#fff!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog :is(.rpcm-ai-review-raw,.rpcm-ai-review-diff)>summary{color:#1c1c1e!important;font-size:14px!important;font-weight:600!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-ai-review-raw textarea{border:1px solid #e5e5ea!important;border-radius:12px!important;background:#fafafa!important;color:#1c1c1e!important;font:14px/1.7 -apple-system,BlinkMacSystemFont,"Pretendard",sans-serif!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer{display:flex!important;align-items:center!important;justify-content:space-between!important;gap:10px!important;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))!important;border:0!important;border-top:.5px solid #d1d1d6!important;background:rgba(249,249,251,.96)!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer>div{display:flex!important;gap:8px!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer .rpcm-btn{min-height:44px!important;padding:0 18px!important;border:0!important;border-radius:12px!important;background:#e5e5ea!important;color:#1c1c1e!important;font-size:15px!important;font-weight:600!important;box-shadow:none!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer .rpcm-btn.primary{background:#ff2d55!important;color:#fff!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer .rpcm-btn:disabled{opacity:.4!important}
+      html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer [data-ai-memory-discard]{padding:0 6px!important;background:transparent!important;color:#ff3b30!important;font-weight:500!important}
+      @media(max-width:600px){
+        html body #rpcm-ai-memory-backdrop{place-items:end center!important;align-items:end!important;padding:0!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-dialog.rpcm-update-result-dialog{width:100vw!important;height:calc(100vh - 36px)!important;height:calc(100dvh - 36px)!important;border-radius:22px 22px 0 0!important;animation:wish-sheet-up .28s cubic-bezier(.2,.8,.2,1) both!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header{padding-top:24px!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header::before{content:'';position:absolute;top:8px;left:50%;width:36px;height:5px;margin-left:-18px;border-radius:3px;background:#c7c7cc}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header h2{font-size:20px!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog .rpcm-update-result-body{padding:4px 12px 16px!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer{flex-direction:column-reverse!important;align-items:stretch!important;gap:6px!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer>div{display:grid!important;grid-template-columns:1fr 1fr!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer .rpcm-btn{width:100%!important;padding:0 10px!important}
+        html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>footer [data-ai-memory-discard]{min-height:36px!important}
+      }
+      @keyframes wish-sheet-up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+`;
+    }
+    // 다른 스타일이 뒤에 붙어도 이 규칙이 이기도록 항상 맨 뒤에 둡니다.
+    if (style.parentNode !== head || style.nextElementSibling) head.appendChild(style);
+  }
+  function wishHeartPaint(trigger, monitor) {
+    const label = trigger?.querySelector('.rpcm-header-monitor-label');
+    if (!label) return;
+    if (!label.querySelector('svg.wish-heart')) {
+      const d = 'M12 20.6s-7.6-4.6-9.4-9.3C1.4 8.1 3.3 4.8 6.6 4.5c2.1-.2 3.9.9 5.4 2.8 1.5-1.9 3.3-3 5.4-2.8 3.3.3 5.2 3.6 4 6.8-1.8 4.7-9.4 9.3-9.4 9.3z';
+      const clipId = `wish-heart-clip-${Math.random().toString(36).slice(2, 9)}`;
+      label.innerHTML = `<svg class="wish-heart" viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="${clipId}"><rect x="0" y="24" width="24" height="0"></rect></clipPath></defs><path class="wish-heart-fill" d="${d}" clip-path="url(#${clipId})"></path><path class="wish-heart-line" d="${d}"></path></svg>`;
+    }
+    const on = !!monitor?.armed;
+    // 주입 중이면 빨간 하트. 기억 용량을 많이 쓸수록 아래에서부터 더 차오릅니다(최소 30%).
+    const level = on ? Math.max(0.3, Math.min(1, (Number(monitor.percent) || 0) / 100)) : 0;
+    const top = level ? 20.8 - 17 * level : 24;
+    const rect = label.querySelector('svg.wish-heart rect');
+    rect?.setAttribute('y', top.toFixed(2));
+    rect?.setAttribute('height', (24 - top).toFixed(2));
+    trigger.classList.toggle('wish-heart-on', on);
+  }
+  function wishCleaningLabel() {
+    try {
+      const roomId = String(state.currentRoom?.chatId || '');
+      if (roomId && aiMemoryRuntime.busy && aiMemoryRuntime.roomId === roomId) return `${AI_MEMORY_AREAS[aiMemoryRuntime.area]?.label || '기억'} 정리 중…`;
+      if (roomId && wishHistoryPreparing) return '기존 대화 정리 준비 중…';
+    } catch (_) {}
+    return '';
+  }
+  function wishBusyChipUpdate() {
+    try {
+      const busyText = wishCleaningLabel();
+      state.fab?.classList.toggle('wish-heart-cleaning', !!busyText);
+      const text = state.modal ? '' : busyText;
+      let chip = document.getElementById('wish-cleaning-chip');
+      if (!text || !document.body) { chip?.remove(); return; }
+      wishV0174Style();
+      if (!chip) {
+        chip = document.createElement('div');
+        chip.id = 'wish-cleaning-chip';
+        chip.setAttribute('role', 'status');
+        chip.innerHTML = '<span class="wish-chip-dot" aria-hidden="true"></span><span class="wish-chip-text"></span>';
+        document.body.appendChild(chip);
+      }
+      const span = chip.querySelector('.wish-chip-text');
+      if (span.textContent !== text) span.textContent = text;
+    } catch (_) {}
+  }
   function createManagerButton() {
     wishLiteLauncherStyle();
+    wishV0174Style();
     const fab = document.createElement('button');
     fab.type = 'button';
     fab.id = 'rpcm-fab';
     fab.className = 'rpcm-header-monitor';
     fab.setAttribute('aria-label','위시라이트3 열기');
-    fab.innerHTML = '<span class="rpcm-header-monitor-label" aria-hidden="true">✦</span><span class="rpcm-header-status-dot" aria-hidden="true"></span>';
+    fab.innerHTML = '<span class="rpcm-header-monitor-label" aria-hidden="true"></span><span class="rpcm-header-status-dot" aria-hidden="true"></span>';
     fab.onmousedown = event => event.stopPropagation();
     rpcmBindMonitorPress(fab);
     return fab;
@@ -20868,13 +20994,56 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     const labels={person:'인물',target:'대상',status:'인지 상태',fact:'확인된 사실',actualFact:'실제 사실',address:'호칭',tone:'말투',context:'상황',official:'공식 관계',stance:'태도·감정',conflict:'남은 갈등',evidence:'근거',dateStart:'시작 날짜',dateEnd:'종료 날짜',timelineLabel:'시간선',tags:'태그'};
     return Object.entries(labels).filter(([key])=>card[key]!=null&&String(card[key]).trim()).map(([key,label])=>`${label}: ${Array.isArray(card[key])?card[key].join(' · '):card[key]}`).join('\n')||String(card.summary||card.title||'내용 없음');
   }
+  function wishReviewCompareHtml(oldText, newText, openOld = false) {
+    const oldValue = String(oldText ?? '').trim(), newValue = String(newText ?? '').trim();
+    const emptyOld = !oldValue || ['아직 저장된 항목이 없습니다.', '저장된 내용 없음'].includes(oldValue);
+    return `<div class="wish-rv-body"><div class="wish-rv-text">${esc(newValue || '내용 없음')}</div>${emptyOld ? '' : `<details class="wish-rv-old"${openOld ? ' open' : ''}><summary>이전 내용 보기</summary><div class="wish-rv-text is-old">${esc(oldValue)}</div></details>`}</div>`;
+  }
+  function wishReviewSplitBlocks(text) {
+    const value = String(text || '').replace(/\r\n/g, '\n').trim();
+    if (!value) return [];
+    const isHead = line => { const t = line.trim(); return /^\[[^\[\]]{2,}\]$/.test(t) && !/^\[\/?[A-Z0-9_]+\]$/.test(t); };
+    const lines = value.split('\n');
+    if (!lines.some(isHead)) return [{ key:'', title:'', text:value, body:value }];
+    const blocks = [];
+    let cur = null;
+    for (const line of lines) {
+      if (isHead(line)) { cur = { head:line.trim(), lines:[line] }; blocks.push(cur); }
+      else if (cur) cur.lines.push(line);
+      else { cur = { head:'', lines:[line] }; blocks.push(cur); }
+    }
+    return blocks.map(block => {
+      const title = block.head.replace(/^\[|\]$/g, '').trim();
+      const date = title.match(/^([^-]*\d{4}[^-]*)/);
+      return { key:(date ? date[1] : title).trim(), title, text:block.lines.join('\n').trim(), body:(block.head ? block.lines.slice(1) : block.lines).join('\n').trim() };
+    }).filter(block => block.text);
+  }
+  function wishReviewPartHtml(part) {
+    const label = String(part?.label || '변경 내용').replace(/\.txt$/, '').replace(/\s*전체 저장본$/, '').trim();
+    const card = (title, kind, cls, oldText, newText, openOld = false) => `<article class="rpcm-ai-review-change"><header><strong>${esc(title)}</strong><span class="rpcm-ai-review-kind ${cls}">${esc(kind)}</span></header>${wishReviewCompareHtml(oldText, newText, openOld)}</article>`;
+    const whole = () => card(label, String(part?.before || '').trim() ? '수정' : '새로 작성', String(part?.before || '').trim() ? 'is-edit' : 'is-add', part?.before || '', part?.after || '');
+    const before = wishReviewSplitBlocks(part?.before), after = wishReviewSplitBlocks(part?.after);
+    if (after.length <= 1 && before.length <= 1) return whole();
+    const beforeTexts = new Set(before.map(block => block.text)), afterTexts = new Set(after.map(block => block.text));
+    const beforeByKey = new Map(before.filter(block => block.key).map(block => [block.key, block]));
+    const afterKeys = new Set(after.map(block => block.key));
+    const changed = after.filter(block => !beforeTexts.has(block.text));
+    const removed = before.filter(block => block.key && !afterKeys.has(block.key) && !afterTexts.has(block.text));
+    if (!changed.length && !removed.length) return whole();
+    const edited = changed.filter(block => block.key && beforeByKey.has(block.key));
+    const unit = /날짜/.test(label) ? '개 날짜' : '개';
+    const counts = [changed.length - edited.length ? `추가 ${changed.length - edited.length}` : '', edited.length ? `수정 ${edited.length}` : '', removed.length ? `삭제 ${removed.length}` : '', `그대로 ${after.length - changed.length}${unit}`].filter(Boolean).join(' · ');
+    return `<p class="wish-rv-summary">${esc(label)} · ${esc(counts)}</p>`
+      + changed.map(block => { const old = block.key ? beforeByKey.get(block.key) : null; return card(block.title || label, old ? '수정' : '추가', old ? 'is-edit' : 'is-add', old ? old.body : '', block.body); }).join('')
+      + removed.map(block => card(block.title || label, '삭제', 'is-remove', block.body, '이 내용이 저장본에서 빠져요.', true)).join('');
+  }
   function aiMemoryReviewCardsHtml(room,area,prepared,rows) {
     const list=(r)=>area==='importantItems'?(r.slots||[]).filter(s=>s.group==='item'):area==='personInfo'?[...(r.knowledgeCards||[]),...(r.personStateRecords||[])]:area==='timeline'?r.storyTimelineCards||[]:[];
     const idOf=r=>String(area==='timeline'?r.cardId:r.id),before=new Map(list(room).map(r=>[idOf(r),r])),after=new Map(list(prepared.candidate).map(r=>[idOf(r),r]));
-    const comparison=(oldText,newText)=>`<div class="rpcm-ai-review-compare"><section><h4>현재 저장된 내용</h4><pre>${esc(oldText)}</pre></section><section><h4>적용 후 내용</h4><pre>${esc(newText)}</pre></section></div>`;
-    if(rows.length&&area!=='lore')return `<p class="rpcm-ai-review-note">적용할 항목을 선택하세요. 선택하지 않은 항목은 현재 내용이 유지됩니다.</p>${rows.map(row=>`<article class="rpcm-ai-review-change"><header><label><input type="checkbox" data-ai-memory-change="${esc(row.key)}" ${row.kind==='제거'?'':'checked'}><strong>${esc(row.label)}</strong></label><span class="rpcm-ai-review-kind">${esc(row.kind)}</span></header>${comparison(aiMemoryReadableCard(before.get(row.key)),after.has(row.key)?aiMemoryReadableCard(after.get(row.key)):'선택하면 이 항목을 제거합니다.')}</article>`).join('')}`;
+    const comparison=(oldText,newText,openOld=false)=>wishReviewCompareHtml(oldText,newText,openOld);
+    if(rows.length&&area!=='lore')return `<p class="rpcm-ai-review-note">적용할 항목을 선택하세요. 선택하지 않은 항목은 현재 내용이 유지됩니다.</p>${rows.map(row=>`<article class="rpcm-ai-review-change"><header><label><input type="checkbox" data-ai-memory-change="${esc(row.key)}" ${row.kind==='제거'?'':'checked'}><strong>${esc(row.label)}</strong></label><span class="rpcm-ai-review-kind ${row.kind==='추가'?'is-add':row.kind==='제거'?'is-remove':'is-edit'}">${esc(row.kind)}</span></header>${comparison(aiMemoryReadableCard(before.get(row.key)),after.has(row.key)?aiMemoryReadableCard(after.get(row.key)):'선택하면 이 항목을 제거합니다.',!after.has(row.key))}</article>`).join('')}`;
     if(area==='lore'&&rows.length)return `<p>적용할 자료집 변경을 선택하세요.</p><div>${rows.map(row=>`<label><input type="checkbox" data-ai-memory-change="${esc(row.key)}" ${['제거','removed','deleted'].includes(row.kind)?'':'checked'}><span>${esc(row.label)}</span><small>${esc(row.kind)}</small></label>`).join('')}</div>`;
-    return (prepared.diffParts||[]).map(part=>`<article class="rpcm-ai-review-change"><header><strong>${esc(part.label)}</strong></header>${comparison(String(part.before||'저장된 내용 없음'),String(part.after||'내용 없음'))}</article>`).join('');
+    return (prepared.diffParts||[]).map(part=>wishReviewPartHtml(part)).join('');
   }
   function aiMemoryAnnounceDrafts(room,drafts) {
     if(state.currentRoom!==room||!drafts?.length)return;
@@ -21050,6 +21219,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
   }
 
   function aiMemoryReviewDialog(room,area,forcePopup=false) {
+    wishV0174Style();
     const row=aiMemoryConfig(room).areas[area],draft=row.draft;
     if(!draft){notify('검토할 AI 초안이 없습니다.','warn');return;}
     document.querySelector('#rpcm-ai-memory-backdrop')?.remove();
@@ -21929,6 +22099,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     return effective>=row.interval?`${effective}턴 미처리 · 실행 조건 도달`:`${effective}/${row.interval}턴 · 다음 실행까지 ${left}턴`;
   }
   function wishCleanUpdateStatus(room){
+    wishBusyChipUpdate();
     const root=state.modal;
     if(!root||state.currentRoom!==room||!root.querySelector('.wish-clean-modal'))return;
     wishCleanRefreshHome(room);
@@ -22856,7 +23027,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
 
   function wishTabbedStyles(){
     GM_addStyle(`
-      /* WISH 0.17.71-smooth-chat - unified one-page layout; no second navigation or separate memory windows. */
+      /* WISH 0.17.74-smooth-chat - unified one-page layout; no second navigation or separate memory windows. */
       #rpcm-overlay #rpcm-modal-wrap{width:min(780px,100%)!important;max-width:min(780px,100%)!important}
       #rpcm-overlay .wish-clean-main.wish-unified-home{display:flex!important;flex-direction:column!important;gap:14px!important;padding:14px!important;overscroll-behavior:contain}
       #rpcm-overlay .wish-status-line[hidden]{display:none!important}
@@ -23237,7 +23408,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
         #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-clean-footer button{padding:9px 12px!important;font-size:11px!important;min-height:40px!important}
       }
 
-      /* v0.17.71-smooth-chat: simple mobile reading, only monthly folders collapse */
+      /* v0.17.74-smooth-chat: simple mobile reading, only monthly folders collapse */
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-month .wish-log-day-visible{display:block!important;overflow:visible}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible h3{font-size:13px!important;font-weight:700!important;color:#424553!important;margin:0 0 6px!important;line-height:1.5}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible .wish-log-day-content{padding:0!important}
@@ -23739,7 +23910,3 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
 
 
 })(); // shared storage boundary for Manager and integrated refiner
-
-
-
-
