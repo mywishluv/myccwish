@@ -4,7 +4,7 @@
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      4.7.0
+// @version      4.8.0
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -54,6 +54,7 @@
  *  v4.5.0 위 막대 없앰: 닫기·되돌리기·글 고치기를 아래 막대로, 아래 막대는 떠 있고 끌어서 옮길 수 있게
  *  v4.6.0 이미지: 고를 때 미리 받기·자리 먼저 보여주기·진행 표시, 움직임(찰칵·원고 등장·버튼 눌림·고르기 체크·저장 하트)
  *  v4.7.0 이름을 '반짝카메라 로그 캡처'로, 아이콘을 별이 든 카메라로
+ *  v4.8.0 폰 설정 판 높이를 손잡이로 끌어 작게·중간·크게 (기억함), 아주 내리면 닫힘
  */
 try {
 
@@ -2875,7 +2876,13 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .fb-undo:disabled { background: var(--fill); color: var(--label3); }
     .fb-sep { flex: none; width: .5px; height: 26px; background: var(--sep); margin: 0 4px; }
     .app .pages { padding-top: calc(14px + var(--safe-t)); padding-bottom: calc(96px + var(--safe-b)); }
-    .sheet.cc-mobile-panel { bottom: 0 !important; padding-bottom: var(--safe-b); }
+    .sheet.cc-mobile-panel { bottom: 0 !important; padding-bottom: var(--safe-b); transition: height .28s cubic-bezier(.2,.9,.3,1.05); }
+    .sheet.cc-mobile-panel.resizing { transition: none; }
+    .sheet.cc-mobile-panel .grabber { width: 44px; height: 5px; margin: 7px auto 3px; background: var(--label3); }
+    .sheet.cc-mobile-panel .sheet-nav { touch-action: none; }
+    .sheet.cc-mobile-panel .grabber { touch-action: none; }
+    .cc-panel-toggle { visibility: hidden !important; pointer-events: none; }
+    .tabbar.floatbar.docked-moving { transition: none; }
     .app.cc-preview-split .pages { margin-bottom: calc(var(--cc-panel-h, min(40dvh, 340px)) + 64px) !important; }
     .sheet.cc-side-panel { top: 14px; bottom: calc(14px + var(--safe-b)); }
     .app.cc-side-split .tabbar.floatbar:not(.placed) { left: calc((100% - 392px) / 2); }
@@ -4050,15 +4057,27 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   // v3.7: mobile preview and settings split; only settings sheet takes reserved space.
   const MOBILE_PANELS = new Set(['sheet-name', 'sheet-look', 'sheet-font', 'sheet-save']);
   function isCompactViewport() { return window.innerWidth <= 700; }
+  // 폰 설정 판 높이: 손잡이를 끌면 작게·중간·크게에 착 붙는다
+  const PANEL_H = {
+    small: () => 172,
+    compact: () => Math.round(Math.min(innerHeight * 0.42, 360)),
+    expanded: () => Math.round(Math.min(innerHeight * 0.8, 700))
+  };
+  function setPanelHeight(sheet, h) {
+    sheet.style.height = h + 'px';
+    $('app').style.setProperty('--cc-panel-h', h + 'px');
+  }
   function setMobilePanelMode(sheet, mode) {
     if (!sheet || !isCompactViewport() || !MOBILE_PANELS.has(sheet.id)) return;
+    if (mode === 'collapsed') mode = 'small';
+    if (!PANEL_H[mode]) mode = 'compact';
     const app = $('app');
     sheet.classList.add('cc-mobile-panel');
-    sheet.classList.toggle('cc-panel-collapsed', mode === 'collapsed');
-    sheet.classList.toggle('cc-panel-expanded', mode === 'expanded');
+    sheet.classList.remove('cc-panel-collapsed', 'cc-panel-expanded');
     app.classList.add('cc-preview-split');
-    app.style.setProperty('--cc-panel-h', mode === 'collapsed' ? '46px' : mode === 'expanded' ? 'min(70dvh, 640px)' : 'min(40dvh, 340px)');
+    setPanelHeight(sheet, PANEL_H[mode]());
     sheet.dataset.panelMode = mode;
+    if (settings.panelMode !== mode) { settings.panelMode = mode; saveSettings(); }
     try { if (fbDock) dockBar(sheet); } catch (e) { /* 시작 전 */ }
     const btn = sheet.querySelector('.cc-panel-toggle');
     if (btn) {
@@ -4108,10 +4127,13 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     requestAnimationFrame(() => {
       const app = $('app').getBoundingClientRect(), sr = sheet.getBoundingClientRect(), r = fbar.getBoundingClientRect();
       if (!sr.height) return;
+      // 높이가 움직이는 중이어도 도착할 높이(style.height) 기준으로 자리 잡기
+      const target = parseFloat(sheet.style.height) || sr.height;
+      const top = (sheet.classList.contains('resizing') ? sr.top : app.bottom - target) - app.top;
       fbDock = true;
       fbar.classList.add('placed');
       fbar.style.left = Math.max(6, (app.width - r.width) / 2) + 'px';
-      fbar.style.top = Math.max(6, sr.top - app.top - r.height - 8) + 'px';
+      fbar.style.top = Math.max(6, top - r.height - 8) + 'px';
     });
   }
   function undockBar() { if (!fbDock) return; fbDock = false; placeBar(); }
@@ -4159,7 +4181,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     sheet.classList.remove('hidden');
     if (MOBILE_PANELS.has(id)) {
       // 설정 판은 미리보기를 가리지 않는다: 폰은 아래쪽 낮은 판, 넓은 화면은 오른쪽 옆 판
-      if (isCompactViewport()) { setMobilePanelMode(sheet, 'compact'); dockBar(sheet); }
+      if (isCompactViewport()) { setMobilePanelMode(sheet, settings.panelMode || 'compact'); dockBar(sheet); }
       else { sheet.classList.add('cc-side-panel'); $('app').classList.add('cc-side-split'); }
       return;
     }
@@ -4189,6 +4211,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     qa('.sheet').forEach(s => {
       s.classList.add('hidden');
       s.classList.remove('cc-mobile-panel', 'cc-panel-collapsed', 'cc-panel-expanded', 'cc-side-panel');
+      s.style.height = '';
       delete s.dataset.panelMode;
     });
     $('app').classList.remove('cc-preview-split', 'cc-side-split');
@@ -4206,24 +4229,41 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     const grab = sheet.querySelector('.grabber');
     let y0 = null;
     const navEl = sheet.querySelector('.sheet-nav');
+    let h0 = 0, t0 = 0;
+    const isPanel = () => isCompactViewport() && sheet.classList.contains('cc-mobile-panel');
     [grab, navEl].filter(Boolean).forEach(el => {
-      el.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; }, { passive: true });
+      el.addEventListener('touchstart', e => {
+        if (e.target.closest('button')) { y0 = null; return; }
+        y0 = e.touches[0].clientY; h0 = sheet.getBoundingClientRect().height; t0 = Date.now();
+        sheet.classList.add('resizing');
+      }, { passive: true });
       el.addEventListener('touchmove', e => {
         if (y0 === null) return;
-        const dy = Math.max(0, e.touches[0].clientY - y0);
-        sheet.style.transform = `translate(-50%, ${dy}px)`;
-      }, { passive: true });
+        const dy = e.touches[0].clientY - y0;
+        if (isPanel()) {
+          if (e.cancelable) e.preventDefault();
+          setPanelHeight(sheet, Math.max(110, Math.min(innerHeight * 0.88, h0 - dy)));
+          if (fbDock) dockBar(sheet);
+        } else sheet.style.transform = `translate(-50%, ${Math.max(0, dy)}px)`;
+      }, { passive: false });
       el.addEventListener('touchend', e => {
         if (y0 === null) return;
         const dy = e.changedTouches[0].clientY - y0;
         y0 = null;
+        sheet.classList.remove('resizing');
         sheet.style.transform = '';
-        if (isCompactViewport() && sheet.classList.contains('cc-mobile-panel')) {
-          if (dy < -55) setMobilePanelMode(sheet, 'expanded');
-          else if (dy > 55) {
-            const mode = sheet.dataset.panelMode || 'compact';
-            setMobilePanelMode(sheet, mode === 'expanded' ? 'compact' : 'collapsed');
+        if (isPanel()) {
+          const h = sheet.getBoundingClientRect().height;
+          if (h < PANEL_H.small() - 50) { closeSheets(); return; } // 아주 내리면 닫기
+          // 빠르게 튕기면 그 방향 칸으로, 아니면 가장 가까운 칸으로
+          const order = ['small', 'compact', 'expanded'];
+          const v = dy / Math.max(1, Date.now() - t0);
+          let mode = order.reduce((a, b) => Math.abs(PANEL_H[b]() - h) < Math.abs(PANEL_H[a]() - h) ? b : a);
+          if (Math.abs(v) > 0.6 && Math.abs(dy) > 20 && Math.abs(dy) < 110) { // 짧게 휙 튕긴 경우만
+            const cur = order.indexOf(sheet.dataset.panelMode || 'compact');
+            mode = order[Math.max(0, Math.min(2, cur + (v < 0 ? 1 : -1)))];
           }
+          setMobilePanelMode(sheet, mode);
         } else if (dy > 80) closeSheets();
       });
     });
