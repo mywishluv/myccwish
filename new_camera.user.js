@@ -4,7 +4,7 @@
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/wishlite/main/crack-heart-camera.user.js
-// @version      4.9.0
+// @version      5.0.0
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -56,6 +56,7 @@
  *  v4.7.0 이름을 '반짝카메라 로그 캡처'로, 아이콘을 별이 든 카메라로
  *  v4.8.0 폰 설정 판 높이를 손잡이로 끌어 작게·중간·크게 (기억함), 아주 내리면 닫힘
  *  v4.9.0 미리보기 두 손가락 확대·축소(PC는 Ctrl+휠), '글 고치기' 없앰
+ *  v5.0.0 칠하기를 아래 막대로(모양 옆), 설정 판을 '빼기'로 떠 있는 창으로(옮기기·크기 조절, 작게), '붙이기'로 원래대로
  */
 try {
 
@@ -2680,6 +2681,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       <span class="fb-sep"></span>
       <button class="tab" data-tab="name">${ICON.name}이름</button>
       <button class="tab" data-tab="look">${ICON.look}모양</button>
+      <button class="tab" data-tab="paint">${ICON.deco}칠하기</button>
       <button class="tab save" data-tab="save"><span class="bubble">${ICON.save}</span>저장</button>
     </div>
   </div>
@@ -2886,7 +2888,17 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .sheet.cc-mobile-panel .grabber { width: 44px; height: 5px; margin: 7px auto 3px; background: var(--label3); }
     .sheet.cc-mobile-panel .sheet-nav { touch-action: none; }
     .sheet.cc-mobile-panel .grabber { touch-action: none; }
-    .cc-panel-toggle { visibility: hidden !important; pointer-events: none; }
+    .cc-panel-toggle { display: inline-flex !important; visibility: visible !important; align-items: center; border: none; background: var(--fill); color: var(--blue); border-radius: 8px; padding: 5px 8px; font-size: 12px; font-weight: 600; white-space: nowrap; min-height: 28px; }
+    .sheet.cc-float-panel { position: fixed; transform: none; bottom: auto; right: auto; max-height: none; border-radius: 14px; box-shadow: 0 16px 50px rgba(0,0,0,.28), 0 0 0 .5px rgba(0,0,0,.12); z-index: 14; animation: cc-pop .2s ease; overflow: hidden; display: flex; flex-direction: column; }
+    .sheet.cc-float-panel .sheet-body { zoom: .88; flex: 1; min-height: 0; padding: 2px 12px 14px; }
+    .sheet.cc-float-panel .sheet-nav { cursor: move; touch-action: none; padding: 2px 8px 4px; }
+    .sheet.cc-float-panel .sheet-nav b { font-size: 14px; }
+    .sheet.cc-float-panel .sheet-nav .btn-text { font-size: 13px; }
+    .sheet.cc-float-panel .grabber { cursor: move; touch-action: none; }
+    .sheet.cc-float-panel.resizing { user-select: none; }
+    .cc-resize { display: none; }
+    .sheet.cc-float-panel .cc-resize { display: block; position: absolute; right: 0; bottom: 0; width: 26px; height: 26px; cursor: nwse-resize; touch-action: none; z-index: 2;
+      background: linear-gradient(135deg, transparent 50%, var(--label3) 50%, var(--label3) 56%, transparent 56%, transparent 66%, var(--label3) 66%, var(--label3) 72%, transparent 72%); }
     .tabbar.floatbar.docked-moving { transition: none; }
     .app.cc-preview-split .pages { margin-bottom: calc(var(--cc-panel-h, min(40dvh, 340px)) + 64px) !important; }
     .sheet.cc-side-panel { top: 14px; bottom: calc(14px + var(--safe-b)); }
@@ -2962,7 +2974,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .sheet.cc-side-panel { left: auto; right: 14px; top: 64px; bottom: calc(76px + var(--safe-b)); transform: none; width: 372px; max-height: none; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,.18); animation: cc-side .22s ease; }
     @keyframes cc-side { from { transform: translateX(24px); opacity: 0; } }
     .app.cc-side-split .pages { margin-right: 392px; }
-    .cc-side-panel .cc-panel-toggle { display: inline-block; visibility: hidden; }
+
     .look-body .themes { padding-left: 6px; padding-right: 6px; }
     .look-body .presets { padding-left: 4px; }
     .look-body .themes.dragging, .look-body .presets.dragging { scroll-snap-type: none; cursor: grabbing; }
@@ -4151,11 +4163,14 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       const btn = document.createElement('button');
       btn.type = 'button';
       btn.className = 'cc-panel-toggle';
-      btn.textContent = '미리보기';
-      btn.setAttribute('aria-label', '원고 미리보기 넓히기 또는 설정 열기');
+      btn.textContent = '⧉ 빼기';
+      btn.setAttribute('aria-label', '설정 판을 떠 있는 창으로 빼기 또는 아래에 붙이기');
       btn.addEventListener('click', () => {
-        const mode = sheet.dataset.panelMode || 'compact';
-        setMobilePanelMode(sheet, mode === 'collapsed' ? 'compact' : mode === 'expanded' ? 'compact' : 'collapsed');
+        settings.panelStyle = settings.panelStyle === 'float' ? 'dock' : 'float';
+        saveSettings();
+        const tabOn = qa('.tab.on').map(x => x.dataset.tab);
+        openSheet(id, true);
+        tabOn.forEach(t => { const tb = qa('.tab').find(x => x.dataset.tab === t); if (tb) tb.classList.add('on'); });
       });
       if (left.tagName === 'SPAN' && !left.textContent.trim()) left.replaceWith(btn);
       else {
@@ -4167,6 +4182,59 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     }
   }
   setupMobilePanelButtons();
+
+  /* 판을 떠 있는 창으로: 제목 줄을 잡고 옮기고, 오른쪽 아래 모서리로 크기 조절 */
+  function floatRect() {
+    const vw = innerWidth, vh = innerHeight;
+    const r = store.get('floatRect', null);
+    const w0 = Math.min(360, vw - 24), h0 = Math.min(440, Math.round(vh * 0.6));
+    let w = r ? r.w * vw : w0, h = r ? r.h * vh : h0;
+    w = Math.max(230, Math.min(vw - 12, w)); h = Math.max(170, Math.min(vh - 12, h));
+    let x = r ? r.x * vw : vw - w - 12, y = r ? r.y * vh : 64;
+    x = Math.max(6, Math.min(vw - w - 6, x)); y = Math.max(6, Math.min(vh - h - 6, y));
+    return { x, y, w, h };
+  }
+  function applyFloat(sheet, rc) {
+    rc = rc || floatRect();
+    sheet.classList.add('cc-float-panel');
+    Object.assign(sheet.style, { left: rc.x + 'px', top: rc.y + 'px', width: rc.w + 'px', height: rc.h + 'px' });
+  }
+  function saveFloat(sheet) {
+    const r = sheet.getBoundingClientRect();
+    store.set('floatRect', { x: r.left / innerWidth, y: r.top / innerHeight, w: r.width / innerWidth, h: r.height / innerHeight });
+  }
+  for (const id of MOBILE_PANELS) {
+    const sheet = $(id);
+    if (!sheet) continue;
+    const rz = document.createElement('div');
+    rz.className = 'cc-resize'; rz.setAttribute('aria-label', '창 크기 바꾸기');
+    sheet.appendChild(rz);
+    let g = null;
+    const down = (e, kind) => {
+      if (!sheet.classList.contains('cc-float-panel')) return;
+      if (kind === 'move' && e.target.closest('button, input')) return;
+      const r = sheet.getBoundingClientRect();
+      g = { kind, x: e.clientX, y: e.clientY, r, id: e.pointerId };
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch (er) { /* 무시 */ }
+      sheet.classList.add('resizing');
+      e.preventDefault(); e.stopPropagation();
+    };
+    const mv = e => {
+      if (!g || e.pointerId !== g.id) return;
+      const dx = e.clientX - g.x, dy = e.clientY - g.y, r = g.r;
+      if (g.kind === 'move') {
+        sheet.style.left = Math.max(6, Math.min(innerWidth - r.width - 6, r.left + dx)) + 'px';
+        sheet.style.top = Math.max(6, Math.min(innerHeight - r.height - 6, r.top + dy)) + 'px';
+      } else {
+        sheet.style.width = Math.max(230, Math.min(innerWidth - r.left - 4, r.width + dx)) + 'px';
+        sheet.style.height = Math.max(170, Math.min(innerHeight - r.top - 4, r.height + dy)) + 'px';
+      }
+    };
+    const up = e => { if (!g || e.pointerId !== g.id) return; g = null; sheet.classList.remove('resizing'); saveFloat(sheet); };
+    const nav = sheet.querySelector('.sheet-nav'), grab = sheet.querySelector('.grabber');
+    [nav, grab].filter(Boolean).forEach(el => { el.addEventListener('pointerdown', e => down(e, 'move')); el.addEventListener('pointermove', mv); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); });
+    rz.addEventListener('pointerdown', e => down(e, 'size')); rz.addEventListener('pointermove', mv); rz.addEventListener('pointerup', up); rz.addEventListener('pointercancel', up);
+  }
 
   /* 떠 있는 막대: 손잡이(⠿)나 빈 곳을 잡고 끌어서 옮긴다. 폰에서 설정 판이 열리면 판 바로 위로 잠깐 붙는다 */
   const fbar = $('tabbar');
@@ -4237,7 +4305,13 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     sheetOpenedAt = Date.now();
     const sheet = $(id);
     sheet.classList.remove('hidden');
+    if (MOBILE_PANELS.has(id) && settings.panelStyle === 'float') { // 떠 있는 창
+      applyFloat(sheet);
+      const tg = sheet.querySelector('.cc-panel-toggle'); if (tg) tg.textContent = '⬓ 붙이기';
+      return;
+    }
     if (MOBILE_PANELS.has(id)) {
+      const tg = sheet.querySelector('.cc-panel-toggle'); if (tg) tg.textContent = '⧉ 빼기';
       // 설정 판은 미리보기를 가리지 않는다: 폰은 아래쪽 낮은 판, 넓은 화면은 오른쪽 옆 판
       if (isCompactViewport()) { setMobilePanelMode(sheet, settings.panelMode || 'compact'); dockBar(sheet); }
       else { sheet.classList.add('cc-side-panel'); $('app').classList.add('cc-side-split'); }
@@ -4268,8 +4342,8 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     if (choiceResolve) { const r = choiceResolve; choiceResolve = null; r(null); }
     qa('.sheet').forEach(s => {
       s.classList.add('hidden');
-      s.classList.remove('cc-mobile-panel', 'cc-panel-collapsed', 'cc-panel-expanded', 'cc-side-panel');
-      s.style.height = '';
+      s.classList.remove('cc-mobile-panel', 'cc-panel-collapsed', 'cc-panel-expanded', 'cc-side-panel', 'cc-float-panel');
+      s.style.height = ''; s.style.width = ''; s.style.left = ''; s.style.top = '';
       delete s.dataset.panelMode;
     });
     $('app').classList.remove('cc-preview-split', 'cc-side-split');
@@ -4291,7 +4365,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     const isPanel = () => isCompactViewport() && sheet.classList.contains('cc-mobile-panel');
     [grab, navEl].filter(Boolean).forEach(el => {
       el.addEventListener('touchstart', e => {
-        if (e.target.closest('button')) { y0 = null; return; }
+        if (e.target.closest('button') || sheet.classList.contains('cc-float-panel')) { y0 = null; return; }
         y0 = e.touches[0].clientY; h0 = sheet.getBoundingClientRect().height; t0 = Date.now();
         sheet.classList.add('resizing');
       }, { passive: true });
@@ -4332,6 +4406,11 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     clearSel();
     if (t === 'name') { setTool(null); renderRules(); renderColorNames(); syncLook(); openSheet('sheet-name', true); b.classList.add('on'); }
     else if (t === 'look') { setTool(null); syncLook(); openSheet('sheet-look', true); b.classList.add('on'); }
+    else if (t === 'paint') { // 바로 칠하기 (문단을 먼저 고르지 않아도 됨)
+      closeSheets(); selSet.clear();
+      mode = 'paint'; tool = settings.tool === 'ul' || settings.tool === 'st' ? settings.tool : 'hl'; pendingMark = null;
+      syncBar();
+    }
     else if (t === 'save') { setTool(null); exportImages(); }
   }));
 
