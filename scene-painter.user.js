@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         🎨 Crack Scene Painter (크랙 장면 삽화)
 // @namespace    crack-scene-painter
-// @version      5.6.0.8
-// @description  크랙 AI 삽화 + 만화 콘티. 5.6.0.8: 모바일 화면 지원 + 터치 편의 + 갤러리 보관 범위(이 채팅/같은 작품/전체).
+// @version      5.6.1.0
+// @description  크랙 AI 삽화 + 만화 콘티. 5.6.1.0: 모바일 화면 지원 + 터치 편의 + 갤러리 보관 범위(이 채팅/같은 작품/전체).
 // @match        https://crack.wrtn.ai/*
 // @grant        GM_xmlhttpRequest
 // @grant        GM_getValue
@@ -19,6 +19,8 @@
 // @require      https://cdn.jsdelivr.net/npm/fflate@0.8.2/umd/index.js
 // @run-at       document-idle
 // ==/UserScript==
+// 5.6.1.0: 스튜디오 👥 등장인물 창에서 등록된 캐릭터를 눌러 장면에 넣고 빼기.
+// 5.6.0.9: 갤러리 같은 작품·전체에서도 다른 채팅 사진 삭제 가능.
 // 5.6.0.8: 모바일에서 진행 카드를 화면 맨 위로, 스튜디오 생성 버튼이 화면 밖으로 밀리던 것 수정.
 // 5.6.0.7: 이미지 정보 지우기(저장할 때 자동 + 내 사진 골라서) — 설정 > 저장.
 // 5.6.0.6: 브라우저 저장공간(localStorage)이 가득 차면 탬퍼몽키 저장소로 넘겨 저장(기록 삭제·캐릭터 추가 막힘 수정).
@@ -11091,7 +11093,7 @@ ${P} .gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
         const menu=document.createElement('div');menu.className='v35-menu';
         const r=anchor.getBoundingClientRect();
         menu.style.cssText=`position:fixed;z-index:2147483600;left:${Math.max(8,Math.min(innerWidth-220,r.right-210))}px;top:${Math.max(8,Math.min(innerHeight-140,r.bottom+4))}px;width:210px;padding:4px;border:1px solid var(--line);border-radius:12px;background:var(--sf);box-shadow:var(--shadow)`;
-        menu.innerHTML=`<button class="btn ghost" data-a="download" style="width:100%;justify-content:flex-start">⬇ 다운로드</button>${item.roomPath?'<button class="btn ghost" data-a="go" style="width:100%;justify-content:flex-start">💬 그 채팅으로 이동</button>':''}`;
+        menu.innerHTML=`<button class="btn ghost" data-a="download" style="width:100%;justify-content:flex-start">⬇ 다운로드</button>${item.roomPath?'<button class="btn ghost" data-a="go" style="width:100%;justify-content:flex-start">💬 그 채팅으로 이동</button>':''}<button class="btn ghost" data-a="delete" style="width:100%;justify-content:flex-start;color:var(--dgr,#ef4444)">🗑 삭제</button>`;
         cspV35Root.appendChild(menu);
         const onOutside=e=>{if(!menu.contains(e.target)&&!anchor.contains(e.target))cleanup()};
         const cleanup=()=>{document.removeEventListener('mousedown',onOutside,true);menu.remove()};
@@ -11101,7 +11103,13 @@ ${P} .gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
             const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;cleanup();
             try{
                 if(a==='download'){v35다운로드(await getRecordImageSrc(item.record,item.index),item.title);return}
-                if(a==='go'){closeV35();location.href=item.roomPath}
+                if(a==='go'){closeV35();location.href=item.roomPath;return}
+                if(a==='delete'){
+                    if(!confirm(`"${item.title}" 이미지를 삭제할까요?\n(${item.roomTitle||'다른 채팅'}에 있는 사진이에요)`))return;
+                    await cspDeleteForeignHistoryImage(item.roomId,item.messageKey,item.index);
+                    v35Toast('🗑 삭제했어요.','ok');
+                    openV35Gallery();
+                }
             }catch(err){v35Toast('실패: '+err.message,'error',0)}
         });
     }
@@ -11262,6 +11270,84 @@ ${P} .gallery-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
         sec.querySelector('#csp-strip-on').addEventListener('change',e=>{try{GM_setValue('csp_mobile_strip_meta',e.target.value==='1')}catch(_){}});
         sec.querySelector('#csp-strip-pick').addEventListener('click',cspPickAndStrip);
         return true;
+    }
+
+    // 다른 채팅방에 저장된 사진 한 장 지우기(갤러리 '같은 작품'·'전체'에서 사용)
+    async function cspDeleteForeignHistoryImage(roomId,messageKey,index){
+        if(!roomId||roomId===getRoomId())return deleteSceneHistoryImage(messageKey,index);
+        const key=getSceneRecordsKey(roomId);
+        const recs=getLocalJsonStorage(key,{})||{};
+        const rec=normalizeSceneRecordHistory(recs[messageKey],messageKey);
+        if(!rec||!Array.isArray(rec.history)||!rec.history.length){delete recs[messageKey];saveSceneRecords(recs,{roomId});return}
+        const cur=clampHistoryIndex(rec);
+        const i=Math.max(0,Math.min(Math.trunc(Number(index)||0),rec.history.length-1));
+        const [removed]=rec.history.splice(i,1);
+        if(removed?.imageId){try{await deleteStoredImage(removed.imageId)}catch(e){console.warn('[Scene Painter] 사진 삭제 실패:',e)}}
+        if(!rec.history.length)delete recs[messageKey];
+        else{rec.currentIndex=i<cur?cur-1:Math.min(cur,rec.history.length-1);recs[messageKey]=rec}
+        saveSceneRecords(recs,{roomId});
+    }
+
+    /* ============================================================
+     * 5.6.1.0 스튜디오 👥 등장인물: 등록된 캐릭터를 눌러서 이 장면에 넣고 빼기
+     * Gemini가 '보이는 인물'만 고르기 때문에, 여러 명을 그리고 싶을 때 직접 고를 수 있게 한다.
+     * ============================================================ */
+    function cspRoomCharList(room){
+        return (room?.characters||[]).filter(hasCharacterSlotContent).map(char=>({char,name:getCharacterSlotName(char)||'',id:getCharacterSlotId(char,(room.characters||[]).indexOf(char))})).filter(x=>x.name);
+    }
+    function cspCharInScene(s,room,entry){
+        const key=normalizeCharacterLookupKey(entry.name);
+        return (s.promptState?.charPrompts||[]).some(c=>c.kind!=='pc'&&(c.characterId===entry.id||normalizeCharacterLookupKey(c.name||'')===key));
+    }
+    function cspToggleSceneCharacter(entry,include){
+        const s=cspV35Session;if(!s?.plan)return;
+        const room=getRoomSettings();
+        if(include){
+            const max=getNaiModelCapability(v35Model()).maxCharacters;
+            const count=(s.promptState?.charPrompts||[]).length;
+            if(count>=max){v35Toast(`이 모델은 최대 ${max}명까지 넣을 수 있어요.`,'error');return}
+        }
+        if((s.promptDirty||s.characterDirty)&&!confirm('직접 고친 프롬프트가 있어요. 인물을 바꾸면 장면 프롬프트를 다시 만들어서 고친 내용이 사라져요. 계속할까요?'))return;
+        const plan={...s.plan};
+        const target=findCharacterForDirective(room,{name:entry.name})||findCharacterForDirective(room,{characterId:entry.id});
+        const same=item=>!!target&&findCharacterForDirective(room,item)===target;
+        // 1) 자세한 인물 지시(characters) 목록
+        if(Array.isArray(plan.characters)&&plan.characters.length){
+            let found=false;
+            plan.characters=plan.characters.map(item=>{if(same(item)){found=true;return {...item,present:include}}return item});
+            if(include&&!found)plan.characters=[...plan.characters,{name:entry.name,characterId:entry.id,present:true}];
+        }
+        // 2) 보이는 인물 이름 목록
+        const names=getPlanVisibleNames(plan).filter(n=>!same({name:n}));
+        if(include)names.push(entry.name);
+        plan.visibleCharacters=names;
+        if(Array.isArray(plan.charactersInScene))plan.charactersInScene=names.slice();
+        s.plan=plan;
+        s.promptState=buildFinalPromptFromPlan(s.plan,room);
+        s.promptDirty=s.negativeDirty=s.characterDirty=false;
+        renderV35Studio();
+        v35Toast(include?`👥 ${entry.name} 넣었어요`:`${entry.name} 뺐어요`,'success');
+    }
+    function renderV35ToolPanel(root){
+        const result=cspRenderV35ToolPanelBase(root);
+        try{
+            const s=cspV35Session,p=root?.querySelector('#v35-tool-panel');
+            if(!s||s.tool!=='characters'||!p||p.querySelector('.csp-cast'))return result;
+            const room=getRoomSettings(),list=cspRoomCharList(room);
+            const sec=document.createElement('div');sec.className='section csp-cast';
+            if(!list.length){
+                sec.innerHTML='<div class="section-title">등록된 캐릭터</div><div class="help">설정 › 캐릭터에서 먼저 캐릭터를 등록해 주세요.</div>';
+            }else{
+                sec.innerHTML=`<div class="section-title">등록된 캐릭터 · 눌러서 넣기/빼기</div><div class="csp-cast-list" style="display:flex;flex-wrap:wrap;gap:8px">${list.map((x,i)=>{const on=cspCharInScene(s,room,x);return `<button type="button" class="chip ${on?'on':''}" data-cast="${i}" style="min-height:38px;padding:0 14px;border-radius:999px;border:1px solid ${on?'var(--ac)':'var(--line)'};background:${on?'var(--soft)':'transparent'};color:${on?'var(--ac)':'var(--tx2)'};font-weight:600">${on?'✓ ':'＋ '}${escapeHtml(x.name)}</button>`}).join('')}</div><p class="help" style="margin-top:8px">넣은 인물로 장면 프롬프트를 다시 만들어요. 그다음 이미지 생성을 누르면 돼요.</p>`;
+                sec.addEventListener('click',e=>{
+                    const b=e.target.closest('[data-cast]');if(!b)return;
+                    const x=list[Number(b.dataset.cast)];if(!x)return;
+                    cspToggleSceneCharacter(x,!cspCharInScene(s,room,x));
+                });
+            }
+            p.appendChild(sec);
+        }catch(e){console.warn('[Scene Painter 등장인물]',e)}
+        return result;
     }
 
     function ensureV35Styles() {
@@ -11808,7 +11894,7 @@ ${v35GaugeHtml({thin:true,percent:b.charCount/b.maxCharacters*100,tone:'ok'})}</
         slot.__v35Src=s.currentImageSrc;slot.src=s.currentImageSrc;
     }
     function cspRenderV35StudioBase(){if(!cspV35Session)return;const s=cspV35Session,reused=reuseV35StudioRoot(s),keepFocus=reused?captureV35Focus(reused.app):null,prevImg=reused?reused.app.querySelector('#v35-main-img'):null,{root,app}=reused||mountV35();root.__v35Session=s;root.dataset.view='studio';const model=v35Model(),fam=getNaiModelCapability(model).family,uc=normalizeNaiUcPresetForModel(s.generation.ucPreset,model),subOpen=isV35SubtitleOpen(s);app.innerHTML=`<div class="v35-top"><div class="v35-brand">🎨 Scene Painter <small>스튜디오</small></div><select class="select" id="v35-q-model" style="width:175px">${buildNaiModelOptionsHtml(model)}</select><select class="select" id="v35-q-size" style="width:145px"><option value="portrait" ${s.generation.width==832&&s.generation.height==1216?'selected':''}>832 × 1216</option><option value="square" ${s.generation.width==1024&&s.generation.height==1024?'selected':''}>1024 × 1024</option><option value="landscape" ${s.generation.width==1216&&s.generation.height==832?'selected':''}>1216 × 832</option><option value="custom">직접 입력</option></select>${fam==='v5'?`<select class="select" id="v35-q-quality" style="width:130px"><option value="none" ${s.generation.v5QualityPreset==='none'?'selected':''}>품질 · 없음</option><option value="light" ${s.generation.v5QualityPreset==='light'?'selected':''}>품질 · 라이트</option><option value="standard" ${s.generation.v5QualityPreset==='standard'?'selected':''}>품질 · 표준</option></select>`:`<button class="btn" id="v35-q-quality-toggle">품질 태그 · ${s.generation.qualityToggle!==false?'켜짐':'꺼짐'}</button>`}<select class="select" id="v35-q-uc" style="width:160px">${buildNaiUcPresetOptionsHtml(uc,model)}</select><div class="grow"></div>${v35QuotaChipHtml()}${v35BudgetChipHtml()}${v35CostChipHtml()}<button class="btn ghost" id="v35-gallery-open">🖼 갤러리</button><button class="btn ghost" id="v35-settings-open">⚙ 설정</button><button class="iconbtn" id="v35-close">×</button></div><div class="studio ${s.tool?'panel':''}"><div class="rail"><button class="iconbtn ${s.tool==='scene'?'active':''}" data-tool="scene" title="장면">🎬</button><button class="iconbtn ${s.tool==='characters'?'active':''}" data-tool="characters" title="캐릭터">👥</button><button class="iconbtn ${s.tool==='context'?'active':''}" data-tool="context" title="장면 정보">🌐</button><div class="grow"></div><button class="iconbtn ${s.tool==='raw'?'active':''}" data-tool="raw" title="원문 / 디버그">⌘</button></div>${s.tool?'<aside class="context-panel" id="v35-tool-panel"></aside>':''}<main class="output"><div class="canvas-wrap"><div class="canvas" id="v35-canvas" style="--iw:${Number(s.generation.width)||832};--ih:${Number(s.generation.height)||1216}">${s.currentImageSrc?`<img id="v35-main-img">${subOpen?'<canvas id="v35-sub-canvas" class="sub-canvas" title="클릭해서 대사 입력"></canvas>':''}<div class="canvas-tools"><button class="iconbtn glass" id="v35-view">⛶</button><button class="iconbtn glass" id="v35-download">↓</button></div>`:`<div class="canvas-empty"><strong>생성 준비 완료</strong>장면 분석이 끝났어.<br>오른쪽 설정에서 확인하고 생성하면 돼.</div>`}${s.positionMode?v35PositionOverlayHtml(s):''}${!['idle','ready'].includes(s.status)&&!s.error?`<div class="loading"><div class="loading-card"><div class="spinner"></div><strong>${escapeHtml(s.statusMessage||'처리 중…')}</strong></div></div>`:''}</div>${s.error?`<div style="position:absolute;left:24px;right:24px;bottom:24px;padding:12px;border:1px solid var(--danger);border-radius:12px;background:var(--sf);color:var(--danger)">${escapeHtml(s.error)}</div>`:''}</div>${subOpen?v35SubtitleDockHtml(s):`<div class="film"><div class="film-label">🎞 장면</div><div id="v35-film" style="display:flex;gap:6px;align-items:center"></div><div class="grow"></div><button class="btn ghost tiny" id="v35-film-all">전체 기록 보기 →</button></div>`}</main><aside class="inspector"><div class="inspector-tabs"><button class="tab ${s.inspector==='prompt'?'active':''}" data-inspector="prompt">✍ 프롬프트</button><button class="tab ${s.inspector==='generate'?'active':''}" data-inspector="generate">⚙ 생성</button></div><div class="inspector-body" id="v35-inspector"></div></aside></div><div class="bottom"><button class="btn" id="v35-comic-mode"><svg class="csp-comic-icon" style="display:inline-block;width:16px;height:16px;flex:0 0 16px;vertical-align:-3px;color:inherit" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="3" y="4" width="18" height="16" rx="1.3"/><path d="M7.5 7.5h5a1.5 1.5 0 0 1 1.5 1.5v2a1.5 1.5 0 0 1-1.5 1.5h-2L8 14v-1.5h-.5A1.5 1.5 0 0 1 6 11V9a1.5 1.5 0 0 1 1.5-1.5Z"/><path d="m15 17 3-3m0 3h1"/></svg> 만화</button><button class="btn" id="v35-reanalyze" ${s.markdown?'':'disabled title="원래 메시지가 현재 DOM에 없어서 재분석할 수 없어."'}>↻ 요청 재분석</button><button class="btn ${subOpen?'is-on':''}" id="v35-subtitle" ${s.currentImageSrc?'':'disabled'} title="이미지 하단에 영화 자막 넣기">💬 텍스트 편집</button><span class="help" id="v35-dirty">${s.promptDirty||s.negativeDirty||s.characterDirty?'● 프롬프트 수정됨':''}</span><div class="nai-usage" id="v35-nai-usage" title="클릭해서 NAI 할당량/Anlas 새로고침"><span class="nai-usage-label">${fam==='v5'?'V5 할당량':'NAI'}</span>${fam==='v5'?'<span class="nai-usage-track"><i class="nai-usage-fill"></i></span>':''}<b class="nai-usage-pct">…</b><span class="nai-usage-anlas">Anlas …</span></div><div class="grow"></div><button class="btn" id="v35-reroll" ${s.currentImageSrc?'':'disabled'}>🎲 같은 설정으로 리롤${v35CostSuffixHtml()}</button><button class="btn ${v35GenerateToneClass()}" id="v35-generate">${v35GenerateLabelHtml()}</button></div>`;placeV35MainImage(root,s,prevImg);bindV35Studio(root);renderV35ToolPanel(root);renderV35Inspector(root);renderV35Film(root);bindV35CanvasFit(root);bindV35Subtitle(root);restoreV35Focus(app,keepFocus);refreshV35NaiUsage(root);hydrateV35CurrentImageFromHistory(s)}
-    function renderV35ToolPanel(root){
+    function cspRenderV35ToolPanelBase(root){
         const p=root.querySelector('#v35-tool-panel'),s=cspV35Session;
         if(!p||!s.tool)return;
         const plan=s.plan||{};
