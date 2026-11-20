@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         크랙 무드 배경
 // @namespace    https://github.com/mywishluv/wishlite
-// @version      1.1.0
+// @version      1.1.1
 // @description  크랙 채팅 화면에 벚꽃·눈·비·반딧불·낙엽·별똥별·비눗방울·하트 배경 효과를 은은하게 깔아줘요
 // @author       muz
 // @match        https://crack.wrtn.ai/*
@@ -11,6 +11,7 @@
 // @downloadURL  https://github.com/mywishluv/wishlite/raw/main/crack-mood.user.js
 // @updateURL    https://github.com/mywishluv/wishlite/raw/main/crack-mood.user.js
 // ==/UserScript==
+// v1.1.1 폰에서 버튼을 눌러도 설정창이 안 열리던(열리자마자 닫히던) 문제 수정
 // v1.1.0 효과 4개 추가(낙엽·별똥별·비눗방울·하트), 터치 반응, 대화 보고 자동 전환(🪄), '배경이미지보기' 밑에 메뉴 버튼
 // v1.0.0 첫 버전: 벚꽃·눈·비·반딧불 4가지 효과, 양 3단계, 버튼 끌어서 옮기기(양옆에 착 붙음)
 //
@@ -500,12 +501,14 @@
   const host = document.createElement('div');
   host.id = 'crack-mood-host';
   Object.assign(host.style, { position: 'fixed', left: '0', top: '0', width: '0', height: '0', zIndex: '2147483001' });
+  host.style.setProperty('pointer-events', 'auto', 'important'); // 크랙 메뉴가 열려 화면 터치를 막아도 우리 창은 눌리게
   const root = host.attachShadow({ mode: 'open' });
   root.innerHTML = `
 <style>
   :host{all:initial}
   *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",Pretendard,"Noto Sans KR",sans-serif;-webkit-tap-highlight-color:transparent}
-  button{font:inherit;margin:0;cursor:pointer}
+  button{font:inherit;margin:0;cursor:pointer;touch-action:manipulation;pointer-events:auto}
+  .sheet,.dim.show{pointer-events:auto}
   .fab{position:fixed;left:0;top:0;width:44px;height:44px;border-radius:50%;border:1px solid rgba(255,255,255,.7);
     background:rgba(255,255,255,.75);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
     box-shadow:0 4px 16px rgba(0,0,0,.16);font-size:21px;line-height:1;display:flex;align-items:center;justify-content:center;
@@ -639,22 +642,36 @@
     fab.classList.add('drag');
     setPos(drag.x0 + dx, drag.y0 + dy);
   });
+  let justDragged = 0;
   fab.addEventListener('pointerup', () => {
     if (!drag) return;
     const moved = drag.moved;
     drag = null;
     fab.classList.remove('drag');
     if (moved) {
+      justDragged = Date.now();
       cfg.btn = { side: bx + 22 < W / 2 ? 'left' : 'right', y: by / Math.max(1, H - 44) };
       save(); placeBtn();
-    } else { pop(fab); openSheet(); }
+    }
   });
   fab.addEventListener('pointercancel', () => { drag = null; fab.classList.remove('drag'); placeBtn(); });
+  fab.addEventListener('click', e => { // 열기는 click에서 (폰에서 터치가 두 번 먹는 문제 방지)
+    e.preventDefault(); e.stopPropagation();
+    if (Date.now() - justDragged < 400) return; // 끌어서 옮긴 직후엔 안 열기
+    pop(fab); openSheet();
+  });
 
   /* 설정창 */
-  function openSheet() { refreshUI(); dim.classList.add('show'); sheet.classList.add('show'); }
+  let openedAt = 0;
+  function openSheet() {
+    openedAt = Date.now();
+    refreshUI(); dim.classList.add('show'); sheet.classList.add('show');
+  }
   function closeSheet() { dim.classList.remove('show'); sheet.classList.remove('show'); }
-  dim.addEventListener('click', closeSheet);
+  dim.addEventListener('click', () => {
+    if (Date.now() - openedAt < 500) return; // 열자마자 따라온 터치로 바로 닫히지 않게
+    closeSheet();
+  });
   root.querySelector('.done').addEventListener('click', closeSheet);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
 
@@ -713,7 +730,19 @@
     if (svg) svg.replaceWith(inlineLabel);
     else { inlineLabel.style.marginRight = '6px'; (texts[0] ? texts[0].parentNode : c).insertBefore(inlineLabel, texts[0] || c.firstChild); }
     inlineLabel.textContent = iconNow();
-    c.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); openSheet(); }, true);
+    // 크랙 메뉴가 터치하자마자 닫히면서 버튼이 사라질 수 있어서, 손 뗄 때 바로 열어요
+    let down = null;
+    c.addEventListener('pointerdown', e => { down = { x: e.clientX, y: e.clientY }; e.stopPropagation(); }, true);
+    c.addEventListener('pointerup', e => {
+      e.stopPropagation();
+      if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 10) { down = null; return; }
+      down = null;
+      openSheet();
+    }, true);
+    c.addEventListener('click', e => {
+      e.preventDefault(); e.stopPropagation();
+      if (Date.now() - openedAt > 600) openSheet(); // 키보드 등으로 눌렀을 때
+    }, true);
     return c;
   }
   function ensureInline() {
