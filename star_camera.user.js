@@ -4,7 +4,7 @@
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
-// @version      5.0.9
+// @version      5.1.1
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -66,6 +66,8 @@
  *  v5.0.7 창 테두리 '일기장'(가죽 표지·볼펜·리본) 추가
  *  v5.0.8 테마 '일기장'을 '구겨진 종이'로 바꿈
  *  v5.0.9 테마 '구겨진 종이'를 '빛바랜 일기장'(바랜 가장자리·얼룩·눈물 자국·줄)으로 바꿈
+ *  v5.1.0 코드블록(```) 안의 대사(큰따옴표)는 회색 상자 대신 보통 대사·지문으로 나오게 (상태창은 상자 그대로)
+ *  v5.1.1 코드블록(```) 글 전체를 회색 상자 없이 보통 글로, 글씨는 조금 작게
  */
 try {
 
@@ -761,6 +763,8 @@ try {
 
     const textCtx = { measure, size: S, family: opt.family };
     const smallCtx = { measure, size: Math.round(S * 0.8 * 10) / 10, family: 'sans' };
+    // 코드블록(```)에서 온 글: 상자 없이 보통 글처럼, 글씨만 조금 작게
+    const codeS = Math.round(S * 0.88 * 10) / 10, codeCtx = { measure, size: codeS, family: opt.family }, codeLH = Math.round(opt.lineH * 0.88 * 100) / 100;
     const labelSize = Math.round(S * 0.78 * 10) / 10;
 
     if (opt.title) {
@@ -822,7 +826,7 @@ try {
           const x = turnX + (indentBar ? barGap : 0) + padX;
           const avail = turnW - (indentBar ? barGap : 0) - padX * 2;
           const indent = opt.indent && (b.kind === 'narration' || b.kind === 'mixed') ? S : 0;
-          const lines = breakLines(b.runs, avail, textCtx, indent);
+          const lines = breakLines(b.runs, avail, b.code ? codeCtx : textCtx, indent);
           const maxLineW = Math.max(...lines.map(l => l.w), S);
           blocks[bid] = {
             deco, pid: b.pid, turn: turn.id, color: b.color || null,
@@ -835,8 +839,8 @@ try {
           }
           lines.forEach((ln, li) => {
             flow.push({
-              kind: 'line', h: opt.lineH, before: li === 0 ? before : 0, x, line: ln,
-              size: S, family: opt.family, block: bid, turn: turn.id, pid: b.pid, mi: b.mi, off: b.off || 0,
+              kind: 'line', h: b.code ? codeLH : opt.lineH, before: li === 0 ? before : 0, x, line: ln,
+              size: b.code ? codeS : S, family: opt.family, block: bid, turn: turn.id, pid: b.pid, mi: b.mi, off: b.off || 0,
               keepNext: li === 0 && lines.length > 2, first: li === 0,
               forceBreak: li === 0 && deco !== 'bubble' ? b.forceBreak : false
             });
@@ -3636,7 +3640,8 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           runs = T.applyMarks(runs, edits.marks[pid]);
           // 상태창은 이름 강조 대상에서 제외 (대사/서술 구분 대상이 아님)
           const force = edits.kind[pid];
-          if (b.type === 'status' && !force) { turn.blocks.push({ pid, mi, type: 'status', runs, code: b.code || null }); return; }
+          // 코드블록(```) 글은 회색 상자 대신 보통 글(대사·지문 자동 구분)로, 글씨만 조금 작게
+          const isCode = b.type === 'status';
           // 대사 여부를 먼저 판별해야 ★가 서술 부분까지 퍼지지 않는다.
           const uprightItalic = settings.italic === 'narr';
           runs = T.classifyRuns(runs, { italicThought: !uprightItalic, force });
@@ -3647,7 +3652,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           const offs = T.pieceOffsets(full, pieces);
           // 이름/구분자 패턴은 인물마다 달라서 해석하지 않고 원문 그대로 보존한다.
           pieces.forEach((pc, i) => {
-            turn.blocks.push({ pid, mi, type: 'p', kind: T.kindOf(pc), runs: pc, off: offs[i] });
+            turn.blocks.push({ pid, mi, type: 'p', kind: T.kindOf(pc), runs: pc, off: offs[i], code: isCode });
           });
         } else if (b.type === 'img') {
           const im = images.get(b.src);
