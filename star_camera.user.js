@@ -4,7 +4,7 @@
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
-// @version      5.1.1
+// @version      5.1.2
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -68,6 +68,7 @@
  *  v5.0.9 테마 '구겨진 종이'를 '빛바랜 일기장'(바랜 가장자리·얼룩·눈물 자국·줄)으로 바꿈
  *  v5.1.0 코드블록(```) 안의 대사(큰따옴표)는 회색 상자 대신 보통 대사·지문으로 나오게 (상태창은 상자 그대로)
  *  v5.1.1 코드블록(```) 글 전체를 회색 상자 없이 보통 글로, 글씨는 조금 작게
+ *  v5.1.2 대사 표시에 '형광 띠'(글자 아래 연한 띠, 글자는 기본색)와 '굵게' 추가
  */
 try {
 
@@ -819,6 +820,7 @@ try {
           if (isDialogueBlock && opt.dialogueStyle === 'bar') deco = 'bar';
           if (isDialogueBlock && opt.dialogueStyle === 'bubble') deco = 'bubble';
           if (isDialogueBlock && opt.dialogueStyle === 'quote') deco = 'quote';
+          if (isDialogueBlock && opt.dialogueStyle === 'band') deco = 'band';
           const barGap = deco === 'quote' ? Math.round(S * 1.6) : Math.round(S * 0.95);
           const padX = deco === 'bubble' ? Math.round(S * 0.85) : 0;
           const padY = deco === 'bubble' ? Math.round(S * 0.5) : 0;
@@ -967,6 +969,9 @@ try {
             const top = lines[0].y + opt.lineH * 0.2;
             const bottom = lines[lines.length - 1].y + opt.lineH * 0.8;
             decos.push({ type: 'bar', x: b.barX, y: top, w: Math.max(2, Math.round(opt.size * 0.17)), h: bottom - top, z: 1, color: b.color });
+          } else if (b.deco === 'band') {
+            // 형광 띠: 대사 줄마다 글자 아래쪽 절반에 연한 띠
+            g.items.filter(x => x.kind === 'line' && x.line && x.line.w > 0).forEach(x => decos.push({ type: 'band', it: x, z: 1, color: b.color }));
           } else if (b.deco === 'quote') {
             // 큰 따옴표는 대사 첫 줄이 있는 쪽에만
             const firstLine = g.items.find(x => x.kind === 'line' && x.first);
@@ -1144,6 +1149,7 @@ try {
     if (item.isTitle) return theme.text;
     if (style.nm) return theme.nameColor;
     const k = style.k;
+    if (k === 'd' && look.dialogueStyle === 'band') return theme.text; // 형광 띠는 띠에만 색, 글자는 읽기 쉽게 기본색
     if (k === 'd') return look.dlgColor || (look.dialogueStyle === 'color' ? theme.dialogueColor : theme.text); // 대사 색을 고르면 어느 표시 방식이든 대사 글씨에 쓴다
     if (k === 't') return theme.thought;
     if (style.nf && typeof look.narrAlpha === 'number') return rgba(theme.text, look.narrAlpha);
@@ -2069,6 +2075,12 @@ try {
         ctx.fillText('\u201C', d.x - opt.size * 0.05, d.y - opt.size * 0.12);
         ctx.restore();
       }
+      else if (d.type === 'band') {
+        const g = lineGeom(ctx, d.it), bc = d.color || look.dlgColor || theme.accent;
+        ctx.fillStyle = rgba(bc, theme.dark ? 0.34 : 0.24);
+        const y0 = g.baseline - g.glyphH * 0.40, hh = g.glyphH * 0.52;
+        roundRect(ctx, d.it.x - 2, y0, d.it.line.w + 4, hh, Math.min(3, hh / 2)); ctx.fill();
+      }
       else if (d.type === 'bar') { ctx.fillStyle = d.color || look.dlgColor || theme.accent; ctx.globalAlpha = 0.85; roundRect(ctx, d.x, d.y, d.w, d.h, d.w / 2); ctx.fill(); ctx.globalAlpha = 1; }
     }
 
@@ -2847,7 +2859,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       </div>
       <div class="group mt12">
         <div class="row col"><span class="label">대사 표시</span>
-          <div class="seg" data-seg="dialogueStyle"><button data-v="bar">세로선</button><button data-v="bubble">말풍선</button><button data-v="color">글자색</button><button data-v="quote">따옴표</button></div></div>
+          <div class="seg" data-seg="dialogueStyle"><button data-v="bar">세로선</button><button data-v="bubble">말풍선</button><button data-v="color">글자색</button><button data-v="quote">따옴표</button><button data-v="band">형광 띠</button><button data-v="bold">굵게</button></div></div>
         <div class="row col"><span class="label">대사 색 <small id="dlg-hint">테마 색 그대로</small></span>
           <div class="colors dlg-colors" id="dlg-colors"></div></div>
         <div class="row col"><span class="label">위아래 여백 <b id="pady-v" style="color:var(--label2);font-weight:500"></b></span>
@@ -3647,6 +3659,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           runs = T.classifyRuns(runs, { italicThought: !uprightItalic, force });
           if (uprightItalic) runs = runs.map(r => (r.i ? Object.assign({}, r, { i: false }) : r)); // 기울임 풀기
           if (force === 'n') runs = runs.map(r => Object.assign({}, r, { nf: true })); // 내가 '서술'로 지정한 문단
+          if (settings.dialogueStyle === 'bold') runs = runs.map(r => (r.k === 'd' ? Object.assign({}, r, { b: true }) : r)); // 대사만 굵게
           runs = T.applyEmphasis(runs, names, { dialogueOnly: settings.starScope !== 'all' });
           const pieces = force ? [runs] : T.splitDialogue(runs);
           const offs = T.pieceOffsets(full, pieces);
