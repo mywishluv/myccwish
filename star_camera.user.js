@@ -4,7 +4,7 @@
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
-// @version      5.0.5
+// @version      5.0.9
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -61,7 +61,11 @@
  *  v5.0.2 예전 하트카메라와 따로 쓰도록 별도 파일로 분리
  *  v5.0.3 배포 위치를 mywishluv/myccwish 의 star_camera.user.js 로 변경
  *  v5.0.4 폰에서 이미지 '불러오는 중'으로 멈추던 것 고침: 여러 방법 동시 시도, 최대 12초면 포기, 저장은 이미지를 2초만 기다리고 빼고 저장
- *  v5.0.5 폰 설정 크기 변경
+ *  v5.0.5 코드블록(```) 문단을 하나씩 지우고 대사·지문으로 지정할 수 있게(그림에서는 한 상자로 이어짐)
+ *  v5.0.6 한 문단 안 여러 줄(줄바꿈)이 한 줄로 붙던 것 고침, 캐릭터 대표(프로필) 사진이 캡처에 끼던 것 고침
+ *  v5.0.7 창 테두리 '일기장'(가죽 표지·볼펜·리본) 추가
+ *  v5.0.8 테마 '일기장'을 '구겨진 종이'로 바꿈
+ *  v5.0.9 테마 '구겨진 종이'를 '빛바랜 일기장'(바랜 가장자리·얼룩·눈물 자국·줄)으로 바꿈
  */
 try {
 
@@ -796,6 +800,7 @@ try {
         });
       }
 
+      let lastBox = null;
       turn.blocks.forEach((b0, bi) => {
         let b = b0;
         const bid = turn.id + ':' + bi;
@@ -840,13 +845,21 @@ try {
         } else if (b.type === 'status') {
           const padX = Math.round(S * 0.8), padY = Math.round(S * 0.6);
           const lines = breakLines(b.runs, turnW - padX * 2, smallCtx, 0);
-          blocks[bid] = { deco: 'status', pid: b.pid, turn: turn.id, x: turnX, w: turnW };
-          flow.push({ kind: 'pad', h: padY, before, block: bid, turn: turn.id, pid: b.pid, keepNext: true, forceBreak: b.forceBreak });
+          const prevB = bi > 0 ? turn.blocks[bi - 1] : null;
+          const cont = !!(b.code && prevB && prevB.type === 'status' && prevB.code === b.code && lastBox);
+          const box = cont ? lastBox : bid;
+          if (cont) { // 앞 상자 안에서 빈 줄 하나만큼 띄우고 이어 쓴다
+            flow.push({ kind: 'pad', h: Math.max(0, Math.round(smallCtx.size * 1.6) - padY), before: 0, block: box, turn: turn.id, pid: b.pid });
+          } else {
+            blocks[bid] = { deco: 'status', pid: b.pid, turn: turn.id, x: turnX, w: turnW };
+            flow.push({ kind: 'pad', h: padY, before, block: box, turn: turn.id, pid: b.pid, keepNext: true, forceBreak: b.forceBreak });
+          }
+          lastBox = box;
           lines.forEach(ln => flow.push({
             kind: 'line', h: Math.round(smallCtx.size * 1.6), before: 0, x: turnX + padX, line: ln,
-            size: smallCtx.size, family: 'sans', block: bid, turn: turn.id, pid: b.pid, mi: b.mi, status: true, off: 0
+            size: smallCtx.size, family: 'sans', block: box, turn: turn.id, pid: b.pid, mi: b.mi, status: true, off: 0
           }));
-          flow.push({ kind: 'pad', h: padY, before: 0, block: bid, turn: turn.id, pid: b.pid });
+          flow.push({ kind: 'pad', h: padY, before: 0, block: box, turn: turn.id, pid: b.pid });
         } else if (b.type === 'img') {
           let w = Math.min(turnW, b.w || turnW);
           let h = b.w ? Math.round((b.h / b.w) * w) : Math.round(w * 0.75);
@@ -1045,6 +1058,7 @@ try {
     mint: T({ name: '민트', decor: 'glow', glow: 'rgba(175,235,215,0.55)', grain: 0.35, bg: '#F6FBF9', bgTop: '#E4F5EE', frame: '#D6EBE2', text: '#122C26', narration: '#465F58', thought: '#82998F', accent: '#1E9E80', dialogueColor: '#0E6F58', bubble: 'rgba(30,158,128,0.09)', card: '#E5F3ED', status: 'rgba(70,95,88,0.06)', rule: 'rgba(70,95,88,0.16)', nameColor: '#D9466F', sticker: '#D9466F', page: '#8EA79E' }),
     mono: T({ name: '흑백 잡지', decor: 'magazine', grain: 0.45, bg: '#F4F2EE', frame: '#E0DDD6', text: '#111111', narration: '#3F3F3D', thought: '#83827D', accent: '#111111', dialogueColor: '#111111', bubble: 'rgba(17,17,17,0.05)', card: '#E9E6E0', status: 'rgba(17,17,17,0.045)', rule: '#111111', nameColor: '#111111', sticker: '#C0392B', page: '#7D7B76' }),
     milktea: T({ name: '다이어리', decor: 'diary', bg: '#FBF6EE', frame: '#E9DFCF', text: '#3A2C22', narration: '#6A584B', thought: '#9F8D80', accent: '#C58B6A', dialogueColor: '#8E5134', bubble: 'rgba(197,139,106,0.11)', card: '#F3E8DA', status: 'rgba(106,88,75,0.06)', rule: 'rgba(106,88,75,0.16)', nameColor: '#C2456B', sticker: '#C2456B', page: '#AE9C8E' }),
+    faded: T({ name: '빛바랜 일기장', decor: 'faded', lines: true, grain: 0.6, bg: '#F1E3C4', bgTop: '#F6ECD6', frame: '#E0CFAE', text: '#33271B', narration: '#5E4D3B', thought: '#998770', accent: '#8A5A3A', dialogueColor: '#5A3418', bubble: 'rgba(138,90,58,0.08)', card: 'rgba(255,248,232,0.55)', status: 'rgba(94,77,59,0.07)', rule: 'rgba(130,95,55,0.22)', nameColor: '#A5392F', sticker: '#A5392F', page: '#A08B70', marginLine: 'rgba(190,80,70,0.30)' }),
     note: T({ name: '줄노트', decor: 'none', lines: true, bg: '#FFFEFA', frame: '#ECEAE3', text: '#1E2128', narration: '#4A4F59', thought: '#8C919B', accent: '#4F72C2', dialogueColor: '#2D4F9E', bubble: 'rgba(79,114,194,0.08)', card: '#F1F3F9', status: 'rgba(74,79,89,0.05)', rule: 'rgba(110,140,200,0.24)', nameColor: '#D9466F', sticker: '#D9466F', page: '#9AA1AD', marginLine: 'rgba(230,110,120,0.3)' }),
     dark: T({ name: '새벽 대본', decor: 'script', bg: '#13161D', bgTop: '#1A2130', frame: '#06080C', text: '#ECEEF3', narration: '#B3B8C4', thought: '#828896', accent: '#8FA9D6', dialogueColor: '#DCE6FF', bubble: 'rgba(143,169,214,0.10)', card: '#1C2230', status: 'rgba(236,238,243,0.06)', rule: 'rgba(236,238,243,0.16)', nameColor: '#FFC08A', sticker: '#FF8FB1', page: '#6E7586', hlAlpha: 0.4, dark: true }),
     night: T({ name: '밤하늘', decor: 'stars', bg: '#0F1529', bgTop: '#151D38', frame: '#070B18', text: '#EEF1FA', narration: '#B9C0D6', thought: '#8890AA', accent: '#8FA8FF', dialogueColor: '#A9C1FF', bubble: 'rgba(143,168,255,0.12)', card: '#18213D', status: 'rgba(185,192,214,0.08)', rule: 'rgba(185,192,214,0.14)', nameColor: '#FFB4CB', sticker: '#FF8FB1', page: '#6C7594', hlAlpha: 0.4, dark: true }),
@@ -1445,6 +1459,37 @@ try {
         ctx.globalAlpha = 1;
         break;
       }
+      case 'faded': {
+        // 빛바랜 일기장: 누렇게 바랜 가장자리, 갈색 얼룩 점, 커피잔 자국
+        const rr = rand(seed * 4111 + 9);
+        drawGrain(ctx, w, h, theme, seed, 0.8);
+        for (let i = 0; i < area / 2600; i++) {
+          const x = rr() * w, y = rr() * h, rad = 0.6 + rr() * 2.2;
+          ctx.fillStyle = `rgba(140,95,45,${0.05 + rr() * 0.12})`; ctx.beginPath(); ctx.arc(x, y, rad, 0, Math.PI * 2); ctx.fill();
+        }
+        // 눈물 자국: 종이에 떨어져 마른 물방울 (테두리가 조금 진하고 모양이 고르지 않다)
+        const tear = (cx, cy, R) => {
+          const n = 22, pts = [];
+          for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; const rad = R * (0.82 + rr() * 0.3); pts.push([cx + Math.cos(a) * rad, cy + Math.sin(a) * rad * (0.9 + rr() * 0.15)]); }
+          ctx.beginPath(); pts.forEach((q, k) => { const nx = pts[(k + 1) % n]; const mx = (q[0] + nx[0]) / 2, my = (q[1] + nx[1]) / 2; k ? ctx.quadraticCurveTo(q[0], q[1], mx, my) : ctx.moveTo(mx, my); }); ctx.closePath();
+          const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+          g.addColorStop(0, 'rgba(150,110,60,0.03)'); g.addColorStop(0.75, 'rgba(150,110,60,0.06)'); g.addColorStop(1, 'rgba(130,90,45,0.13)');
+          ctx.fillStyle = g; ctx.fill();
+          ctx.strokeStyle = 'rgba(125,85,40,0.16)'; ctx.lineWidth = 0.9; ctx.stroke();
+          ctx.fillStyle = 'rgba(255,250,235,0.18)'; ctx.beginPath(); ctx.ellipse(cx - R * 0.25, cy - R * 0.3, R * 0.35, R * 0.22, -0.5, 0, Math.PI * 2); ctx.fill();
+        };
+        const drops = (bx, by) => { const c = 2 + Math.floor(rr() * 3); for (let k = 0; k < c; k++) tear(bx + (rr() - 0.5) * 70, by + (rr() - 0.5) * 60, 6 + rr() * 11); };
+        drops(w - 90 - rr() * 60, 90 + rr() * 120);
+        if (h > 1200) drops(70 + rr() * 120, h * (0.55 + rr() * 0.3));
+        // 바랜 가장자리
+        const e = 46;
+        [[0, 0, w, e, 0, 0, 0, e], [0, h - e, w, e, 0, h, 0, h - e], [0, 0, e, h, 0, 0, e, 0], [w - e, 0, e, h, w, 0, w - e, 0]].forEach(([x, y, ww, hh, x1, y1, x2, y2]) => {
+          const g = ctx.createLinearGradient(x1, y1, x2, y2);
+          g.addColorStop(0, 'rgba(160,110,50,0.22)'); g.addColorStop(1, 'rgba(160,110,50,0)');
+          ctx.fillStyle = g; ctx.fillRect(x, y, ww, hh);
+        });
+        break;
+      }
       case 'diary': {
         // 다이어리: 점 모눈 + 날짜 칸
         ctx.fillStyle = 'rgba(120,95,75,0.16)';
@@ -1745,7 +1790,7 @@ try {
    * page.frame 이 있으면 바깥 여백 + 카드 모양으로 그린다.
    */
   /* 창 테두리: 원고는 (F, F+T) 에서 시작. 아래는 F + chromeB */
-  const WINDOW_KINDS = ['mac', 'win', 'polaroid', 'film', 'rpg', 'phone', 'browser'];
+  const WINDOW_KINDS = ['mac', 'win', 'polaroid', 'film', 'rpg', 'phone', 'browser', 'diary'];
   function drawWindow(ctx, page, theme, kind) {
     const F = page.frame, T = page.chrome || 0, B = page.chromeB || 0, w = page.w, h = page.h;
     const W = w + F * 2, H = h + F * 2 + T + B;
@@ -1849,6 +1894,63 @@ try {
       ctx.fillRect(bx + 24, 34, 15, 7); ctx.fillRect(bx + 45, 35.5, 1.6, 4); ctx.globalAlpha = 1;
       ctx.textBaseline = 'alphabetic';
       ctx.globalAlpha = 0.45; roundRect(ctx, W / 2 - 60, H - 30, 120, 5, 2.5); ctx.fill(); ctx.globalAlpha = 1;
+    } else if (kind === 'diary') {
+      // 일기장: 가죽 겉표지 + 바느질선 + 겹친 종이 + 오른쪽에 끼운 볼펜 + 아래로 나온 리본 책갈피
+      const D = theme.dark;
+      ctx.fillStyle = D ? '#121316' : '#E8E3DB'; ctx.fillRect(0, 0, W, H);
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.25)'; ctx.shadowBlur = 14; ctx.shadowOffsetY = 5;
+      const cg = ctx.createLinearGradient(0, 0, W, 0);
+      if (D) { cg.addColorStop(0, '#24262C'); cg.addColorStop(0.5, '#2E3038'); cg.addColorStop(1, '#25272D'); }
+      else { cg.addColorStop(0, '#6E4A30'); cg.addColorStop(0.5, '#86593A'); cg.addColorStop(1, '#704B31'); }
+      ctx.fillStyle = cg; roundRect(ctx, 4, 4, W - 8, H - 8, 16); ctx.fill(); ctx.restore();
+      // 가죽 결
+      const rr = rand(31 + page.index);
+      ctx.save(); roundRect(ctx, 4, 4, W - 8, H - 8, 16); ctx.clip();
+      for (let i = 0; i < W * H / 90; i++) { ctx.fillStyle = rr() < 0.5 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.04)'; ctx.fillRect(rr() * W, rr() * H, 1.2, 1.2); }
+      ctx.restore();
+      // 바느질선
+      ctx.save(); ctx.setLineDash([5, 4]); ctx.lineWidth = 1; ctx.strokeStyle = D ? 'rgba(220,220,230,0.28)' : 'rgba(255,236,210,0.5)';
+      roundRect(ctx, 11, 11, W - 22, H - 22, 11); ctx.stroke(); ctx.restore();
+      // 겹친 종이 (오른쪽·아래로 살짝)
+      ctx.fillStyle = D ? '#07080B' : '#E6DCCB'; ctx.fillRect(F + 3, top + 3, w + 2, h + 2);
+      ctx.fillStyle = D ? '#3A3D45' : '#F1E9DA'; ctx.fillRect(F + 1.5, top + 1.5, w + 1, h + 1);
+      ctx.fillStyle = theme.bg; ctx.fillRect(F, top, w, h);
+      // 리본 책갈피: 종이 아래로 빠져나온 끝
+      const rx = F + Math.round(w * 0.72), ry = top + h + 2, rl = Math.max(10, H - ry - 6);
+      ctx.fillStyle = '#B8323F';
+      ctx.beginPath(); ctx.moveTo(rx, ry - 2); ctx.lineTo(rx + 11, ry - 2); ctx.lineTo(rx + 11, ry + rl); ctx.lineTo(rx + 5.5, ry + rl - 6); ctx.lineTo(rx, ry + rl); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.18)'; ctx.fillRect(rx + 1.5, ry - 2, 1.5, rl - 2);
+      // 볼펜: 오른쪽 겉표지 띠에 세로로 끼움
+      const pw = 12, cx = F + w + Math.round((W - F - w) / 2) + 1, x0 = cx - pw / 2;
+      const py = top + 16, pl = Math.min(300, Math.max(160, h * 0.55));
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetX = 1.5; ctx.shadowOffsetY = 2;
+      const bg2 = ctx.createLinearGradient(x0, 0, x0 + pw, 0);
+      bg2.addColorStop(0, '#16213D'); bg2.addColorStop(0.45, '#3A5294'); bg2.addColorStop(1, '#16213D');
+      ctx.fillStyle = bg2; roundRect(ctx, x0, py + 10, pw, pl - 40, 3); ctx.fill();
+      ctx.restore();
+      const metal = (y, hh) => { const mg = ctx.createLinearGradient(x0, 0, x0 + pw, 0); mg.addColorStop(0, '#8C9198'); mg.addColorStop(0.45, '#F2F4F6'); mg.addColorStop(1, '#7E838A'); ctx.fillStyle = mg; ctx.fillRect(x0, y, pw, hh); };
+      // 위 노크 버튼
+      const kg = ctx.createLinearGradient(x0, 0, x0 + pw, 0); kg.addColorStop(0, '#8C9198'); kg.addColorStop(0.45, '#F2F4F6'); kg.addColorStop(1, '#7E838A');
+      ctx.fillStyle = kg; roundRect(ctx, x0 + 2.5, py, pw - 5, 12, 2.5); ctx.fill();
+      metal(py + 10, 5);
+      // 그립(고무)과 금속 끝
+      const gy = py + pl - 62;
+      ctx.fillStyle = '#121212'; ctx.fillRect(x0 + 0.5, gy, pw - 1, 32);
+      ctx.fillStyle = 'rgba(255,255,255,0.10)'; for (let y = gy + 3; y < gy + 30; y += 4) ctx.fillRect(x0 + 0.5, y, pw - 1, 1);
+      metal(gy + 32, 4);
+      const tg2 = ctx.createLinearGradient(x0, 0, x0 + pw, 0); tg2.addColorStop(0, '#8C9198'); tg2.addColorStop(0.45, '#F2F4F6'); tg2.addColorStop(1, '#7E838A');
+      ctx.fillStyle = tg2; ctx.beginPath(); ctx.moveTo(x0 + 0.5, gy + 36); ctx.lineTo(x0 + pw - 0.5, gy + 36); ctx.lineTo(cx + 1.5, gy + 52); ctx.lineTo(cx - 1.5, gy + 52); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#222'; ctx.fillRect(cx - 0.8, gy + 52, 1.6, 3);
+      // 클립
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 2; ctx.shadowOffsetX = 1;
+      const clg = ctx.createLinearGradient(cx - 2, 0, cx + 2, 0); clg.addColorStop(0, '#A3A8AE'); clg.addColorStop(0.5, '#FFFFFF'); clg.addColorStop(1, '#A3A8AE');
+      ctx.fillStyle = clg; roundRect(ctx, cx - 2, py + 14, 4, 58, 2); ctx.fill(); ctx.restore();
+      // 펜 고리(가죽 띠)가 펜을 감싼다
+      const ly = py + 92;
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 1;
+      ctx.fillStyle = D ? '#3A3D46' : '#5C3C26'; ctx.fillRect(F + w + 2, ly, W - F - w - 8, 16); ctx.restore();
+      ctx.save(); ctx.setLineDash([3, 2.5]); ctx.lineWidth = 0.8; ctx.strokeStyle = D ? 'rgba(220,220,230,0.35)' : 'rgba(255,236,210,0.55)';
+      ctx.beginPath(); ctx.moveTo(F + w + 3, ly + 3); ctx.lineTo(W - 7, ly + 3); ctx.moveTo(F + w + 3, ly + 13); ctx.lineTo(W - 7, ly + 13); ctx.stroke(); ctx.restore();
     } else if (kind === 'browser') {
       // 브라우저 창 (윈도우 크롬 느낌): 탭 줄 + 오른쪽 창 버튼 + 주소창, 글자는 넣지 않는다
       const D = theme.dark;
@@ -2109,13 +2211,18 @@ try {
   function bigImage(el) {
     const r = el.getBoundingClientRect();
     const nw = el.naturalWidth || 0, nh = el.naturalHeight || 0;
-    if (r.width >= 64 && r.height >= 48) return true;
+    // 동그랗게 깎은 그림은 프로필 사진 (원본이 커도 뺀다)
+    const br = getComputedStyle(el).borderRadius || '';
+    if (/50%|9999px/.test(br) || (r.width && parseFloat(br) >= r.width * 0.4)) return false;
+    // 화면에 그려진 크기를 알면 그걸로만 판단 (대표 사진이 작게 붙은 프로필 칸 제외)
+    if (r.width > 0 && r.height > 0) return r.width >= 64 && r.height >= 48;
     if (nw >= 160 && nh >= 120) return true;
     const aw = Number(el.getAttribute('width')) || 0;
     if (!nw && !r.width && (!aw || aw >= 160)) return true; // 아직 안 불러온 이미지
     return false;
   }
   function imgBlock(el) {
+    if (!bigImage(el)) return null; // 프로필 사진·작은 아이콘 제외
     const r = el.getBoundingClientRect();
     const w = el.naturalWidth || el.width || Math.round(r.width), h = el.naturalHeight || el.height || Math.round(r.height);
     if ((w && h && (w < 40 || h < 40)) || (r.width && r.width < 32 && !(el.naturalWidth >= 160))) return null;
@@ -2139,7 +2246,11 @@ try {
 
     function walk(node, style) {
       if (node.nodeType === Node.TEXT_NODE) {
-        addText(node.nodeValue.replace(/[\r\n\t]+/g, ' '), style);
+        // 크랙이 줄바꿈 글자(\n)를 그대로 보여주는 칸이면 줄바꿈을 살린다 (메시지 여러 줄이 한 줄로 붙는 문제)
+        const pe = node.parentElement;
+        const ws = pe ? getComputedStyle(pe).whiteSpace : '';
+        const keepNl = /pre|break-spaces/.test(ws);
+        addText(keepNl ? node.nodeValue.replace(/\r/g, '').replace(/\t/g, ' ') : node.nodeValue.replace(/[\r\n\t]+/g, ' '), style);
         return;
       }
       if (node.nodeType !== Node.ELEMENT_NODE) return;
@@ -2327,17 +2438,17 @@ try {
   // 고른 문단들 → 메시지 묶음 (같은 말풍선끼리 모은다)
   function collectUnits(list) {
     const msgs = [];
-    let cur = null, lastCode = null;
+    let cur = null;
+    const codeIds = new Map();
     for (const u of list) {
       const blocks = u.blocks || parseUnit(u.el, u.part);
       if (!blocks.length) continue;
-      // 같은 코드 블록에서 이어진 문단들은 한 상자로 합친다
+      // 같은 코드 블록에서 나온 문단은 따로 두되(하나씩 지우기·대사 지정) 같은 번호를 붙여 그림에서는 한 상자로 잇는다
       const isPart = u.part !== undefined && u.part !== null;
-      if (isPart && lastCode === u.el && cur && cur.bubble === u.bubble) {
-        const prev = cur.blocks[cur.blocks.length - 1];
-        if (prev && prev.type === 'status' && blocks[0].type === 'status') { prev.runs[0].t += '\n\n' + blocks[0].runs[0].t; continue; }
+      if (isPart && blocks[0].type === 'status') {
+        if (!codeIds.has(u.el)) codeIds.set(u.el, 'c' + codeIds.size);
+        blocks[0].code = codeIds.get(u.el);
       }
-      lastCode = isPart ? u.el : null;
       if (!cur || cur.bubble !== u.bubble) {
         cur = { bubble: u.bubble, role: u.role || getRole(u.bubble), blocks: [] };
         msgs.push(cur);
@@ -2723,7 +2834,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
         <div class="row"><span class="label">테마 장식</span>
           <div class="seg decor-seg" data-seg="decor"><button data-v="deco">켜기</button><button data-v="simple">끄기</button></div></div>
         <div class="row col"><span class="label">테두리</span>
-          <div class="seg frame-seg" data-seg="frame"><button data-v="none">없음</button><button data-v="mac">맥</button><button data-v="win">윈도우</button><button data-v="browser">브라우저</button><button data-v="phone">휴대폰</button><button data-v="polaroid">폴라로이드</button><button data-v="film">필름</button><button data-v="rpg">게임 대화창</button></div></div>
+          <div class="seg frame-seg" data-seg="frame"><button data-v="none">없음</button><button data-v="mac">맥</button><button data-v="win">윈도우</button><button data-v="browser">브라우저</button><button data-v="phone">휴대폰</button><button data-v="polaroid">폴라로이드</button><button data-v="film">필름</button><button data-v="rpg">게임 대화창</button><button data-v="diary">일기장</button></div></div>
       </div>
       <div class="group mt12">
         <button class="row link" id="open-font"><span class="label">글꼴</span><span class="value" id="font-v"></span><span class="chev">›</span></button>
@@ -3524,8 +3635,8 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           order.push(pid);
           runs = T.applyMarks(runs, edits.marks[pid]);
           // 상태창은 이름 강조 대상에서 제외 (대사/서술 구분 대상이 아님)
-          if (b.type === 'status') { turn.blocks.push({ pid, mi, type: 'status', runs }); return; }
           const force = edits.kind[pid];
+          if (b.type === 'status' && !force) { turn.blocks.push({ pid, mi, type: 'status', runs, code: b.code || null }); return; }
           // 대사 여부를 먼저 판별해야 ★가 서술 부분까지 퍼지지 않는다.
           const uprightItalic = settings.italic === 'narr';
           runs = T.classifyRuns(runs, { italicThought: !uprightItalic, force });
@@ -3558,7 +3669,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     mac: { x: 16, top: 50, bottom: 16 }, win: { x: 16, top: 44, bottom: 16 },
     polaroid: { x: 22, top: 22, bottom: 86 }, film: { x: 34, top: 14, bottom: 14 },
     rpg: { x: 24, top: 24, bottom: 40 }, phone: { x: 18, top: 58, bottom: 40 },
-    browser: { x: 16, top: 92, bottom: 16 }
+    browser: { x: 16, top: 92, bottom: 16 }, diary: { x: 30, top: 30, bottom: 30 }
   };
   const fspec = () => FRAMES[settings.frame] || null;
   const frameSize = () => (fspec() ? fspec().x : 0);
@@ -3866,7 +3977,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     if (mode) closeSheets();
     if (mode === 'sel') {
       const pids = [...selSet];
-      const paras = pids.filter(pid => { const b = blockOf(pid); return b && b.type === 'p'; });
+      const paras = pids.filter(pid => { const b = blockOf(pid); return b && (b.type === 'p' || b.type === 'status'); });
       $('ab-info').textContent = pids.length === 1 ? '1개 골랐어요 · 다른 문단도 누르면 같이 골라져요' : `${pids.length}개 골랐어요`;
       bar.querySelectorAll('.ab-acts button').forEach(b => {
         const a = b.dataset.a;
@@ -3962,11 +4073,11 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     if (a === 'del') {
       change(ed => pids.forEach(pid => { ed.hidden[pid] = true; }));
       setTool(null);
-      toast(`${pids.length}개를 지웠어요 · 위 ↶ 버튼으로 되돌릴 수 있어요`, 2000);
+      toast(`${pids.length}개를 지웠어요 · ↶ 버튼으로 되돌릴 수 있어요`, 2000);
       return;
     }
     // 대사 · 지문: 이미 다 그거면 자동으로 되돌리기
-    const paras = pids.filter(pid => { const bl = blockOf(pid); return bl && bl.type === 'p'; });
+    const paras = pids.filter(pid => { const bl = blockOf(pid); return bl && (bl.type === 'p' || bl.type === 'status'); });
     const allOn = paras.every(pid => edits.kind[pid] === a);
     change(ed => paras.forEach(pid => { if (allOn) delete ed.kind[pid]; else ed.kind[pid] = a; }));
     setTool(null);
