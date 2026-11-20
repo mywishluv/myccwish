@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         위시라이트
+// @name         위시라이트3_통합홈
 // @namespace    local.rp.context.manager
-// @version      0.17.75-smooth-chat
+// @version      0.17.76-smooth-chat
 // @description  모바일 통합 화면 · 현재상태/날짜로그/타임라인 한곳에 · 자동 기억주입 유지.
 // @author       User
 // @license      All Rights Reserved
@@ -31,10 +31,11 @@
 // @noframes
 // @run-at       document-end
 // ==/UserScript==
-// v0.17.75
-// v0.17.74
-// v0.17.73
-// v0.17.72
+// v0.17.76: 기타 항목에 주입 유지 선택(계속·1·3·5·10턴) 추가, 기본값 계속 유지(예전 5턴 자동 해제 해결) · 날짜로그 "자동" 설명 추가
+// v0.17.75: 남은 핑크 테마를 아이폰 색(파랑·회색)으로 통일 · 시작 상태 창 아이폰 스타일 · 하트는 진짜 빨강
+// v0.17.74: 로고를 하트로(주입 중 빨간 하트·용량만큼 차오름) · 창을 닫아도 작은 "정리 중" 표시 · AI 정리 확인 창 아이폰 스타일(바뀐 날짜만 표시) · 과거 기억 자동 사용 회색 배경 제거
+// v0.17.73: 날짜로그 지침 v6.3(섹스 장면 짧게·체위/횟수/절정만 남김·같은 날짜 재압축 방지) · 현재상태 지침 v8.6(분량 기준·완료 항목 정리·연속성 잠금 정의)
+// v0.17.72: 자동정리 확인 대기 30초→8초 · 옛 버전 지침 원문을 압축해 파일 용량 축소(기능 변화 없음)
 
 // ============================================================
 // 🪽위시 RP Manager
@@ -106,7 +107,7 @@
         const style=document.createElement('style');
         style.textContent=':host{all:initial}section{box-sizing:border-box;width:280px;border:0;border-radius:16px;background:rgba(255,255,255,.96);color:#1c1c1e;padding:14px 16px;font:13px/1.5 -apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.16),0 0 0 .5px rgba(0,0,0,.08);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}strong,span{display:block}strong{font-size:13px;font-weight:600;color:#1c1c1e}span{white-space:pre-wrap;overflow-wrap:anywhere;margin-top:4px;color:#636366}button{font:inherit;font-weight:600;margin-top:10px;padding:6px 14px;border:0;border-radius:999px;background:#f2f2f7;color:#007aff;cursor:pointer}';
         const card=document.createElement('section');
-        card.innerHTML='<strong>WISH 0.17.75-smooth-chat · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
+        card.innerHTML='<strong>WISH 0.17.76-smooth-chat · 쉬운 기억 관리</strong><span role="status" aria-live="polite"></span><button type="button">닫기</button>';
         card.querySelector('button').onclick=()=>{dismissed=true;host?.remove();host=null;};
         root.append(style,card);document.documentElement.appendChild(host);
         for(const [key,value] of Object.entries({position:'fixed',right:'16px',top:'112px','z-index':'2147483647',display:'block',visibility:'visible',opacity:'1',width:'280px',height:'auto'}))host.style.setProperty(key,value,'important');
@@ -130,13 +131,13 @@
     wishBoot.status('duplicate', '다른 RP Manager 실행이 감지됐습니다. 버전: '+String(window.__WISH_RP_MANAGER_LOADED__.version||'알 수 없음'));
     return;
   }
-  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.75-smooth-chat', loadedAt: Date.now() };
+  window.__WISH_RP_MANAGER_LOADED__ = { version: '0.17.76-smooth-chat', loadedAt: Date.now() };
   // 같은 페이지에 남아 있는 v0.8.10 복사본이 뒤늦게 시작되는 경우도 차단합니다.
   window.__RP_MANAGER_0810_LOADED__ = true;
 
   const APP = {
     name: '🪽위시 RP Manager',
-    version: '0.17.75-smooth-chat',
+    version: '0.17.76-smooth-chat',
     dbName: 'RPContextManagerDB',
     dbVersion: 2,
     storeName: 'rooms',
@@ -2195,7 +2196,7 @@ USER 캐릭터의 다음 항목은 직접 RP, USER의 명시적 서술 또는 �
   const SLOT_TEMPLATE = [
     { id: 'currentState', title: '현재상태', group: 'fixed', enabled: true, content: '', retentionTurns: 5 },
     { id: 'logSummary', title: '로그요약', group: 'fixed', enabled: true, content: '', retentionTurns: 5 },
-    { id: 'extra-default', title: '기타', group: 'extra', enabled: false, content: '', retentionTurns: 5 },
+    { id: 'extra-default', title: '기타', group: 'extra', enabled: false, content: '', retentionTurns: 0 },
   ];
   function normalizeUserCanonMemos(room) {
     if (!Array.isArray(room.userCanonMemos)) room.userCanonMemos = [];
@@ -5079,6 +5080,13 @@ ${dialogueText}`;
 
     if (!dynamic.some(x => x.group === 'extra')) dynamic.push({ ...SLOT_TEMPLATE[2] });
     room.slots = [currentState, logSummary, ...dynamic];
+    // v0.17.76: 기타 항목의 예전 기본값(5턴 뒤 자동 해제)을 '계속 유지'로 한 번만 바꿉니다.
+    if (!room.wishExtraKeepV1776) {
+      const kept = new Set();
+      for (const slot of dynamic) if (slot.group === 'extra' && slot.extraCategory !== '캐릭터' && Number(slot.retentionTurns) === 5) { slot.retentionTurns = 0; kept.add(slot.id); }
+      if (kept.size && Array.isArray(room.pending?.items)) for (const item of room.pending.items) if (kept.has(item.slotId)) { item.totalTurns = 0; item.usedTurns = 0; }
+      room.wishExtraKeepV1776 = true;
+    }
     delete room.retentionTurns; // v0.6부터 유지 주기는 항목별로 관리
 
     // v0.7 자동 기억 호출 설정: 기존 방은 보수적으로 OFF에서 시작합니다.
@@ -17140,6 +17148,8 @@ html.rpcm-mobile-layout #rpcm-modal #rpcm-section-overview .rpcm-maintenance-act
       @keyframes wish-chip-in{from{opacity:0;transform:translate(-50%,-6px)}to{opacity:1;transform:translate(-50%,0)}}
       @media(prefers-reduced-motion:reduce){html body #rpcm-fab svg.wish-heart,#wish-cleaning-chip,#wish-cleaning-chip .wish-chip-dot{animation:none!important}}
       html body #rpcm-overlay #rpcm-modal.wish-three .wish-three-recall.wish-mobile-auto-recall{background:transparent!important;padding:10px 2px!important;border:0!important;box-shadow:none!important}
+      html body #rpcm-overlay .wish-clean-extra-top{flex-wrap:wrap!important}
+      html body #rpcm-overlay .wish-clean-extra-top select[data-clean-extra-turns]{-webkit-appearance:none!important;appearance:none!important;flex:none!important;height:30px!important;margin:0!important;padding:0 24px 0 10px!important;border:0!important;border-radius:8px!important;background:#f2f2f7 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 4.5l3 3 3-3' fill='none' stroke='%23007aff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") right 8px center/10px no-repeat!important;color:#007aff!important;font:600 12px/30px -apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo",sans-serif!important;cursor:pointer}
       html body #rpcm-ai-memory-backdrop{background:rgba(0,0,0,.32)!important;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);font-family:-apple-system,BlinkMacSystemFont,"Pretendard","Apple SD Gothic Neo",sans-serif!important}
       html body #rpcm-ai-memory-backdrop .rpcm-update-dialog.rpcm-update-result-dialog{width:min(680px,calc(100vw - 32px))!important;height:min(860px,calc(100vh - 32px))!important;border:0!important;border-radius:22px!important;background:#f2f2f7!important;color:#1c1c1e!important;box-shadow:0 24px 60px rgba(0,0,0,.25)!important}
       html body #rpcm-ai-memory-backdrop .rpcm-update-result-dialog>header{position:relative!important;padding:18px 20px 12px!important;border:0!important;background:#f2f2f7!important}
@@ -21606,9 +21616,9 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
   function wishLogChoiceHtml(room,key){
     key=String(key);
     const mode=(room.autoLogExcludedKeys||[]).includes(key)?'exclude':(room.autoLogPinnedKeys||[]).includes(key)?'pin':(room.manualLogSelectedKeys||[]).includes(key)?'manual':'auto';
-    const label={auto:'자동 선택',manual:'직접 선택',pin:'항상 주입',exclude:'주입 제외'}[mode];
+    const label={auto:'자동 (필요할 때만)',manual:'직접 선택',pin:'항상 주입',exclude:'주입 제외'}[mode];
     return `<details class="wish-log-choices" data-log-choice-key="${esc(key)}"><summary>주입: ${label} · 변경</summary>
-      <div class="wish-log-choice-options">${[['auto','자동 선택'],['manual','직접 선택'],['pin','항상 주입'],['exclude','제외']].map(([id,text])=>`<button type="button" data-log-choice="${id}" aria-pressed="${mode===id}">${text}</button>`).join('')}</div></details>`;
+      <div class="wish-log-choice-options">${[['auto','자동'],['manual','직접 선택'],['pin','항상 주입'],['exclude','제외']].map(([id,text])=>`<button type="button" data-log-choice="${id}" aria-pressed="${mode===id}">${text}</button>`).join('')}</div><p class="wish-log-choice-help" style="margin:8px 2px 0;color:#8e8e93;font-size:12px;line-height:1.5">자동: 가장 최근 날짜와, 지금 대화에 나온 인물·장소·물건과 관련된 날짜일 때만 넣어요.<br>직접 선택 · 항상 주입: 관련이 없어도 넣어요. 제외: 넣지 않아요.</p></details>`;
   }
   async function wishChooseLog(room,key,mode){
     if(state.currentRoom!==room)throw new Error('방이 바뀌었습니다.');
@@ -22192,8 +22202,8 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
   const wishEditorFlights=new Map();
   function wishCleanSaveEditor(room,rerender=false){
     const root=state.modal;if(!root||state.currentRoom!==room)return Promise.resolve();
-    const selectors='#wish-clean-state,#wish-clean-logs,#wish-clean-state-on,#wish-clean-logs-on,[data-clean-extra-title],[data-clean-extra-text],[data-clean-extra-enabled]';
-    const edits=[...root.querySelectorAll(selectors)].filter(node=>node.dataset.cleanDirty==='1').map(node=>({node,value:node.value,checked:node.checked,id:node.id,slotId:node.closest('[data-clean-extra-id]')?.dataset.cleanExtraId,kind:node.hasAttribute('data-clean-extra-title')?'title':node.hasAttribute('data-clean-extra-enabled')?'enabled':node.hasAttribute('data-clean-extra-text')?'content':null}));
+    const selectors='#wish-clean-state,#wish-clean-logs,#wish-clean-state-on,#wish-clean-logs-on,[data-clean-extra-title],[data-clean-extra-text],[data-clean-extra-enabled],[data-clean-extra-turns]';
+    const edits=[...root.querySelectorAll(selectors)].filter(node=>node.dataset.cleanDirty==='1').map(node=>({node,value:node.value,checked:node.checked,id:node.id,slotId:node.closest('[data-clean-extra-id]')?.dataset.cleanExtraId,kind:node.hasAttribute('data-clean-extra-title')?'title':node.hasAttribute('data-clean-extra-enabled')?'enabled':node.hasAttribute('data-clean-extra-turns')?'retentionTurns':node.hasAttribute('data-clean-extra-text')?'content':null}));
     if(!edits.length)return Promise.resolve();
     const key=String(room.chatId),previous=wishEditorFlights.get(key)||Promise.resolve();
     const work=previous.catch(()=>{}).then(async()=>{
@@ -22201,7 +22211,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       for(const edit of edits){
         const slotId=edit.slotId||(/state/.test(edit.id)?'currentState':'logSummary'),slot=room.slots?.find(row=>row.id===slotId);if(!slot)continue;
         const field=edit.kind||(/-on$/.test(edit.id)?'enabled':'content');
-        const value=field==='enabled'?!!edit.checked:field==='title'?String(edit.value).trim()||'기타':edit.value;
+        const value=field==='enabled'?!!edit.checked:field==='retentionTurns'?normalizeRetentionTurns(edit.value):field==='title'?String(edit.value).trim()||'기타':edit.value;
         changed.add(slot.id);if(slot[field]===value)continue;slot[field]=value;
         if(slot.id==='logSummary'&&field==='content'){const signatures=new Set(parseDatedLogBlocks(slot.content).map(wishLogDeleteSignature));room.wishDeletedLogMarkers=(room.wishDeletedLogMarkers||[]).filter(marker=>!signatures.has(marker.signature));}
       }
@@ -22216,6 +22226,20 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     });
     wishEditorFlights.set(key,work);void work.finally(()=>{if(wishEditorFlights.get(key)===work)wishEditorFlights.delete(key);}).catch(()=>{});return work;
   }
+  // v0.17.76: 기타 항목별 주입 유지 턴
+  function wishExtraTurnsSelect(slot) {
+    const value = normalizeRetentionTurns(slot?.retentionTurns);
+    const options = [[0, '계속 유지'], [1, '1턴만'], [3, '3턴만'], [5, '5턴만'], [10, '10턴만']];
+    return `<select data-clean-extra-turns aria-label="주입 유지" title="주입을 얼마 동안 유지할지 정해요">${options.map(([n, text]) => `<option value="${n}" ${n === value ? 'selected' : ''}>${text}</option>`).join('')}</select>`;
+  }
+  function wishExtraTurnsText(room, slot) {
+    const total = normalizeRetentionTurns(slot?.retentionTurns);
+    if (total === 0) return '계속 유지';
+    const item = (room?.pending?.items || []).find(row => row.slotId === slot?.id);
+    if (!item) return `${total}턴만`;
+    const left = Math.max(0, Number(item.totalTurns || total) - Number(item.usedTurns || 0));
+    return left ? `${total}턴 중 ${left}턴 남음` : `${total}턴 끝남 · 다시 켜면 처음부터`;
+  }
   async function wishSyncEditorSlot(room,slot){
     if(!room.pending)return;
     await queuePendingCarrierOperation(room,async()=>{
@@ -22223,6 +22247,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       const items=room.pending.items||(room.pending.items=[]),index=items.findIndex(item=>item.slotId===slot.id),enabled=slot.enabled&&String(slot.content||'').trim();
       if(!enabled){if(index<0)return;items.splice(index,1);}
       else if(index<0)items.push(slotToPendingItem(slot));
+      else if(slot.group==='extra'&&slot.extraCategory!=='캐릭터'){const prev=items[index],total=normalizeRetentionTurns(slot.retentionTurns),prevTotal=Number(prev.totalTurns||0),ended=prevTotal>0&&Number(prev.usedTurns||0)>=prevTotal;items[index]={...prev,title:slot.title,content:String(slot.content).trim(),totalTurns:total,usedTurns:(ended||prevTotal!==total)?0:Number(prev.usedTurns||0)};}
       else items[index]={...items[index],title:slot.title,content:String(slot.content).trim(),...(slot.extraCategory==='캐릭터'?{totalTurns:0}:{})};
       await syncPendingCarrierNow(room,'편집 내용 반영');
     });
@@ -22901,9 +22926,9 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
       </details>
     </section></div><div id="wish-pane-extra" class="wish-tab-pane" role="tabpanel" aria-labelledby="wish-tab-extra" data-wish-pane="extra" ${wishCleanActiveTab==='extra'?'':'hidden'}><section class="wish-dash-panel wish-memory-panel" data-wish-section="extra">
             <div class="wish-memory-head"><div class="wish-panel-title"><span class="wish-panel-icon gold" aria-hidden="true">✎</span><div><strong>📝 기타 · OOC</strong><small>말투 · 출력 규칙 · 추가 설정</small></div></div><span class="wish-mini-chip">${enabledExtra}개 주입</span></div>
-            <div class="wish-extra-read-list">${extra.length?extra.map(s=>`<article class="wish-extra-read-card"><strong>${esc(s.title||'기타')}</strong><small>${s.enabled?'주입 사용':'주입 꺼짐'}</small><p>${esc(s.content||'내용 없음')}</p></article>`).join(''):'추가 설정이 없어요. 필요한 지침만 넣어두세요.'}</div><button type="button" id="wish-extra-edit-toggle">${extra.length?'기록 수정 · 추가':'기록 추가하기'}</button>
+            <div class="wish-extra-read-list">${extra.length?extra.map(s=>`<article class="wish-extra-read-card"><strong>${esc(s.title||'기타')}</strong><small>${s.enabled?'주입 사용 · '+(s.extraCategory==='캐릭터'?'계속 유지':wishExtraTurnsText(room,s)):'주입 꺼짐'}</small><p>${esc(s.content||'내용 없음')}</p></article>`).join(''):'추가 설정이 없어요. 필요한 지침만 넣어두세요.'}</div><button type="button" id="wish-extra-edit-toggle">${extra.length?'기록 수정 · 추가':'기록 추가하기'}</button>
             <div class="wish-memory-meta"><span class="wish-mini-chip">전체 ${extra.length}개</span></div>
-            <div class="wish-expand wish-direct-editor" id="wish-extra-editor" hidden><div class="wish-edit-panel"><div class="wish-clean-extra-list">${extra.map(slot=>`<article data-clean-extra-id="${esc(slot.id)}"><div class="wish-clean-extra-top"><input data-clean-extra-title type="text" value="${esc(slot.title||'기타')}" aria-label="항목 이름"><label><input data-clean-extra-enabled type="checkbox" ${slot.enabled?'checked':''}> 주입</label><button type="button" data-clean-extra-delete="${esc(slot.id)}">삭제</button></div><textarea data-clean-extra-text spellcheck="false" placeholder="OOC · 출력 규칙 · 기타 설정">${esc(slot.content||'')}</textarea></article>`).join('')}</div><div class="wish-clean-actions"><button type="button" id="wish-clean-extra-add">＋ 추가</button><button type="button" id="wish-clean-extra-save" class="primary">저장</button></div></div></div>
+            <div class="wish-expand wish-direct-editor" id="wish-extra-editor" hidden><div class="wish-edit-panel"><div class="wish-clean-extra-list">${extra.map(slot=>`<article data-clean-extra-id="${esc(slot.id)}"><div class="wish-clean-extra-top"><input data-clean-extra-title type="text" value="${esc(slot.title||'기타')}" aria-label="항목 이름"><label><input data-clean-extra-enabled type="checkbox" ${slot.enabled?'checked':''}> 주입</label>${slot.extraCategory==='캐릭터'?'':wishExtraTurnsSelect(slot)}<button type="button" data-clean-extra-delete="${esc(slot.id)}">삭제</button></div><textarea data-clean-extra-text spellcheck="false" placeholder="OOC · 출력 규칙 · 기타 설정">${esc(slot.content||'')}</textarea></article>`).join('')}</div><div class="wish-clean-actions"><button type="button" id="wish-clean-extra-add">＋ 추가</button><button type="button" id="wish-clean-extra-save" class="primary">저장</button></div></div></div>
           </section></div><div id="wish-pane-settings" class="wish-tab-pane" role="tabpanel" aria-labelledby="wish-tab-settings" data-wish-pane="settings" ${wishCleanActiveTab==='settings'?'':'hidden'}><section class="wish-dash-panel wish-dash-automation" data-wish-section="settings"><details class="wish-single-settings"><summary>⚙️ 설정 · 백업 · 자동화</summary>
           <div class="wish-auto-head"><div class="wish-panel-title"><span class="wish-panel-icon" aria-hidden="true">⏱</span><div><strong>⚙️ 자동 기억 갱신</strong><small>대화가 쌓이면 AI가 정리해요</small></div></div><span class="wish-mini-chip ${config.enabled?'live':''}">${config.enabled?'사용 중':'꺼짐'}</span></div>
           <div id="wish-clean-auto-alert" class="wish-auto-alert" role="alert" hidden><span data-wish-auto-error></span><button type="button" id="wish-clean-error-retry" hidden>지금 다시 실행</button></div>
@@ -22954,6 +22979,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     const scheduleEditorSave=()=>{clearTimeout(wishAutoSaveTimer);const status=overlay.querySelector('#rpcm-save-status');if(status)status.textContent='편집 중…';wishAutoSaveTimer=setTimeout(()=>{if(state.currentRoom===room&&overlay.isConnected)void wishCleanSaveEditor(room).catch(error=>notify('자동 저장 실패: '+error.message,'error'));},700);};
     overlay.querySelectorAll('#wish-clean-state,#wish-clean-logs,[data-clean-extra-title],[data-clean-extra-text]').forEach(node=>node.addEventListener('input',scheduleEditorSave));
     overlay.querySelectorAll('[data-clean-extra-enabled]').forEach(node=>node.addEventListener('change',scheduleEditorSave));
+    overlay.querySelectorAll('[data-clean-extra-turns]').forEach(node=>node.addEventListener('change',()=>{node.dataset.cleanDirty='1';scheduleEditorSave();}));
     click('wish-clean-close',()=>wishCloseMainImmediately(room));
     click('wish-clean-save',async()=>{await wishCleanSaveEditor(room);renderModalIfOpen();notify('저장했습니다.','success');});
     click('wish-extra-edit-toggle',()=>{
@@ -22995,7 +23021,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
     click('wish-clean-state-guide',()=>openCommonGuideEditor(room,'currentState'));
     click('wish-clean-logs-guide',()=>openCommonGuideEditor(room,'logSummary'));
     click('wish-clean-log-calendar',()=>openWishLogCalendar(room));
-    click('wish-clean-extra-add',async()=>{await wishCleanSaveEditor(room);const slot=makeDynamicSlot('extra',`기타 ${room.slots.filter(s=>s.group==='extra').length+1}`);room.slots.push(slot);await saveRoom(room);renderModalIfOpen();});
+    click('wish-clean-extra-add',async()=>{await wishCleanSaveEditor(room);const slot=makeDynamicSlot('extra',`기타 ${room.slots.filter(s=>s.group==='extra').length+1}`);slot.retentionTurns=0;room.slots.push(slot);await saveRoom(room);renderModalIfOpen();});
     overlay.querySelectorAll('[data-clean-extra-delete]').forEach(button=>button.onclick=async()=>{const id=button.dataset.cleanExtraDelete,slot=room.slots.find(s=>s.id===id);if(!confirm(`‘${slot?.title||'기타'}’를 영구 삭제할까요?`))return;if(room.pending){notify('주입 중에는 먼저 주입을 해제한 다음 삭제해 주세요.','warn');return;}room.slots=room.slots.filter(s=>s.id!==id);await saveRoom(room);renderModalIfOpen();});
     for(const [id,slotId] of [['wish-clean-state-on','currentState'],['wish-clean-logs-on','logSummary']]){const node=overlay.querySelector('#'+id);if(node)node.onchange=async()=>{const slot=room.slots.find(s=>s.id===slotId);if(slot){node.dataset.cleanDirty='1';await wishCleanSaveEditor(room);}};}
     overlay.querySelector('#wish-clean-timeline-on').onchange=async event=>{room.storyTimelineInjectionEnabled=event.target.checked;await saveRoom(room);if(room.pending)await rebuildPendingStoryTimelineItem(room,'wish-clean-toggle');};
@@ -23028,7 +23054,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
 
   function wishTabbedStyles(){
     GM_addStyle(`
-      /* WISH 0.17.75-smooth-chat - unified one-page layout; no second navigation or separate memory windows. */
+      /* WISH 0.17.76-smooth-chat - unified one-page layout; no second navigation or separate memory windows. */
       #rpcm-overlay #rpcm-modal-wrap{width:min(780px,100%)!important;max-width:min(780px,100%)!important}
       #rpcm-overlay .wish-clean-main.wish-unified-home{display:flex!important;flex-direction:column!important;gap:14px!important;padding:14px!important;overscroll-behavior:contain}
       #rpcm-overlay .wish-status-line[hidden]{display:none!important}
@@ -23409,7 +23435,7 @@ Existing REF must come from this packet. NEW REF are temporary, and a NEW_P pack
         #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-clean-footer button{padding:9px 12px!important;font-size:11px!important;min-height:40px!important}
       }
 
-      /* v0.17.75-smooth-chat: simple mobile reading, only monthly folders collapse */
+      /* v0.17.76-smooth-chat: simple mobile reading, only monthly folders collapse */
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-month .wish-log-day-visible{display:block!important;overflow:visible}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible h3{font-size:13px!important;font-weight:700!important;color:#424553!important;margin:0 0 6px!important;line-height:1.5}
       #rpcm-overlay #rpcm-modal.wish-clean-modal .wish-log-day-visible .wish-log-day-content{padding:0!important}
