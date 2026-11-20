@@ -4,7 +4,7 @@
 // @author       muz
 // @updateURL    https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
 // @downloadURL  https://raw.githubusercontent.com/mywishluv/myccwish/main/star_camera.user.js
-// @version      5.1.2
+// @version      5.1.4
 // @description  크랙 채팅을 이름을 바꾼 예쁜 소설 원고 이미지로 저장 · 문단 콕콕 고르기 · 형광펜·밑줄·스티커 · 테마 18종·내 색·창 테두리 · 폰·PC 지원
 // @icon         data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA1MTIgNTEyIj4gPGRlZnM+IDxsaW5lYXJHcmFkaWVudCBpZD0iYmciIHgxPSIwIiB5MT0iMCIgeDI9IjEiIHkyPSIxIj4gPHN0b3Agb2Zmc2V0PSIwIiBzdG9wLWNvbG9yPSIjRkY4REJBIi8+PHN0b3Agb2Zmc2V0PSIuNTUiIHN0b3AtY29sb3I9IiNDNzdERkYiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiM3QzZDRjIiLz4gPC9saW5lYXJHcmFkaWVudD4gPHJhZGlhbEdyYWRpZW50IGlkPSJnbG93IiBjeD0iLjMiIGN5PSIuMiIgcj0iLjgiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI2ZmZiIgc3RvcC1vcGFjaXR5PSIuNDUiLz48c3RvcCBvZmZzZXQ9IjEiIHN0b3AtY29sb3I9IiNmZmYiIHN0b3Atb3BhY2l0eT0iMCIvPjwvcmFkaWFsR3JhZGllbnQ+IDxsaW5lYXJHcmFkaWVudCBpZD0ic3RhciIgeDE9IjAiIHkxPSIwIiB4Mj0iMCIgeTI9IjEiPjxzdG9wIG9mZnNldD0iMCIgc3RvcC1jb2xvcj0iI0ZGRTI3QSIvPjxzdG9wIG9mZnNldD0iMSIgc3RvcC1jb2xvcj0iI0ZGQjAyMCIvPjwvbGluZWFyR3JhZGllbnQ+IDwvZGVmcz4gPHJlY3Qgd2lkdGg9IjUxMiIgaGVpZ2h0PSI1MTIiIHJ4PSIxMTYiIGZpbGw9InVybCgjYmcpIi8+IDxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTE2IiBmaWxsPSJ1cmwoI2dsb3cpIi8+IDxwYXRoIGQ9Ik0xMTIgMTg2YTQyIDQyIDAgMCAxIDQyLTQyaDMwbDIyLTMwaDEwMGwyMiAzMGgzMGE0MiA0MiAwIDAgMSA0MiA0MnYxNTJhNDIgNDIgMCAwIDEtNDIgNDJIMTU0YTQyIDQyIDAgMCAxLTQyLTQyeiIgZmlsbD0iI2ZmZiIvPiA8Y2lyY2xlIGN4PSIyNTYiIGN5PSIyNjIiIHI9Ijc4IiBmaWxsPSIjRjRFQ0ZGIi8+IDxjaXJjbGUgY3g9IjI1NiIgY3k9IjI2MiIgcj0iNzgiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI0UyRDJGRiIgc3Ryb2tlLXdpZHRoPSI2Ii8+IDxwYXRoIGQ9Ik0yNTYgMjA0YzYgMzQgMTggNDYgNTIgNTItMzQgNi00NiAxOC01MiA1Mi02LTM0LTE4LTQ2LTUyLTUyIDM0LTYgNDYtMTggNTItNTJ6IiBmaWxsPSJ1cmwoI3N0YXIpIi8+IDxjaXJjbGUgY3g9IjM1NiIgY3k9IjE4MiIgcj0iOSIgZmlsbD0iI0ZGQjAyMCIvPiA8cGF0aCBkPSJNNDEwIDg0YzMgMTcgOSAyMyAyNiAyNi0xNyAzLTIzIDktMjYgMjYtMy0xNy05LTIzLTI2LTI2IDE3LTMgMjMtOSAyNi0yNnoiIGZpbGw9IiNGRkYzQjAiLz4gPHBhdGggZD0iTTk2IDM5MmMyIDExIDYgMTUgMTcgMTctMTEgMi0xNSA2LTE3IDE3LTItMTEtNi0xNS0xNy0xNyAxMS0yIDE1LTYgMTctMTd6IiBmaWxsPSIjRkZGM0IwIiBvcGFjaXR5PSIuOSIvPiA8L3N2Zz4=
 // @match        https://crack.wrtn.ai/*
@@ -69,6 +69,8 @@
  *  v5.1.0 코드블록(```) 안의 대사(큰따옴표)는 회색 상자 대신 보통 대사·지문으로 나오게 (상태창은 상자 그대로)
  *  v5.1.1 코드블록(```) 글 전체를 회색 상자 없이 보통 글로, 글씨는 조금 작게
  *  v5.1.2 대사 표시에 '형광 띠'(글자 아래 연한 띠, 글자는 기본색)와 '굵게' 추가
+ *  v5.1.3 양옆 여백 조절, 글자 크기 11까지, 세로선·형광 띠는 선/띠에만 색 + 진하기 조절, 무지개 버튼에 색 36개 판
+ *  v5.1.4 테마 '내 색'도 색 판(바탕색 36개)으로, 대사 표시 옆에 '문단을 눌러 지정' 안내
  */
 try {
 
@@ -726,7 +728,8 @@ try {
     const width = WIDTHS[o.width] || Number(o.width) || WIDTHS.phone;
     const size = Number(o.fontSize) || 16;
     const lh = LINE_HEIGHTS[o.lineHeight] || Number(o.lineHeight) || LINE_HEIGHTS.normal;
-    const margin = Math.round(Math.max(28, Math.min(64, width * 0.075)));
+    const padX = o.padX === undefined || o.padX === null || o.padX === '' ? NaN : Number(o.padX);
+    const margin = Number.isFinite(padX) ? Math.max(6, Math.min(72, Math.round(padX))) : Math.round(Math.max(28, Math.min(64, width * 0.075)));
     const padY = o.padY === undefined || o.padY === null || o.padY === '' ? NaN : Number(o.padY);
     return {
       width,
@@ -1149,7 +1152,7 @@ try {
     if (item.isTitle) return theme.text;
     if (style.nm) return theme.nameColor;
     const k = style.k;
-    if (k === 'd' && look.dialogueStyle === 'band') return theme.text; // 형광 띠는 띠에만 색, 글자는 읽기 쉽게 기본색
+    if (k === 'd' && (look.dialogueStyle === 'band' || look.dialogueStyle === 'bar')) return theme.text; // 세로선·형광 띠는 선/띠에만 색, 글자는 기본색
     if (k === 'd') return look.dlgColor || (look.dialogueStyle === 'color' ? theme.dialogueColor : theme.text); // 대사 색을 고르면 어느 표시 방식이든 대사 글씨에 쓴다
     if (k === 't') return theme.thought;
     if (style.nf && typeof look.narrAlpha === 'number') return rgba(theme.text, look.narrAlpha);
@@ -2064,12 +2067,12 @@ try {
     // 1) 장식
     for (const d of page.decos || []) {
       if (d.type === 'card') { ctx.fillStyle = theme.card; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 1.05)); ctx.fill(); }
-      else if (d.type === 'bubble') { const bc = d.color || look.dlgColor; ctx.fillStyle = bc ? rgba(bc, theme.dark ? 0.18 : 0.12) : theme.bubble; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 0.95)); ctx.fill(); }
+      else if (d.type === 'bubble') { const bc = d.color || look.dlgColor; ctx.fillStyle = bc || look.dlgAlpha != null ? rgba(bc || theme.accent, look.dlgAlpha != null ? look.dlgAlpha * 0.5 : (theme.dark ? 0.18 : 0.12)) : theme.bubble; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 0.95)); ctx.fill(); }
       else if (d.type === 'status') { ctx.fillStyle = theme.status; roundRect(ctx, d.x, d.y, d.w, d.h, Math.round(opt.size * 0.7)); ctx.fill(); }
       else if (d.type === 'quote') {
         ctx.save();
         ctx.fillStyle = d.color || look.dlgColor || theme.accent;
-        ctx.globalAlpha = 0.6;
+        ctx.globalAlpha = look.dlgAlpha != null ? look.dlgAlpha : 0.6;
         ctx.font = `700 ${Math.round(opt.size * 2.6)}px Georgia, "Times New Roman", serif`;
         ctx.textBaseline = 'top';
         ctx.fillText('\u201C', d.x - opt.size * 0.05, d.y - opt.size * 0.12);
@@ -2077,11 +2080,11 @@ try {
       }
       else if (d.type === 'band') {
         const g = lineGeom(ctx, d.it), bc = d.color || look.dlgColor || theme.accent;
-        ctx.fillStyle = rgba(bc, theme.dark ? 0.34 : 0.24);
+        ctx.fillStyle = rgba(bc, look.dlgAlpha != null ? look.dlgAlpha * 0.6 : (theme.dark ? 0.34 : 0.24));
         const y0 = g.baseline - g.glyphH * 0.40, hh = g.glyphH * 0.52;
         roundRect(ctx, d.it.x - 2, y0, d.it.line.w + 4, hh, Math.min(3, hh / 2)); ctx.fill();
       }
-      else if (d.type === 'bar') { ctx.fillStyle = d.color || look.dlgColor || theme.accent; ctx.globalAlpha = 0.85; roundRect(ctx, d.x, d.y, d.w, d.h, d.w / 2); ctx.fill(); ctx.globalAlpha = 1; }
+      else if (d.type === 'bar') { ctx.fillStyle = d.color || look.dlgColor || theme.accent; ctx.globalAlpha = look.dlgAlpha != null ? look.dlgAlpha : 0.85; roundRect(ctx, d.x, d.y, d.w, d.h, d.w / 2); ctx.fill(); ctx.globalAlpha = 1; }
     }
 
     // 2) 형광펜·형광 밑줄 (글자 뒤)
@@ -2858,12 +2861,15 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
           <div class="stepper"><button id="fs-minus">−</button><button id="fs-plus">＋</button></div></div>
       </div>
       <div class="group mt12">
-        <div class="row col"><span class="label">대사 표시</span>
+        <div class="row col"><span class="label">대사 표시 <small class="lbl-hint">대사는 문단을 눌러 지정해요</small></span>
           <div class="seg" data-seg="dialogueStyle"><button data-v="bar">세로선</button><button data-v="bubble">말풍선</button><button data-v="color">글자색</button><button data-v="quote">따옴표</button><button data-v="band">형광 띠</button><button data-v="bold">굵게</button></div></div>
         <div class="row col"><span class="label">대사 색 <small id="dlg-hint">테마 색 그대로</small></span>
-          <div class="colors dlg-colors" id="dlg-colors"></div></div>
+          <div class="colors dlg-colors" id="dlg-colors"></div>
+          <div class="alpha-row" id="dlg-alpha-row" style="padding:0"><span>진하기</span><input type="range" id="dlg-alpha" min="10" max="100" step="5"><b id="dlg-alpha-v"></b></div></div>
         <div class="row col"><span class="label">위아래 여백 <b id="pady-v" style="color:var(--label2);font-weight:500"></b></span>
           <div class="alpha-row" style="padding:0"><span>좁게</span><input type="range" id="pad-y" min="0" max="80" step="2"><span>넓게</span></div></div>
+        <div class="row col"><span class="label">양옆 여백 <b id="padx-v" style="color:var(--label2);font-weight:500"></b></span>
+          <div class="alpha-row" style="padding:0"><span>좁게</span><input type="range" id="pad-x" min="6" max="72" step="2"><span>넓게</span></div></div>
       </div>
       <details class="more" id="look-more">
         <summary>더보기 <span class="more-sub">영어 글꼴 · 기울임 · 내 스타일</span></summary>
@@ -2957,6 +2963,15 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .kind-pop button.del { color: var(--red); }
     .kind-pop button.del:hover { background: color-mix(in srgb, var(--red) 12%, transparent); }
     .dlg-colors { padding: 2px 0 0; }
+    .cc-pal { position: fixed; left: 50%; bottom: calc(16px + var(--safe-b)); transform: translateX(-50%); width: min(340px, calc(100% - 20px)); background: var(--cell); border-radius: 18px; box-shadow: var(--shadow-lg); padding: 12px 14px 14px; z-index: 40; animation: cc-up .22s cubic-bezier(.2,.9,.3,1.1); }
+    .cc-pal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .cc-pal-head b { font-size: 15px; }
+    .cc-pal-x { border: none; background: var(--fill); width: 28px; height: 28px; border-radius: 50%; font-size: 13px; color: var(--label2); }
+    .cc-pal-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 9px; justify-items: center; }
+    .cc-pal-c { width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--cell); box-shadow: 0 0 0 .5px var(--sep); padding: 0; }
+    .cc-pal-c.on { box-shadow: 0 0 0 2.5px var(--blue); }
+    .cc-pal-own { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 12px; height: 38px; border-radius: 10px; background: var(--fill); font-size: 14px; font-weight: 600; color: var(--blue); cursor: pointer; overflow: hidden; }
+    .cc-pal-own input { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; border: none; padding: 0; cursor: pointer; }
     .dot.auto { background: var(--fill); color: var(--label2); font-size: 10.5px; font-weight: 700; letter-spacing: -0.3px; }
     .dot.auto.on { color: var(--blue); }
     #pady-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
@@ -3115,6 +3130,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     .look-body .themes, .look-body .presets { cursor: grab; }
     #ital-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
     #narr-hint { display: block; margin-top: 2px; font-size: 12px; color: var(--label2); font-weight: 400; }
+    .lbl-hint { margin-left: 6px; font-size: 12px; color: var(--label2); font-weight: 400; }
     #dlg-hint { display: inline; margin-left: 6px; font-size: 12px; color: var(--label2); font-weight: 400; }
     .cc-run:active { opacity: .7; }
     .cc-run:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
@@ -3703,10 +3719,10 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     return {
       width: PAGE_W - 2 * F, pageHeight: ratio ? Math.round(PAGE_W * ratio) - 2 * F : 0,
       fontSize: settings.fontSize, lineHeight: 'normal', font: 'body', dialogueStyle: settings.dialogueStyle,
-      indent: false, showLabels: false, pageMode: settings.pageMode, maxLongHeight: maxH, title: '', pageNumbers: true, padY: settings.padY
+      indent: false, showLabels: false, pageMode: settings.pageMode, maxLongHeight: maxH, title: '', pageNumbers: true, padY: settings.padY, padX: settings.padX
     };
   }
-  const look = () => ({ theme: settings.theme, customBg: settings.customBg || '#F3E9F0', dialogueStyle: settings.dialogueStyle, muteNarration: true, pageNumbers: true, pattern: 'none', decor: settings.decor, frame: settings.frame, dlgColor: settings.dlgColor || '', narrAlpha: 0.72 }); // '지문'으로 고른 문단은 보기 좋은 정도로 자동으로 연하게
+  const look = () => ({ theme: settings.theme, customBg: settings.customBg || '#F3E9F0', dialogueStyle: settings.dialogueStyle, muteNarration: true, pageNumbers: true, pattern: 'none', decor: settings.decor, frame: settings.frame, dlgColor: settings.dlgColor || '', dlgAlpha: Number.isFinite(Number(settings.dlgAlpha)) && settings.dlgAlpha !== null && settings.dlgAlpha !== '' ? Number(settings.dlgAlpha) / 100 : null, narrAlpha: 0.72 }); // '지문'으로 고른 문단은 보기 좋은 정도로 자동으로 연하게
 
   function fontNeeds(model) {
     const fs = fontSet();
@@ -4139,25 +4155,23 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
         b.style.background = hex;
         box.appendChild(b);
       });
-      const custom = document.createElement('label');
+      const custom = document.createElement('span');
       custom.className = 'dot custom';
-      custom.title = '직접 고르기';
-      custom.innerHTML = '<input type="color" id="custom-color">';
+      custom.title = '색 더 보기';
+      custom.setAttribute('role', 'button');
       box.appendChild(custom);
+      custom.addEventListener('click', () => openPalette(settings.color, c => { settings.customColor = settings.color = c; saveSettings(); syncMarkOpts(); }));
       box.addEventListener('click', e => {
         const b = e.target.closest('button.dot');
         if (!b) return;
         settings.color = b.dataset.c; saveSettings(); syncMarkOpts();
       });
-      const input = custom.querySelector('input');
-      input.addEventListener('input', () => { settings.customColor = settings.color = input.value.toUpperCase(); saveSettings(); syncMarkOpts(); });
     }
     const custom = box.querySelector('.custom');
     const inPalette = R.PALETTE.some(([hex]) => hex !== '#FFD60A' && hex === settings.color);
     // 설정에 남은 노란색은 삭제하지 않고 '직접 고르기' 선택으로 보여준다.
     const displayCustomColor = inPalette ? settings.customColor : settings.color;
     custom.style.setProperty('--cc', displayCustomColor);
-    custom.querySelector('input').value = displayCustomColor;
     box.querySelectorAll('button.dot').forEach(b => b.classList.toggle('on', b.dataset.c === settings.color));
     $('actbar').style.setProperty('--cc-mark', settings.color || '#FF7EB6');
     custom.classList.toggle('on', !inPalette);
@@ -4651,6 +4665,51 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     bar(42, 142, 126, th.narration, 0.55);
     bar(42, 166, 80, th.narration, 0.55);
   }
+  /* 색 판: 무지개 버튼을 누르면 고른 색 36개 + 직접 고르기 */
+  const MORE_COLORS = [
+    '#FF3B30', '#FF6B6B', '#FF8FA3', '#FFB3C6', '#E2457A', '#B0164F',
+    '#FF9500', '#FFB86B', '#FFD60A', '#FFE89A', '#D4A017', '#A0522D',
+    '#34C759', '#8FD694', '#A8C686', '#2E8B57', '#1F5F3F', '#5FB3A1',
+    '#007AFF', '#5AC8FA', '#9CC9FF', '#4A6FA5', '#1E3A8A', '#7FB3D5',
+    '#AF52DE', '#C9A7FF', '#E0C3FC', '#7B4FBF', '#4B2E83', '#D17FB0',
+    '#000000', '#3A3A3C', '#8E8E93', '#C7C7CC', '#FFFFFF', '#C4A484'
+  ];
+  let palEl = null;
+  function closePalette() { if (palEl) { palEl.remove(); palEl = null; } }
+  const BG_COLORS = [
+    '#FFFFFF', '#FAF7F2', '#F5EFE6', '#F3E9F0', '#FCE4EC', '#FFE3E3',
+    '#FFF1E0', '#FFF8DC', '#FFFBEA', '#F1F8E9', '#E8F5E9', '#E0F2F1',
+    '#E3F2FD', '#E8EAF6', '#EDE7F6', '#F3E5F5', '#ECEFF1', '#EEEEEE',
+    '#D7CCC8', '#CFD8DC', '#BCAAA4', '#C5B3E6', '#B3D4F5', '#C3E0C5',
+    '#263238', '#1E1E24', '#2B2D42', '#2D1E2F', '#1B2A1F', '#3E2723',
+    '#0F172A', '#111111', '#4A3B52', '#37474F', '#5D4037', '#1A237E'
+  ];
+  function openPalette(cur, onPick, list, title) {
+    closePalette();
+    const el = document.createElement('div');
+    el.className = 'cc-pal';
+    el.innerHTML = `<div class="cc-pal-head"><b>${title || '색 고르기'}</b><button class="cc-pal-x" type="button">✕</button></div>
+      <div class="cc-pal-grid">${(list || MORE_COLORS).map(c => `<button type="button" class="cc-pal-c${String(cur).toUpperCase() === c ? ' on' : ''}" data-c="${c}" style="background:${c}"></button>`).join('')}</div>
+      <label class="cc-pal-own">🎨 직접 고르기<input type="color" value="${/^#[0-9A-F]{6}$/i.test(cur || '') ? cur : '#FF69A0'}"></label>`;
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      if (e.target.closest('.cc-pal-x')) return closePalette();
+      const b = e.target.closest('.cc-pal-c');
+      if (b) { onPick(b.dataset.c); closePalette(); }
+    });
+    el.querySelector('input').addEventListener('input', e => onPick(e.target.value.toUpperCase()));
+    root.appendChild(el); palEl = el;
+    setTimeout(() => document.addEventListener('pointerdown', function off(ev) { if (!ev.composedPath().includes(el)) { closePalette(); document.removeEventListener('pointerdown', off, true); } }, true), 0);
+  }
+  const DLG_ALPHA_DEF = { bar: 85, band: 40, bubble: 25, quote: 60 };
+  function syncDlgAlpha() {
+    const st = settings.dialogueStyle, show = st in DLG_ALPHA_DEF;
+    $('dlg-alpha-row').classList.toggle('hidden', !show);
+    if (!show) return;
+    const v = Number.isFinite(Number(settings.dlgAlpha)) && settings.dlgAlpha !== null && settings.dlgAlpha !== '' ? Number(settings.dlgAlpha) : DLG_ALPHA_DEF[st];
+    $('dlg-alpha').value = v; $('dlg-alpha-v').textContent = v + '%';
+  }
+  $('dlg-alpha').addEventListener('input', () => { settings.dlgAlpha = Number($('dlg-alpha').value); syncDlgAlpha(); saveSettings(); scheduleRefresh(60); });
   function syncDlgColors() {
     const box = $('dlg-colors');
     if (!box.children.length) {
@@ -4668,18 +4727,16 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
         b.style.background = hex;
         box.appendChild(b);
       });
-      const custom = document.createElement('label');
+      const custom = document.createElement('span');
       custom.className = 'dot custom';
-      custom.title = '직접 고르기';
-      custom.innerHTML = '<input type="color">';
+      custom.title = '색 더 보기';
+      custom.setAttribute('role', 'button');
       box.appendChild(custom);
+      custom.addEventListener('click', () => openPalette(settings.dlgColor, c => { settings.dlgColor = c; saveSettings(); syncDlgColors(); scheduleRefresh(60); }));
       box.addEventListener('click', e => {
         const b = e.target.closest('button.dot');
         if (!b) return;
         settings.dlgColor = b.dataset.c; saveSettings(); syncDlgColors(); scheduleRefresh(0);
-      });
-      custom.querySelector('input').addEventListener('input', e => {
-        settings.dlgColor = e.target.value.toUpperCase(); saveSettings(); syncDlgColors(); scheduleRefresh(80);
       });
     }
     const cur = settings.dlgColor || '';
@@ -4687,9 +4744,12 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     box.querySelectorAll('button.dot').forEach(b => b.classList.toggle('on', b.dataset.c === cur));
     const custom = box.querySelector('.custom');
     custom.classList.toggle('on', !inPalette);
-    if (!inPalette) { custom.style.setProperty('--cc', cur); custom.querySelector('input').value = cur; }
-    $('dlg-hint').textContent = cur ? '대사 글씨와 표시에 이 색을 써요' : '테마 색 그대로';
+    if (!inPalette) custom.style.setProperty('--cc', cur);
+    const decoOnly = settings.dialogueStyle === 'bar' || settings.dialogueStyle === 'band';
+    $('dlg-hint').textContent = !cur ? '테마 색 그대로' : decoOnly ? (settings.dialogueStyle === 'bar' ? '세로선에만 이 색을 써요' : '띠에만 이 색을 써요') : '대사 글씨와 표시에 이 색을 써요';
     syncPadY();
+    syncPadX();
+    syncDlgAlpha();
     syncMarkOpts();
   }
   function syncPadY() {
@@ -4697,6 +4757,17 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     $('pad-y').value = v;
     $('pady-v').textContent = v === 0 ? '없음' : v + 'px';
   }
+  function syncPadX() {
+    const v = Number.isFinite(Number(settings.padX)) && settings.padX !== '' && settings.padX !== null ? Number(settings.padX) : 40;
+    $('pad-x').value = v;
+    $('padx-v').textContent = v + 'px';
+  }
+  $('pad-x').addEventListener('input', () => {
+    settings.padX = Number($('pad-x').value);
+    syncPadX();
+    saveSettings();
+    scheduleRefresh(60);
+  });
   $('pad-y').addEventListener('input', () => {
     settings.padY = Number($('pad-y').value);
     syncPadY();
@@ -4704,7 +4775,7 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
     scheduleRefresh(60);
   });
   /* 내 스타일: 글꼴·테마·꾸밈 방식을 이름 붙여 저장 (이름 바꾸기 규칙은 캐릭터마다 달라서 빼고) */
-  const STYLE_KEYS = ['theme', 'customBg', 'decor', 'dialogueStyle', 'dlgColor', 'narrAlpha', 'padY', 'italic', 'font', 'enFont', 'fontSize', 'pattern', 'frame', 'format', 'color', 'customColor', 'hlAlpha', 'ulAlpha', 'ulStyle', 'stStyle', 'starScope'];
+  const STYLE_KEYS = ['theme', 'customBg', 'decor', 'dialogueStyle', 'dlgColor', 'dlgAlpha', 'narrAlpha', 'padY', 'padX', 'italic', 'font', 'enFont', 'fontSize', 'pattern', 'frame', 'format', 'color', 'customColor', 'hlAlpha', 'ulAlpha', 'ulStyle', 'stStyle', 'starScope'];
   const pickStyle = () => { const o = {}; STYLE_KEYS.forEach(k => { if (settings[k] !== undefined) o[k] = settings[k]; }); return o; };
   const sameStyle = (a, b) => STYLE_KEYS.every(k => a[k] === undefined || String(a[k]) === String(b[k]));
   let presets = (() => { const v = store.get('presets', []); return Array.isArray(v) ? v.filter(x => x && x.name && x.s) : []; })();
@@ -4798,21 +4869,16 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
       const b = document.createElement('button');
       b.className = 'theme';
       b.dataset.theme = 'custom';
-      b.innerHTML = '<canvas class="sw" width="120" height="150"></canvas><span>내 색 <b class="cpick">✎</b></span><input type="color" class="cc-color" tabindex="-1">';
-      const inp = b.querySelector('input');
-      inp.addEventListener('click', e => e.stopPropagation());
-      inp.addEventListener('input', () => {
-        settings.customBg = inp.value; settings.theme = 'custom';
-        saveSettings();
-        drawSwatch(b.querySelector('canvas'), 'custom');
-        box.querySelectorAll('.theme').forEach(x => x.classList.toggle('on', x === b));
-        scheduleRefresh(80);
-      });
-      inp.addEventListener('change', () => syncLook());
+      b.innerHTML = '<canvas class="sw" width="120" height="150"></canvas><span>내 색 <b class="cpick">✎</b></span>';
       b.addEventListener('click', () => {
-        inp.value = settings.customBg || '#F3E9F0';
         if (settings.theme !== 'custom') setLook('theme', 'custom');
-        try { if (inp.showPicker) inp.showPicker(); else inp.click(); } catch (e) { inp.click(); }
+        openPalette(settings.customBg || '#F3E9F0', c => {
+          settings.customBg = c; settings.theme = 'custom';
+          saveSettings();
+          drawSwatch(b.querySelector('canvas'), 'custom');
+          box.querySelectorAll('.theme').forEach(x => x.classList.toggle('on', x === b));
+          scheduleRefresh(80);
+        }, BG_COLORS, '바탕색 고르기');
       });
       box.appendChild(b);
     }
@@ -4886,9 +4952,9 @@ const CC_CSS = "/* ===== 아이폰 느낌 기본값 ===== */\n.cc-root {\n  --bg
   $('open-enfont').addEventListener('click', () => { fontFrom = 'sheet-look'; $('font-back').textContent = '‹ 모양'; openFontList('en'); });
   $('font-back').addEventListener('click', () => { syncLook(); openSheet(fontFrom, true); });
 
-  function setLook(key, v) { settings[key] = v; saveSettings(); syncLook(); scheduleRefresh(0); }
+  function setLook(key, v) { if (key === 'dialogueStyle' && settings.dialogueStyle !== v) settings.dlgAlpha = null; settings[key] = v; saveSettings(); syncLook(); scheduleRefresh(0); }
   qa('[data-seg]').forEach(seg => seg.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setLook(seg.dataset.seg, b.dataset.v); }));
-  $('fs-minus').addEventListener('click', () => setLook('fontSize', Math.max(13, settings.fontSize - 1)));
+  $('fs-minus').addEventListener('click', () => setLook('fontSize', Math.max(11, settings.fontSize - 1)));
   $('fs-plus').addEventListener('click', () => setLook('fontSize', Math.min(23, settings.fontSize + 1)));
 
   /* ---------- 글 고치기 (전체) ---------- */
